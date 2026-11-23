@@ -22,11 +22,14 @@ jobs:
             -e N8N_VERSION_NOTIFICATIONS_ENABLED=false \
             -e N8N_PERSONALIZATION_ENABLED=false \
             -v "$PWD/proof:/lab:ro" "$N8N_IMAGE"
-          for i in $(seq 1 90); do
-            if curl -fsS http://127.0.0.1:5678/healthz >/dev/null 2>&1; then echo "healthy after $i tries"; break; fi
+          for i in $(seq 1 120); do
+            if docker logs n8n 2>&1 | grep -q "Editor is now accessible"                && curl -fsS http://127.0.0.1:5678/healthz/readiness >/dev/null 2>&1; then
+              echo "ready after $i tries"; break
+            fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:5678/healthz
+          curl -fsS http://127.0.0.1:5678/healthz/readiness; echo
+          docker logs n8n 2>&1 | grep -c "Finished migration" || true
           docker exec n8n n8n --version
       - name: Import both workflows
         run: |
