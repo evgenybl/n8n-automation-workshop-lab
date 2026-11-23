@@ -1,0 +1,56 @@
+name: proof
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  n8n-with-no-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      N8N_IMAGE: docker.n8n.io/n8nio/n8n:2.48.8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+      - name: Start n8n in a container
+        run: |
+          docker run -d --name n8n -p 127.0.0.1:5678:5678 \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_VERSION_NOTIFICATIONS_ENABLED=false \
+            -e N8N_PERSONALIZATION_ENABLED=false \
+            -v "$PWD/proof:/lab:ro" "$N8N_IMAGE"
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:5678/healthz >/dev/null 2>&1; then echo "healthy after $i tries"; break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:5678/healthz
+          docker exec n8n n8n --version
+      - name: Import both workflows
+        run: |
+          docker exec n8n n8n import:workflow --input=/lab/webhook-sum.json
+          docker exec n8n n8n import:workflow --input=/lab/manual-sum.json
+          docker exec n8n n8n list:workflow || true
+      - name: Publish the webhook workflow and call it
+        run: |
+          docker exec n8n n8n publish:workflow --id=proofWebhookSum01
+          code=000
+          for i in $(seq 1 30); do
+            code=$(curl -s -o resp.json -w '%{http_code}' -X POST -H 'content-type: application/json' \
+              -d '{"a":2,"b":3}' http://127.0.0.1:5678/webhook/proof-sum || true)
+            if [ "$code" = "200" ]; then echo "answered after $i tries"; break; fi
+            sleep 2
+          done
+          echo "status $code"; cat resp.json; echo
+          test "$code" = "200"
+          grep -q '"total":5' resp.json
+      - name: Run the manual workflow by its id (for information)
+        continue-on-error: true
+        run: |
+          docker exec -e N8N_RUNNERS_BROKER_PORT=5690 -e N8N_PORT=5691 n8n n8n execute --id proofManualSum001 | tee execute.out
+          grep -q '"total": *5' execute.out
+      - name: The container's log
+        if: always()
+        run: docker logs n8n 2>&1 | tail -80
