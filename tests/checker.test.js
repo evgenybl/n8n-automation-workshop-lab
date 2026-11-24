@@ -122,6 +122,44 @@ refuses('a header named like a secret', (wf) => {
 refuses('a query parameter named like a secret', (wf) => {
   node(wf, 'Look up the contact').parameters.queryParameters.parameters.push({ name: 'api_key', value: 'x' });
 }, /query parameter named like a secret: api_key/);
+// Six shapes an earlier version let through.
+const SHORT = ['s3cret', 'pass'].join('');
+refuses('a short secret under a header whose name says auth, token, key or secret', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Auth-Token', value: SHORT });
+}, /header named like a secret: X-Auth-Token/);
+refuses('a Proxy-Authorization header', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'Proxy-Authorization', value: 'x' });
+}, /header named like a secret: Proxy-Authorization/);
+refuses('a basic credential under a header not named like a secret', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Thing', value: 'Basic ' + ['dXNlcj', 'pwYXNz'].join('') });
+}, /token-like value/);
+refuses('a key-shaped value written inside an expression', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Thing', value: '={{ "' + TOKEN + '" }}' });
+}, /token-like value/);
+refuses('a long run of letters and digits written as a text inside an expression', (wf) => {
+  node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name: 'ref', value: "={{ '" + LONG + "' }}" });
+}, /token-like value/);
+refuses('a key in the query of the address itself', (wf) => {
+  node(wf, 'Look up the contact').parameters.url = 'http://office:3333/crm/contacts?api_key=' + SHORT;
+}, /query parameter named like a secret in its address: api_key/);
+for (const name of ['password', 'secret', 'token', 'api key', 'apiKey', 'session_token']) {
+  refuses('a body field named ' + name + ' with a fixed value', (wf) => {
+    node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name, value: SHORT });
+  }, new RegExp('body field named like a secret with a fixed value: ' + name));
+}
+refuses('a shorter run of letters and digits in a header value', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Thing', value: LONG.slice(0, 16) });
+}, /token-like value in the header X-Thing/);
+
+test('a body field named like a secret may pass on a value from the enquiry; the practice badge and the lab\'s field names are not secrets', () => {
+  const { secretName } = require('../tools/check-workflows.js');
+  const wf = good();
+  node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name: 'token', value: '={{ $json.body.token }}' });
+  assert.deepEqual(problemsOf(wf), []);
+  for (const n of ['X-Office-Badge', 'email', 'name', 'company', 'note', 'text', 'message', 'summary', 'resumeUrl', 'step', 'reason']) assert.equal(secretName(n), false, n);
+  for (const n of ['Authorization', 'X-API-KEY', 'access_token', 'clientSecret', 'Cookie', 'X-Auth-Token', 'Proxy-Authorization', 'passwd']) assert.equal(secretName(n), true, n);
+});
+
 refuses('an address with no scheme', (wf) => {
   node(wf, 'Add a note').parameters.url = 'collector.vendor.example.org/in';
 }, /not written out as one of the practice office/);

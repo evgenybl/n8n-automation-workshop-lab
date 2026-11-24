@@ -142,10 +142,12 @@ teaching it.
 - The practice AI step is a stand-in that is not a model: it answers from fixed rules, the same way every time. The lab
   teaches how to check an AI step's output; it does not show what any real model does.
 - It uses no paid n8n feature and no hosted n8n. The static checker, `tools/check-workflows.js`, refuses a workflow file
-  that holds a credentials block, authentication on a node, a header or query parameter named like a secret, a token-like
-  value, an address that is not written out as the practice office's, an e-mail address outside example.com, or an IP
-  address, also in a node's or the workflow's name. `tests/checker.test.js` makes a file of each kind and proves the
-  checker refuses it, and proves every file in `workflows/` passes.
+  that holds a credentials block, authentication on a node, a header or query parameter named like a secret (also in the
+  address itself), a body field named like a secret with a value written in the file, a token-like value (a key's shape
+  also inside an expression), an address that is not written out as the practice office's, an e-mail address outside
+  example.com, or an IP address, also in a node's or the workflow's name. `tests/checker.test.js` makes a file of each
+  kind and proves the checker refuses it, and proves every file in `workflows/` passes. The checker is a set of patterns:
+  it catches the common shapes of these, and proves nothing beyond them.
 - Nothing in it is meant for production use. The practice office has no login, keeps everything in memory, and refuses
   changes sent from another site.
 

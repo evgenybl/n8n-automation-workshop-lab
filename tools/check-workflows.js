@@ -9,11 +9,14 @@
 // authentication on any node; a node type outside the stated list, or at another version; an HTTP Request whose address
 // is not written out as an address of the practice office (so none with no scheme, none built in an expression, none that
 // only starts like the office); any other address, any e-mail address outside example.com, any IP address or any
-// phone-like number in a parameter or a name; a token-like value in a header, a query parameter, a body or code; a header
-// or query parameter named like a secret; a node or workflow name with a quote mark or longer than 60 characters; more or
+// phone-like number in a parameter or a name; a token-like value in a header, a query parameter, a body or code, or a
+// key-shaped one inside an expression; a header or query parameter named like a secret, also in the address itself, and a
+// body field named like a secret with a fixed value; a node or workflow name with a quote mark or longer than 60 characters; more or
 // fewer than one Webhook trigger, or a path that is not small letters, digits and dashes, or that another file uses; and a
 // node that the trigger does not lead to (a stage's starter may bring such nodes: the parts the participant connects).
 // Exit 0 when every file passes, 1 when one does not.
+//
+// These are patterns: they catch the common shapes of a key, an address or a personal detail, and prove nothing beyond them.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -35,17 +38,29 @@ const URL_PATTERN = /[a-z][a-z0-9+.-]*:\/\/[^\s"'<>{}]*/gi;
 const EMAIL_PATTERN = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const IP_PATTERN = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
 const PHONE_PATTERN = /\+?\d[\d ()-]{7,}\d/g;
-// Well-known key shapes, a bearer token, and any long run of letters and digits that holds both.
-const TOKEN_PATTERNS = [
+// Well-known key shapes, a bearer token or a basic credential: looked for everywhere, inside expressions too.
+const KEY_SHAPES = [
   /\b(sk|pk|rk)[-_][A-Za-z0-9_-]{8,}/,
   /\b(ghp|gho|ghs|ghu)_[A-Za-z0-9]{8,}/,
   /\bxox[abpr]-/,
   /\bAKIA[0-9A-Z]{8,}/,
   /\beyJ[A-Za-z0-9_-]{10,}/,
   /\bBearer\s+\S{8,}/i,
-  /(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9_-]{24,}/,
+  /\bBasic\s+[A-Za-z0-9+/]{8,}={0,2}/,
 ];
-const SECRET_NAMES = /^(authorization|cookie|x-api-key|api[-_]?key|apikey|token|access[-_]?token|secret|[c]lient[-_]?secret|password|key)$/i; // [c]: the lab's pages test for the word on its own
+// A long run of letters and digits that holds both: in a fixed value, or in a text written inside an expression.
+const MIXED_RUN = /(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9_-]{24,}/;
+// A header carries keys more than anything else: a shorter run is enough there.
+const MIXED_RUN_IN_HEADER = /(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9_-]{16,}/;
+const TOKEN_PATTERNS = KEY_SHAPES.concat([MIXED_RUN]);
+
+// A name says it holds a secret when one of its words does: X-Auth-Token, Proxy-Authorization, api_key, apiKey, password.
+const SECRET_WORDS = new Set(['auth', 'authorization', 'authorisation', 'authentication', 'oauth', 'key', 'apikey', 'accesskey',
+  'secretkey', 'privatekey', 'bearer', 'jwt', 'cookie', 'session', 'sessionid', 'credential', 'credentials', 'pwd', 'passphrase']);
+function secretName(name) {
+  const words = String(name || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  return words.some((w) => SECRET_WORDS.has(w) || /token|secret|passw/.test(w));
+}
 
 function strings(value, out) {
   if (typeof value === 'string') out.push(value);
@@ -64,9 +79,22 @@ function hasKeyDeep(value, key) {
 
 // Text outside n8n's {{ }}, where a fixed value sits.
 const outsideExpressions = (s) => s.replace(/\{\{[\s\S]*?\}\}/g, ' ');
+// The texts written in quote marks inside n8n's {{ }}.
+function textsInExpressions(s) {
+  const out = [];
+  for (const e of s.match(/\{\{[\s\S]*?\}\}/g) || []) {
+    for (const m of e.matchAll(/(['"`])((?:\\.|(?!\1)[^\\])*)\1/g)) out.push(m[2]);
+  }
+  return out;
+}
 
 function tokenLike(s) {
   return TOKEN_PATTERNS.some((re) => re.test(s));
+}
+
+// A token-like value anywhere in a string: key shapes everywhere, a long mixed run in a fixed value or a quoted text.
+function holdsToken(s) {
+  return KEY_SHAPES.some((re) => re.test(s)) || tokenLike(outsideExpressions(s)) || textsInExpressions(s).some(tokenLike);
 }
 
 function checkName(label, name, problems) {
@@ -151,7 +179,23 @@ function checkText(fileName, text) {
       if (!url.startsWith(OFFICE_ORIGIN + '/')) problems.push('node ' + label + ' calls an address that is not written out as one of the practice office: ' + JSON.stringify(p.url));
       for (const group of ['headerParameters', 'queryParameters']) {
         for (const pair of (p[group] && p[group].parameters) || []) {
-          if (SECRET_NAMES.test(String(pair.name || ''))) problems.push('node ' + label + ' sends a ' + (group === 'headerParameters' ? 'header' : 'query parameter') + ' named like a secret: ' + pair.name);
+          if (secretName(pair.name)) problems.push('node ' + label + ' sends a ' + (group === 'headerParameters' ? 'header' : 'query parameter') + ' named like a secret: ' + pair.name);
+          if (group === 'headerParameters' && MIXED_RUN_IN_HEADER.test(outsideExpressions(String(pair.value || '')))) {
+            problems.push('node ' + label + ' holds a token-like value in the header ' + pair.name);
+          }
+        }
+      }
+      // A query written into the address itself.
+      const query = outsideExpressions(url).split('?')[1];
+      if (query !== undefined) {
+        for (const [name] of new URLSearchParams(query.split('#')[0])) {
+          if (secretName(name)) problems.push('node ' + label + ' sends a query parameter named like a secret in its address: ' + name);
+        }
+      }
+      // A body field named like a secret, with a value written in the file.
+      for (const pair of (p.bodyParameters && p.bodyParameters.parameters) || []) {
+        if (secretName(pair.name) && outsideExpressions(String(pair.value || '').replace(/^=/, '')).trim()) {
+          problems.push('node ' + label + ' sends a body field named like a secret with a fixed value: ' + pair.name);
         }
       }
       if (p.sendHeaders && p.specifyHeaders === 'json') problems.push('node ' + label + ' gives its headers as JSON; the lab gives them as fields, so this checker can read them');
@@ -173,7 +217,7 @@ function checkText(fileName, text) {
       for (const m of s.match(IP_PATTERN) || []) problems.push('node ' + label + ' holds an IP address: ' + m);
       const fixed = outsideExpressions(s);
       if (!isCode) for (const m of fixed.match(PHONE_PATTERN) || []) problems.push('node ' + label + ' holds a phone-like number: ' + m);
-      if (tokenLike(fixed)) problems.push('node ' + label + ' holds a token-like value: ' + fixed.slice(0, 40));
+      if (holdsToken(s)) problems.push('node ' + label + ' holds a token-like value: ' + s.slice(0, 40));
     }
   }
 
@@ -258,4 +302,4 @@ function main(argv) {
 
 if (require.main === module) process.exit(main(process.argv));
 
-module.exports = { checkText, checkFiles, ALLOWED_TYPES, OFFICE_ORIGIN };
+module.exports = { checkText, checkFiles, secretName, ALLOWED_TYPES, OFFICE_ORIGIN };
