@@ -44,7 +44,7 @@
     return e;
   }
   function show(value) {
-    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    return typeof value === 'string' ? value : JSON.stringify(value);
   }
   async function decide(id, decision) {
     await fetch('/inbox/' + id + '/' + decision, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
@@ -70,8 +70,8 @@
       p.appendChild(no);
       c.appendChild(p);
     } else if (a.answer) {
-      c.appendChild(el('div', 'meta', 'n8n answered the decision with status ' + (a.answer.status || 'none') + ':'));
-      c.appendChild(el('pre', '', show(a.answer.body)));
+      c.appendChild(el('div', 'meta', 'What n8n answered to the decision:'));
+      c.appendChild(el('pre', '', 'Status:    ' + (a.answer.status || 'no answer') + '\nAnswer:    ' + show(a.answer.body)));
     }
     return c;
   }

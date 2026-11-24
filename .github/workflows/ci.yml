@@ -13,6 +13,9 @@ jobs:
     name: The lab on Linux, with n8n
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
 
@@ -21,7 +24,7 @@ jobs:
           node-version: 24
 
       - name: The office's tests and the other tests that need no container
-        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js"
+        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" | tee "$RUNNER_TEMP/local-tap.txt"
 
       - name: The static checks of every workflow file
         run: node tools/check-workflows.js
@@ -44,7 +47,12 @@ jobs:
       - name: Every scenario, through the published webhooks
         env:
           LAB_LIVE: "1"
-        run: node --test --test-reporter=tap tests/scenarios.test.js
+        run: node --test --test-reporter=tap tests/scenarios.test.js | tee "$RUNNER_TEMP/scenario-tap.txt"
+
+      - name: The test summaries pasted on the testing page are the ones this run printed
+        run: |
+          node tools/check-pasted.js "$RUNNER_TEMP/local-tap.txt" docs/HOW-THIS-WAS-TESTED.md local
+          node tools/check-pasted.js "$RUNNER_TEMP/scenario-tap.txt" docs/HOW-THIS-WAS-TESTED.md ci
 
       - name: The logs, when something failed
         if: failure()
@@ -56,6 +64,9 @@ jobs:
     name: What needs no container, on Windows
     runs-on: windows-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
 
@@ -64,10 +75,13 @@ jobs:
           node-version: 24
 
       - name: The office's tests and the other tests that need no container
-        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js"
+        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" | tee "$RUNNER_TEMP/local-tap.txt"
 
       - name: The static checks of every workflow file
         run: node tools/check-workflows.js
 
       - name: The picture tool, compared with every picture
         run: node tools/draw-workflow.js --check
+
+      - name: The local test summary pasted on the testing page is the one this run printed
+        run: node tools/check-pasted.js "$RUNNER_TEMP/local-tap.txt" docs/HOW-THIS-WAS-TESTED.md local

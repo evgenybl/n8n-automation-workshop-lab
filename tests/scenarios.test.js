@@ -420,6 +420,81 @@ for (const [file, scenario] of Object.entries(SCENARIOS)) {
   });
 }
 
+// ---------- every answer quoted in the guides, replayed ----------
+// A quoted answer in a guide is preceded by a hidden marker, <!-- run: step; step; ... -->, that names how to produce it.
+// The steps are replayed here against the published flows, and the result must equal the block that follows the marker.
+
+const WHO = {
+  maya: MAYA,
+  tom: TOM,
+  'm-rivers': Object.assign({}, MAYA, { name: 'M. Rivers' }),
+  'no-email': Object.assign({}, MAYA, { email: '' }),
+  robot: Object.assign({}, MAYA, { website: 'http://robot.example.com' }),
+  'no-consent': Object.assign({}, MAYA, { consent: false }),
+};
+const shown = (status, text) => 'Status:    ' + (status || 'no answer') + '\nAnswer:    ' + text;
+const idOf = (file) => JSON.parse(fs.readFileSync(path.join(ROOT, 'workflows', file + '.json'), 'utf8')).id;
+const pathOf = (file) => webhookPath(file + '.json');
+
+async function replay(steps) {
+  let last = '';
+  for (const step of steps) {
+    const [verb, ...args] = step.trim().split(/\s+/);
+    if (verb === 'reset') await reset();
+    else if (verb === 'fault') {
+      const [k, v] = args[0].split('=');
+      await fault({ [k]: v });
+    } else if (verb === 'send') {
+      const r = await post(args[0], WHO[args[1]]);
+      last = shown(r.status, r.text);
+    } else if (verb === 'form') {
+      const r = await call('POST', OFFICE + '/form/send', { path: args[0], mode: args[2] || 'live', enquiry: WHO[args[1]] });
+      last = shown(r.json.status, r.json.body);
+    } else if (verb === 'approve' || verb === 'reject') {
+      const a = await decide(verb);
+      last = shown(a.status, typeof a.body === 'string' ? a.body : JSON.stringify(a.body));
+    } else if (verb === 'note') {
+      const s = await state();
+      const c = s.contacts[s.contacts.length - 1];
+      last = c.notes[c.notes.length - 1].text;
+    } else if (verb === 'alert') {
+      const s = await state();
+      last = s.alerts[0].step + ': ' + s.alerts[0].reason;
+    } else if (verb === 'check') {
+      last = (await call('GET', OFFICE + '/api/check')).text;
+    } else if (verb === 'offline' || verb === 'online') {
+      compose(['exec', '-T', 'n8n', 'n8n', verb === 'offline' ? 'unpublish:workflow' : 'publish:workflow', '--id=' + idOf(args[0])]);
+      assert.ok(await waitLive(pathOf(args[0]), verb === 'online'), verb + ' ' + args[0]);
+    } else {
+      throw new Error('unknown step ' + verb);
+    }
+  }
+  return last;
+}
+
+function quotedAnswers() {
+  const out = [];
+  const files = ['README.md', ...['participant', 'instructor', 'docs'].flatMap((d) =>
+    fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d)).filter((f) => f.endsWith('.md')).map((f) => d + '/' + f) : [])];
+  for (const f of files) {
+    const text = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const re = /<!-- run: ([^>]*?) -->\s*```text\n([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(text))) {
+      out.push({ where: f + ':' + text.slice(0, m.index).split('\n').length, steps: m[1].split(';'), expected: m[2].replace(/\n$/, '') });
+    }
+  }
+  return out;
+}
+
+for (const q of quotedAnswers()) {
+  test('the answer quoted at ' + q.where + ' is what the flows answer now', live, async (t) => {
+    const got = await replay(q.steps);
+    t.diagnostic(q.steps.join(';') + ' ->\n' + got);
+    assert.equal(got, q.expected);
+  });
+}
+
 test('the README\'s "Try it" command gives the output the README shows', live, async (t) => {
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
   const m = readme.match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```\s*<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
