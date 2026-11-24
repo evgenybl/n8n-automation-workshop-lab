@@ -7,7 +7,7 @@ and with the version it was done on.
 |---|---|---|
 | Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: on Windows locally and in CI, and on Linux in CI. The last local run is pasted below. |
 | Every workflow file run in CI on n8n 2.48.8 | n8n and the practice office started as `compose.yaml` starts them; all 22 workflow files imported and published with n8n's own command line; every one driven through its webhook with no screen, and every answer quoted in the guides replayed and compared | Done in CI. The run and its summary are pasted below; the badge at the top of the README shows the latest run on `main`. |
-| A new-user test | Done once, at commit 9785e5b, by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what it was given, did and found, and what was changed. |
+| A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what each was given, did and found, and what was changed. |
 | An independent review | Done once, at commit 9785e5b, by a separate AI agent (a Claude model with no part in the build); not repeated on the current version | See below. |
 | The steps in n8n's own screen, walked through by a person | A person follows the participant guide on n8n's editor, stage by stage, and notes every label or step that differs | Not done. |
 | Taught to a class of people | | Not done. |
@@ -47,15 +47,15 @@ everywhere.
 
 <!-- pasted (local) from: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" (the last lines) -->
 ```text
-1..188
-# tests 188
+1..201
+# tests 201
 # suites 0
-# pass 135
+# pass 144
 # fail 0
 # cancelled 0
-# skipped 53
+# skipped 57
 # todo 0
-# duration_ms 10704.7316
+# duration_ms 10777.5189
 ```
 
 The skipped tests are the scenario tests, which need n8n.
@@ -69,9 +69,11 @@ The workflow in `.github/workflows/ci.yml` has two jobs; actions are pinned by c
 **On Linux**, in this order:
 
 1. the tests above;
-2. the static checks (`node tools/check-workflows.js`), the generator (`node tools/build-workflows.js --check`) and the
-   picture tool (`node tools/draw-workflow.js --check`), each compared with the files;
-3. n8n and the practice office started with `docker compose up -d`, and the image's digest, size and platforms printed;
+2. the static checks (`node tools/check-workflows.js`), the generator (`node tools/build-workflows.js --check`), the
+   picture tool (`node tools/draw-workflow.js --check`) and the repairs page for printing (`node tools/print-repairs.js
+   --check`), each compared with the files;
+3. n8n and the practice office started with `docker compose up -d`; the image's digest, size and platforms printed; and
+   what starting the lab prints in a folder without `compose.yaml`, for the setup page;
 4. every workflow file imported and published with `node tools/load.js --all`, which waits until n8n is ready and then
    until every webhook is live;
 5. the scenario tests, with `LAB_LIVE=1`;
@@ -81,7 +83,8 @@ The workflow in `.github/workflows/ci.yml` has two jobs; actions are pinned by c
    duration aside), and fails the run if either differs. This comparison is a CI step, not a local test: a local run
    cannot check its own summary.
 
-**On Windows:** the tests above, the static checks, the picture tool, and the comparison of the local summary.
+**On Windows:** the tests above, the static checks, the picture tool, the repairs page for printing, and the comparison
+of the local summary.
 
 What the scenario tests do, for each workflow file: send it enquiries through its webhook, decide in the approval inbox
 where the flow asks for a person, set the office's faults, and read the office's state. Each solution must pass its
@@ -154,14 +157,21 @@ download for linux/arm64: 377577771 bytes in 20 layers
 | Every label and step in n8n's own screen | n8n's documentation and n8n 2.48.8's own English text |
 | *Import from File* in the workflow's menu | n8n's documentation; n8n's English text has *Import*, then *From file* |
 | The create button in the upper-left corner of the side menu, then *Workflow* | n8n's documentation |
-| How a node is added (the **+**, *Add first step*, the nodes panel) | n8n's documentation |
+| How a node is added (*Add node* on the right side of a node, *Add first step*, the nodes panel), and *Rename node* in the node's context menu | n8n's documentation, *Nodes* |
+| Connecting two nodes (the grey dot, the grey rectangle) and deleting a connection (hover over it, then *Delete*) | n8n's documentation, *Connections* |
+| The *Publish* button in the canvas header, and the window it opens | n8n's documentation, *Save and publish workflows* |
+| The *Executions* tab in the top menu | n8n's documentation, *View executions for a single workflow* |
+| *HTTP Method* and *Respond* among the Wait node's parameters for *On Webhook Call* | n8n's documentation, *Wait* |
 | That an edit stays a draft until it is published again | n8n's documentation |
 | That the test address answers one call after **Execute workflow** | n8n's documentation (that it answers 404 when nobody listens was seen in CI) |
 | The owner account and its password rule: at least eight characters, at least one number and one capital letter | n8n's documentation, *Configure user management* for self-hosted n8n |
 | The optional free licence key offered while the owner account is created | n8n's documentation on the Community edition |
 | The If node's empty boxes shown as *value1* and *value2* | n8n 2.48.8's English text only; not in the documentation |
-| Deleting a connection with the button that appears when the pointer is over it | Not confirmed in the documentation |
-| The *Fixed* / *Expression* switch above a box | n8n's English text has the two labels; where the switch sits is not confirmed in the documentation |
+| The *Fixed* / *Expression* switch of a box, and where it sits | n8n's English text has the two labels; the documentation does not say where the switch sits. The guide says so, and asks the participant to ask the instructor |
+| The label *Convert types where required*, and where the switch sits on the If node | n8n's English text only: the If node's documentation does not name it. The guide says so, and asks the participant to ask the instructor |
+| Where a node's error output sits beside its normal one, once *On Error* is *Continue (using error output)* | Not in the documentation; the guide says so, and asks the participant to ask the instructor |
+| That a new Respond to Webhook node's Response Body already holds a sample body, which the guide says to select before pasting | n8n 2.48.8's source |
+| What n8n shows after the owner account is created, beyond the sign-up screen and the optional licence key | Not in the documentation the lab read; the setup page says so, and asks the participant to ask the instructor |
 | Pasting a whole workflow file onto the canvas | Not confirmed in the documentation |
 | That *Convert types where required* writes `looseTypeValidation` and a loose `typeValidation` into the file | n8n 2.48.8's source |
 | That the type versions in the files (Webhook 2.2, Respond to Webhook 1.5, If 2.4, HTTP Request 4.5, Code 2, Wait 1.1) are the ones n8n's editor gives a new node | Not confirmed: the files were written with these versions, and n8n 2.48.8 ran them; a node added on the screen may get another version |
@@ -203,6 +213,58 @@ points of friction, the main ones below. Not repeated on the current version.
 | Only the CRM wants the badge | Said in stage 4 |
 | The Code node's Mode and Language | "Leave them as they are" |
 
+## The second new-user test, at commit 25e7f76
+
+**Who:** a separate AI agent, a Claude model with no part in the build or in the first passes. **What it was given:** the
+`participant/` folder and the top of the README, as a first-time participant would have them, and a computer with Node;
+no n8n and no Docker. **What it did:** as the first test did, it read every participant page in order, ran the practice
+office alone and replayed each stage's calls to it, wrote down what it believed each flow was, and logged every point of
+friction before it opened any solution or instructor file; then it compared what it believed with the solution and
+repaired files, and last read the instructor pages for what would have rescued it. **What it found:** every stage could
+be followed, and the flow it believed it had built matched every solution file in every node, type and value; every
+"check yourself" it could reproduce with the office matched; 25 points of friction, the main ones below. **Its limits:**
+it never had n8n's screen, so every label and place on the screen is unchecked; it read the repairs page as raw text, so it
+saw each cause before the hints, and its estimates of the hint at which each repair is found are estimates, not
+measurements. Not repeated on the current version.
+
+Its counts per stage, from the guide's tables, beside the planned minutes:
+
+| Stage | Planned minutes | Rows | Paste blocks | Connect and delete rows | Also |
+|---|---|---|---|---|---|
+| 1 | 20 | 8 | 1 | 0 | |
+| 2 | 25 | 14 | 3 | 5 | |
+| 3 | 30 | 11 | 2 | 4 | |
+| 4 | 25 | 8 | 2 | 3 | |
+| 5 | 30 | 14 | 2 | 4 | two new nodes |
+| 6 | 25 | 12 | 0 | 7 | |
+
+It judged stage 6 the heaviest by actions (the build, then four fault runs across the form, the inbox and the office
+window), stage 5 the heaviest by ideas, and stage 2 heavy for a first use of the If node.
+
+| Finding | What was changed |
+|---|---|
+| The practical check is placed in place of repair D on its own page and the variants, but not on the run sheet or the README | One plan, word for word on the run sheet, the README, the variants and its own page, held by a test |
+| Stage 4 says the Code node holds "a line"; the starter holds two | "two lines"; a test holds the count to the starter |
+| Only repair A's repaired file listens at the repair's path; B, C and D use paths the participant is never told | The repairs page lists each repaired file's path and form address, and why repair A's differs; a test holds them to the files |
+| Nothing on WSL 2, virtualisation or administrator rights on Windows | From Docker's installation page, linked |
+| "The lab's folder" is ambiguous after unzipping, and the wrong folder's error is not listed | "The folder where you can see `compose.yaml`", and what a wrong folder prints, pasted from CI |
+| No sample of a successful start | The last lines of a start, pasted from CI |
+| No next step when the check stays "not reachable" | Two commands to run and send to the instructor |
+| A failed `docker info` at home, with nobody to ask | "Send its last lines to your instructor before the session", which the run sheet's chase line now asks for too |
+| `docker compose down -v` in the same table as the ordinary stop | Out of the table, on a warned line of its own |
+| "as an Expression" only once; pasting into a box that holds a value can join two expressions | Every paste row says "(as an Expression)" where it is one, and "select everything in the box, then paste" where a value stands; a test checks both against the starters |
+| A new node's name: is it the table's, or must it be renamed? | Every "add a node" row says "and rename it to ..." |
+| The Respond to Webhook idea is never explained | One sentence in stage 1 |
+| *Convert types where required* and the Wait node's *Respond*: where are they? | *Respond* named as n8n's documentation names it (the *Wait* page); *Convert types* is not in the documentation, so the guide says the page was not written from a screen, and the label is in the list above |
+| Stage 5's two requests are dense | Four numbered lines |
+| Stage 6: a success output connected by mistake answers 500, not 502; four fault runs are long | "Each fault must end with Status 502"; the faults that can wait when short of time, the same as the run sheet's cuts, held by a test |
+| Redoing a stage is not explained | One line: delete the half-built workflow, then import the starter again |
+| Which of repairs A and B in session 1? | Said on the repairs page, as the run sheet says it |
+| A printout shows each cause before its hints | `instructor/repairs-for-printing.md`: the same page without the causes, with the hints written out, made by `tools/print-repairs.js` and compared in CI and by a test |
+| The practical check is on no participant page | Its page says it is handed out by the instructor only, and a test keeps it off the participant pages |
+| Places on the screen given without a source (the top right, above the box, right-click, the top and bottom outputs) | Each place is now said as n8n's documentation says it, with the page named; where the documentation is silent, the guide says so |
+| "port" and "proxy" never explained | One gloss each |
+
 ## The independent review, at commit 9785e5b
 
 **Who:** a separate AI agent, a Claude model with no part in the build. **What it was given:** the repository at commit
@@ -236,7 +298,7 @@ publish after its blockers and majors. Not repeated on the current version.
 
 ## What a reading test without n8n's screen cannot show
 
-Both passes read the pages and ran the practice office; neither ran n8n's editor. So they could not show: whether the
+The three passes read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
 labels in the guide are the ones on the screen; how n8n's editor behaves when a node is added, a block is pasted, or a
 setting is switched; whether dragging and connecting nodes is as easy as the steps suggest; whether Docker Desktop
 installs and runs on a newcomer's own laptop; and how long a room of people takes for each stage.

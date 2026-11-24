@@ -191,12 +191,47 @@ test('each variant adds up to its stated total, and gives every stage the run sh
     for (const r of rows.filter((x) => /^Stage \d/.test(x[0]))) assert.equal(Number(r[1]), stageMinutes[r[0]], name + ': ' + r[0]);
   }
   assert.ok(/ninety-minute/.test(text) && /The planned total of the taster is 90 minutes/.test(text));
-  const check = text.match(/practical check[\s\S]{0,80}?takes (\d+) planned minutes[\s\S]*?in place of repair D: (\d+) of that part's (\d+) planned minutes/);
-  assert.ok(check, 'the practical check is scheduled');
+});
+
+// The one plan for the practical check, word for word on every page that schedules it.
+const CHECK_PLAN = /When you assess, the practical check \(`instructor\/practical-check\.md`\) takes the place of repair D: repair C, then the practical check, in this part's (\d+) planned minutes\./;
+
+test('the practical check has one plan, the same on the run sheet, the README, the variants and its own page', () => {
   const partD = runSheet()[1].rows.find((r) => r.part === 'Repairs C and D');
-  assert.equal(Number(check[3]), partD.minutes);
-  assert.equal(check[1], check[2]);
-  assert.ok(Number(check[2]) <= partD.minutes);
+  for (const f of ['instructor/run-sheet.md', 'README.md', 'instructor/variants.md', 'instructor/practical-check.md']) {
+    const m = flat(f).match(CHECK_PLAN);
+    assert.ok(m, f + ' gives the plan');
+    assert.equal(Number(m[1]), partD.minutes, f + ': the part it replaces has the run sheet\'s minutes');
+  }
+  assert.match(read('instructor/run-sheet.md'), /\| Repairs C and D \| \d+ \|[^\n]*when you assess, the practical check in place of repair D/);
+  assert.match(read('README.md'), /\| Repairs C and D \|[^\n]*when assessing, the practical check in place of repair D/);
+  const own = Number(flat('instructor/practical-check.md').match(/\*\*Planned minutes:\*\* (\d+)\./)[1]);
+  assert.match(flat('instructor/variants.md'), new RegExp('The practical check takes ' + own + ' planned minutes\\.'));
+  assert.ok(own <= partD.minutes, 'it fits the part it replaces');
+  assert.ok(flat('instructor/practical-check.md').includes('It is handed out by the instructor only: no participant page mentions it.'));
+  for (const f of PAGES.filter((x) => x.startsWith('participant/'))) assert.doesNotMatch(read(f), /practical check|check-g/i, f);
+});
+
+test('the repairs page says which repairs come when, as the run sheet does', () => {
+  assert.ok(flat('participant/repairs.md').includes('**Which repairs, and when.** Session 1: repair A; repair B if you finish A. Session 2: repair C; repair D if you finish C.'));
+  assert.match(read('instructor/run-sheet.md'), /\| Repair A or B \| \d+ \| Repair A for everyone; B for those who finish A \|/);
+  assert.match(read('instructor/run-sheet.md'), /\| Repairs C and D \| \d+ \| Repair C for everyone; D for those who finish C[;|]/);
+});
+
+test('the repairs page for printing is the participant page without the causes, as its script writes it', () => {
+  const { forPrinting } = require('../tools/print-repairs.js');
+  const page = read('participant/repairs.md');
+  const printed = read('instructor/repairs-for-printing.md');
+  assert.equal(printed, forPrinting(page));
+  assert.doesNotMatch(printed, /The cause, and the fix|<details>/);
+  assert.equal((page.match(/The cause, and the fix/g) || []).length, 4);
+  // Equal apart from the causes: every line of the printed page but the note and the unfolded hint labels is on the participant page.
+  for (const line of printed.split('\n')) {
+    if (/^> /.test(line) || line === '# The four repairs, for printing') continue;
+    assert.ok(page.includes(line.replace(/^\*\*Hint \d\.\*\* /, '')), 'from the participant page: ' + line.slice(0, 60));
+  }
+  assert.ok(flat('instructor/run-sheet.md').includes('`instructor/repairs-for-printing.md`'));
+  assert.ok(flat('participant/repairs.md').includes('prints `instructor/repairs-for-printing.md` instead'));
 });
 
 // ---------- links, files named, quoted answers ----------
@@ -275,7 +310,7 @@ test('every output block on a page is either replayed in CI or marked as pasted,
 test('the README and the testing page agree on what was done, at which commit, and what was not', () => {
   for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md']) {
     const text = read(f);
-    assert.match(text, /\| A new-user test \|[^\n]*Done once, at commit 9785e5b, by a separate AI agent[^\n]*not repeated on the current version/, f);
+    assert.match(text, /\| A new-user test \|[^\n]*Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent[^\n]*not repeated on the current version/, f);
     assert.match(text, /\| An independent review \|[^\n]*Done once, at commit 9785e5b, by a separate AI agent[^\n]*not repeated on the current version/, f);
     assert.match(text, /\| The steps in n8n's own screen,? walked through by a person \|[^\n]*Not done/, f);
     assert.match(text, /\| Taught to a class of people \|[^\n]*Not done/, f);
@@ -348,6 +383,23 @@ test('the setup page names the browsers, the documented password rule, the check
   assert.match(text, /Apple silicon/);
   assert.match(text, /several hundred megabytes/);
   assert.doesNotMatch(text, /port is already allocated/, 'the port message differs between systems: describe it, do not quote one');
+});
+
+test('the setup page names the right folder, keeps down -v out of the ordinary table, and asks for the lines the run sheet chases', () => {
+  const page = read('participant/setup.md');
+  const text = flat('participant/setup.md');
+  assert.ok(text.includes('1. **Open a terminal in the folder where you can see `compose.yaml`.**'));
+  assert.ok(text.includes("the lab's folder is **the folder where you can see `compose.yaml`**"));
+  assert.ok(text.includes('https://docs.docker.com/desktop/setup/install/windows-install/'));
+  assert.match(text, /WSL 2 feature turned on, and hardware virtualisation enabled/);
+  const table = tableRows(page, '| To | Type |');
+  assert.ok(table.every((r) => !r[1].includes('down -v')), 'the ordinary table has no down -v');
+  assert.ok(text.includes('`docker compose down -v` stops it and **deletes your n8n account and every flow you built**.'));
+  assert.ok(text.includes('**If `docker info` still fails, send its last lines to your instructor before the session**'));
+  assert.ok(text.includes('send that line to your instructor'));
+  assert.ok(flat('instructor/run-sheet.md').includes('send you the line the setup check shows, or, if `docker info` fails, its last lines'));
+  assert.match(text, /If it still says so after three minutes, type `docker compose ps` and `docker compose logs --tail 20 n8n`/);
+  assert.match(page, /<!-- pasted from: the step "Start n8n and the practice office" of CI run \d+, at commit [0-9a-f]{7} -->\n\s*```text\n(\s+ (Network|Volume|Container) [^\n]+\n)+\s*```/);
 });
 
 test('the README ends with the author line, and says nothing else about the author', () => {

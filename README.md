@@ -41,7 +41,7 @@ automation.**
 | `instructor/` | The run sheet for the two planned sessions, the guide per part (purpose, planned minutes, what to say, mistakes to expect, a debrief question), when things go wrong, variants (one half day; a ninety-minute taster), a rubric with four levels per objective, a practical check with its answer, and the answer key |
 | `workflows/` | 22 workflow files: a starter and a solution for each of the six stages, a broken and a repaired file for each of the four repairs, and the practical check's two files |
 | `practice/` | The practice office: a lead form, a practice CRM, a practice AI step (a stand-in that is not a model), an approval inbox, an office window and faults on request; one Node program with no dependencies, and its tests |
-| `tools/` | The load script, the static checker, the picture tool, the generator that writes the workflow files, and the check of the pasted test summaries |
+| `tools/` | The load script, the static checker, the picture tool, the generator that writes the workflow files, the script that writes the repairs page for printing, and the check of the pasted test summaries |
 | `tests/` | The scenario tests that drive every published workflow, and the tests of the checker, the workflow files, the lab guide against the workflow files, the pictures and these pages |
 | `docs/` | How the lab was tested, and the pictures of every workflow file |
 
@@ -92,13 +92,13 @@ editor at `http://localhost:5678`.
 | 2 | Stage 5: A person approves | Post to the approval inbox and wait; write only on Approve | 30 |
 | 2 | Break | | 10 |
 | 2 | Stage 6: When it fails | Error branches that record what failed and answer honestly about what was written | 25 |
-| 2 | Repairs C and D | Two broken flows, repaired from their symptoms | 20 |
+| 2 | Repairs C and D | Two broken flows, repaired from their symptoms; when assessing, the practical check in place of repair D | 20 |
 | 2 | Close | The card of six questions | 5 |
 
 **Audience and level:** a group of 4 to 12, each on a laptop with Docker Desktop installed beforehand (the setup page has
 a check the participant runs). No programming: each stage's starter file brings its nodes already placed and mostly set
 up, every expression is pasted, not typed, and the one piece of code, in stage 4, is pasted and explained, not written.
-No stage has more than 14 steps. Other shapes are in `instructor/variants.md`: one half day, and a ninety-minute taster of
+No stage has more than 14 steps. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. Other shapes are in `instructor/variants.md`: one half day, and a ninety-minute taster of
 stages 1 to 3.
 
 ## How it was tested
@@ -109,7 +109,7 @@ The full account, in the same plain terms, is `docs/HOW-THIS-WAS-TESTED.md`. In 
 |---|---|
 | Automated tests of the office, the checker, the workflow files, the lab guide against them, the pictures and these pages | Done; run on Linux and Windows in CI, and locally on Windows |
 | Every workflow file run in CI on n8n 2.48.8 | Done: all 22 imported, published and driven through their webhooks with no screen; each solution passes its checks, each broken file shows its symptom, each repaired file does not |
-| A new-user test | Done once, at commit 9785e5b, by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version |
+| A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version |
 | An independent review | Done once, at commit 9785e5b, by a separate AI agent (a Claude model with no part in the build); not repeated on the current version |
 | The steps in n8n's own screen walked through by a person | Not done: they were written from n8n's documentation and the workflow files |
 | Taught to a class of people | Not done |
