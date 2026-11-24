@@ -37,8 +37,7 @@ card.
 
 ## When you want to assess
 
-The practical check (`instructor/practical-check.md`) takes 15 planned minutes. In the two-session plan, give it in
-session 2 in place of repair D: 15 of that part's 20 planned minutes, after repair C.
+The practical check takes 15 planned minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. The run sheet says the same.
 
 ---
 

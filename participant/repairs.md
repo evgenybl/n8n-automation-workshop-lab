@@ -5,10 +5,28 @@ answer. Start from the symptom: reproduce it, read the answer the flow gave, rea
 open the node you suspect. Each repair has three hints, from gentle to direct; open one only when you are stuck, and wait a
 minute before the next.
 
+**Which repairs, and when.** Session 1: repair A; repair B if you finish A. Session 2: repair C; repair D if you finish C.
+
+**Printing this page?** A printout cannot fold: it would show each repair's cause before its hints. Your instructor
+prints `instructor/repairs-for-printing.md` instead: this page without the causes, with the hints written out.
+
 **How to start each repair.** Create a new workflow in n8n, import the broken file named below (as in the lab guide,
 *How every stage works*), publish it, and use the form address given. Choose **Reset the office** in the office window
 first, so that what you see belongs to this repair. As in the guide, paste every value shown in a grey block; do not type
-it.
+it; where a box already holds a value, select everything in it first.
+
+**Comparing with the repaired file.** Each repair has a repaired file, which you can import beside your own flow. It listens
+at its own path, so that it does not clash with your copy of the broken flow:
+
+| Repair | The repaired file | It listens at | Its form address |
+|---|---|---|---|
+| A | `workflows/repair-a-fixed.json` | `repair-a` | `http://localhost:3333/form?path=repair-a` |
+| B | `workflows/repair-b-fixed.json` | `repair-b-fixed` | `http://localhost:3333/form?path=repair-b-fixed` |
+| C | `workflows/repair-c-fixed.json` | `repair-c-fixed` | `http://localhost:3333/form?path=repair-c-fixed` |
+| D | `workflows/repair-d-fixed.json` | `repair-d-fixed` | `http://localhost:3333/form?path=repair-d-fixed` |
+
+Repair A is the exception: its repair *is* the path, so its repaired file listens at `repair-a`, the path the form sends
+to. Before you try it, delete or unpublish your own repair A flow, if you repaired it, so that only one flow listens there.
 
 > The steps for n8n's own screen were written from n8n's documentation and the workflow files, and were not walked through
 > on a screen by a person. Every symptom quoted here is what the broken file did in the lab's automated tests on n8n 2.48.8.
@@ -49,7 +67,7 @@ the two, character by character.
 
 <details><summary>Hint 3</summary>
 
-Open **Enquiry arrives** and read its **Path**. Now read the form's path again.
+Open **Enquiry arrives** and read its **Path**, one letter at a time. Now read the form's path the same way.
 
 </details>
 

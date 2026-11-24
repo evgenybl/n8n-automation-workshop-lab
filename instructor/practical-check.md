@@ -1,8 +1,8 @@
 # The practical check: a seventh flow, unseen
 
 **This check has not been given to anyone yet.** It shows objective O7 (and O4) on a flow the participant has not seen.
-Give only the file and the task below; keep the answer. **Planned minutes:** 15, given in session 2 in place of repair D,
-as `instructor/variants.md` says.
+Give only the file and the task below; keep the answer. It is handed out by the instructor only: no participant page
+mentions it. **Planned minutes:** 15. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes.
 
 ## What you give
 

@@ -11,15 +11,17 @@ not downloaded n8n yet.
 ## Before the first session
 
 - **Two weeks before:** send the link to the lab's page on GitHub, and ask everyone to do `participant/setup.md` and send
-  you the line the setup check shows. Chase those who did not: a laptop that cannot run Docker is the one problem the
-  room cannot fix on the day.
+  you the line the setup check shows, or, if `docker info` fails, its last lines (the setup page asks them to). Chase
+  those who sent neither: a laptop that cannot run Docker is the one problem the room cannot fix on the day.
 - **Do the whole lab yourself** on your own laptop, from `participant/guide.md`, before you teach it. Its steps for n8n's
   own screen were written from n8n's documentation and the workflow files, not walked through on a screen by a person;
   note anything on your screen that differs.
 - **Print, if the room may have no internet:** participants read the pages on the lab's page on GitHub, where the tables,
   the paste blocks and the folded hints display properly. Without internet, print `participant/guide.md`,
-  `participant/repairs.md` and `participant/setup.md` from that page beforehand (the browser's Print), one set per person.
-  Print `participant/card.md` in any case, one per person.
+  `participant/setup.md` and, for the repairs, `instructor/repairs-for-printing.md` from that page beforehand (the
+  browser's Print), one set per person. A printout cannot fold, so `participant/repairs.md` would show each repair's cause
+  before its hints; the copy for printing is the same page without the causes (a test keeps the two equal apart from
+  them), and the causes are in `instructor/answer-key.md`. Print `participant/card.md` in any case, one per person.
 - **Prepare your own n8n for showing the solutions**, in this order, in the lab's folder:
   1. `docker compose up -d`
   2. `node tools/load.js --clear` unpublishes every workflow in your n8n, so that no lab path is taken.
@@ -56,10 +58,10 @@ The planned total of session 1 is 120 minutes.
 | Stage 5: A person approves | 30 | The two answers, the inbox, the resume address, the Wait node, the inbox failing | Which step in your own work should never happen without a person saying yes? |
 | Break | 10 | | |
 | Stage 6: When it fails | 25 | Error outputs; a failed lookup wrote nothing, a failed write may have written | When something fails in one of your own flows today, who finds out, and how long does it take? |
-| Repairs C and D | 20 | Repair C for everyone; D for those who finish C | What did the "no" path show you that the "yes" path did not? |
+| Repairs C and D | 20 | Repair C for everyone; D for those who finish C; when you assess, the practical check in place of repair D | What did the "no" path show you that the "yes" path did not? |
 | Close | 5 | The card; what each person will look at in their own work | |
 
-The planned total of session 2 is 120 minutes. The instructor guide, `instructor/guide.md`, has what to say in each part
+The planned total of session 2 is 120 minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. The instructor guide, `instructor/guide.md`, has what to say in each part
 and the mistakes to expect.
 
 ## Between the sessions
@@ -70,8 +72,9 @@ stage 3.
 
 ## If you fall behind
 
-Cut in this order: repair B and repair D (they go home); stage 6's *answers wrongly* fault (keep *fails* and *writes, but
-answers too late*); stage 4's *fails* run (show it on the projector instead). Do not cut stage 5's Reject: it is the moment
+Cut in this order: repair B and repair D (they go home); stage 6's *is slow* and *answers wrongly* faults (keep *fails*
+and *writes, but answers too late*; the guide tells participants the same); stage 4's *fails* run (show it on the
+projector instead). Do not cut stage 5's Reject: it is the moment
 the approval proves itself.
 
 ## After the last session
