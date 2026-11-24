@@ -33,10 +33,28 @@ secret; without it the CRM answers 401.
 
 ## Faults on request
 
-`POST /faults` with `{"crm": "off" | "fail" | "slow" | "wrong", "ai": "off" | "invent"}`, or the office window's controls.
-*fail*: every CRM call answers 500 and writes nothing. *slow*: the CRM waits 15 seconds; a caller that hangs up first gets
-nothing written. *wrong*: the CRM answers 200 and does nothing. *invent*: the AI step's summary gains a figure that is not
-in the enquiry. `POST /reset` empties everything and switches every fault off.
+`POST /faults` with `{"crm": "off" | "fail" | "slow" | "wrong" | "late-writes", "ai": "off" | "invent" | "fail",
+"inbox": "off" | "fail"}`, or the office window's controls.
+
+| Fault | What happens |
+|---|---|
+| CRM *fail* | Every CRM call answers 500 and writes nothing |
+| CRM *slow* | The CRM waits 15 seconds before it reads or writes; a caller that hangs up first gets nothing written |
+| CRM *wrong* | The CRM answers 200 and does nothing |
+| CRM *late-writes* | Lookups work; a write is made at once, and its answer comes 15 seconds later. A caller that hangs up first is told nothing, and the write has happened |
+| AI step *invent* | The summary gains a figure that is not in the enquiry |
+| AI step *fail* | The AI step answers 500 |
+| Inbox *fail* | The inbox answers 500 and queues nothing |
+
+`POST /reset` empties everything and switches every fault off.
+
+## What the office refuses
+
+- A body that is not one JSON object: 400. A body over 100 KB: 413.
+- A change (any request other than GET) sent by a page on another site: 403. The office tells such a request by its
+  `Origin` header, when that names another host than the one the request was sent to, or by its `Sec-Fetch-Site` header,
+  when that says `cross-site`. Its own pages send their own origin; n8n and command-line tools send neither header. This
+  stops a web page from resetting the office or deciding an approval; the office has no login.
 
 When a person decides in the inbox, the office calls the flow's resume address at the n8n it can reach, keeping the
 address's path and its signature. If n8n answers 409 "running already" (the flow has answered the form but not yet

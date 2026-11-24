@@ -16,8 +16,9 @@ const path = require('node:path');
 const BADGE_HEADER = 'x-office-badge';
 const BADGE_VALUE = 'practice-badge';
 
-const CRM_FAULTS = ['off', 'fail', 'slow', 'wrong'];
-const AI_FAULTS = ['off', 'invent'];
+const CRM_FAULTS = ['off', 'fail', 'slow', 'wrong', 'late-writes'];
+const AI_FAULTS = ['off', 'invent', 'fail'];
+const INBOX_FAULTS = ['off', 'fail'];
 const SLOW_MS_DEFAULT = 15000;
 const MAX_BODY = 100 * 1024;
 const MAX_CALLS = 300;
@@ -29,7 +30,7 @@ function freshState() {
     approvals: [],
     alerts: [],
     calls: [],
-    faults: { crm: 'off', ai: 'off' },
+    faults: { crm: 'off', ai: 'off', inbox: 'off' },
     next: { contact: 1, note: 1, approval: 1, alert: 1, call: 1 },
   };
 }
@@ -104,16 +105,28 @@ function readBody(req) {
     let size = 0;
     req.on('data', (c) => {
       size += c.length;
-      if (size > MAX_BODY) {
-        reject(Object.assign(new Error('The body is too large.'), { status: 413 }));
-        req.destroy();
-        return;
-      }
-      chunks.push(c);
+      // Past the limit, the rest is read and dropped, so that the caller gets a 413 answer, not a broken connection.
+      if (size <= MAX_BODY) chunks.push(c);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => {
+      if (size > MAX_BODY) reject(Object.assign(new Error('The body is too large: the office takes up to 100 KB.'), { status: 413 }));
+      else resolve(Buffer.concat(chunks).toString('utf8'));
+    });
     req.on('error', reject);
   });
+}
+
+// A request that a page on another site made the browser send. The office's own pages send their own origin; n8n and
+// command-line tools send none. Refusing the rest stops another site from resetting the office or deciding approvals.
+function crossSite(req) {
+  if (req.headers['sec-fetch-site'] === 'cross-site') return true;
+  const origin = req.headers.origin;
+  if (origin === undefined) return false;
+  try {
+    return new URL(origin).host !== req.headers.host;
+  } catch (e) {
+    return true; // "null" and other values that are not an address
+  }
 }
 
 function parseJson(text) {
@@ -194,7 +207,20 @@ function createOffice(options) {
         return [0, { error: 'The caller hung up while the practice CRM was slow. Nothing was written.' }];
       }
     }
+    if (fault === 'late-writes' && req.method === 'POST') {
+      // The write is made at once; the answer comes late. A caller that gives up first is told nothing, but the
+      // write has happened: the case where a failed call may still have written.
+      const result = crmCall(req, url, body);
+      const stillThere = await delay(slowMs, req);
+      if (!stillThere) {
+        return [0, { error: 'The caller hung up before the answer, but the write was made (' + (result[1].id || 'nothing') + ').' }];
+      }
+      return result;
+    }
+    return crmCall(req, url, body);
+  }
 
+  function crmCall(req, url, body) {
     const parts = url.pathname.split('/').filter(Boolean); // ['crm', 'contacts', id?, 'notes'?]
     if (parts.length === 2 && req.method === 'GET') {
       const email = url.searchParams.get('email');
@@ -283,6 +309,11 @@ function createOffice(options) {
     const p = url.pathname.replace(/\/+$/, '') || '/';
     let raw = '';
     let body = {};
+    if (req.method !== 'GET' && req.method !== 'HEAD' && crossSite(req)) {
+      logCall({ method: req.method, path: p, status: 403, service: 'Office', detail: 'Refused: sent by a page on another site.' });
+      req.resume();
+      return sendJson(res, 403, { error: 'The office takes changes only from its own pages, n8n and command-line tools, not from another site.' });
+    }
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
       raw = await readBody(req);
       try {
@@ -330,6 +361,10 @@ function createOffice(options) {
 
     // The practice AI step
     if (req.method === 'POST' && p === '/ai/read') {
+      if (state.faults.ai === 'fail') {
+        logCall({ method: 'POST', path: p, status: 500, service: 'AI step', detail: 'Failed on request (fault on).' });
+        return sendJson(res, 500, { error: 'The practice AI step was told to fail.' });
+      }
       const answer = aiRead(body, state.faults.ai);
       logCall({
         method: 'POST',
@@ -343,6 +378,10 @@ function createOffice(options) {
 
     // The approval inbox
     if (req.method === 'POST' && p === '/inbox') {
+      if (state.faults.inbox === 'fail') {
+        logCall({ method: 'POST', path: p, status: 500, service: 'Inbox', detail: 'Failed on request (fault on): nothing queued.' });
+        return sendJson(res, 500, { error: 'The approval inbox was told to fail. Nothing was queued.' });
+      }
       const resumeUrl = clean(body.resumeUrl, 2000);
       if (!/^https?:\/\//.test(resumeUrl)) {
         logCall({ method: 'POST', path: p, status: 400, service: 'Inbox', detail: 'No resume address in the request.' });
@@ -416,9 +455,13 @@ function createOffice(options) {
         if (body.ai !== undefined && !AI_FAULTS.includes(body.ai)) {
           return sendJson(res, 400, { error: 'ai must be one of ' + AI_FAULTS.join(', ') + '.' });
         }
+        if (body.inbox !== undefined && !INBOX_FAULTS.includes(body.inbox)) {
+          return sendJson(res, 400, { error: 'inbox must be one of ' + INBOX_FAULTS.join(', ') + '.' });
+        }
         if (body.crm !== undefined) state.faults.crm = body.crm;
         if (body.ai !== undefined) state.faults.ai = body.ai;
-        logCall({ method: 'POST', path: p, status: 200, service: 'Office', detail: 'Faults now: CRM ' + state.faults.crm + ', AI step ' + state.faults.ai + '.' });
+        if (body.inbox !== undefined) state.faults.inbox = body.inbox;
+        logCall({ method: 'POST', path: p, status: 200, service: 'Office', detail: 'Faults now: CRM ' + state.faults.crm + ', AI step ' + state.faults.ai + ', inbox ' + state.faults.inbox + '.' });
         return sendJson(res, 200, state.faults);
       }
     }

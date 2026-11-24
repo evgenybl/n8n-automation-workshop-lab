@@ -204,7 +204,7 @@ test('a fault that does not exist is refused, and the faults stay as they were',
   try {
     assert.equal((await o.call('POST', '/faults', { crm: 'explode' })).status, 400);
     assert.equal((await o.call('POST', '/faults', { ai: 'dream' })).status, 400);
-    assert.deepEqual((await o.call('GET', '/faults')).json, { crm: 'off', ai: 'off' });
+    assert.deepEqual((await o.call('GET', '/faults')).json, { crm: 'off', ai: 'off', inbox: 'off' });
   } finally {
     await o.close();
   }
@@ -408,7 +408,7 @@ test('reset empties everything and switches every fault off; every call is liste
     await o.call('POST', '/reset', {});
     s = (await o.call('GET', '/api/state')).json;
     assert.deepEqual(s.contacts, []);
-    assert.deepEqual(s.faults, { crm: 'off', ai: 'off' });
+    assert.deepEqual(s.faults, { crm: 'off', ai: 'off', inbox: 'off' });
     assert.equal(s.calls.length, 1);
     assert.equal(s.calls[0].path, '/reset');
     const r = await o.call('POST', '/crm/contacts', { name: 'Maya Rivers', email: 'maya.rivers@example.com' }, BADGE);
@@ -424,8 +424,81 @@ test('a body that is not one JSON object is refused, and so is one that is too l
     assert.equal((await o.call('POST', '/alerts', 'not json')).status, 400);
     assert.equal((await o.call('POST', '/alerts', '[1,2]')).status, 400);
     const big = JSON.stringify({ step: 'x'.repeat(200 * 1024) });
-    const r = await fetch(o.base + '/alerts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: big }).catch((e) => ({ status: 'closed', e }));
-    assert.ok(r.status === 413 || r.status === 'closed', 'a large body is refused');
+    const r = await o.call('POST', '/alerts', big);
+    assert.equal(r.status, 413, 'a body over 100 KB is answered 413, not cut off');
+    assert.match(r.json.error, /100 KB/);
+    assert.equal(o.office.state.alerts.length, 0);
+  } finally {
+    await o.close();
+  }
+});
+
+// ---------- the new faults ----------
+
+test('told to write but answer too late, the CRM makes the write and then answers after the delay', async () => {
+  const o = await start({ n8nUrl: 'http://127.0.0.1:9', slowMs: 300 });
+  try {
+    await o.call('POST', '/faults', { crm: 'late-writes' });
+    const look = await o.call('GET', '/crm/contacts?email=maya.rivers@example.com', undefined, BADGE);
+    assert.deepEqual(look.json, { found: false }, 'a lookup is not delayed');
+    await assert.rejects(
+      fetch(o.base + '/crm/contacts', {
+        method: 'POST',
+        headers: Object.assign({ 'content-type': 'application/json' }, BADGE),
+        body: JSON.stringify({ name: 'Maya Rivers', email: 'maya.rivers@example.com', note: 'x' }),
+        signal: AbortSignal.timeout(100),
+      }),
+    );
+    await new Promise((res) => setTimeout(res, 450));
+    assert.equal(o.office.state.contacts.length, 1, 'the caller gave up, but the contact was written');
+    assert.ok(o.office.state.calls.some((c) => /hung up before the answer, but the write was made/.test(c.detail)));
+    const patient = await o.call('POST', '/crm/contacts/C1/notes', { text: 'second' }, BADGE);
+    assert.equal(patient.status, 201, 'a caller that waits gets the answer');
+  } finally {
+    await o.close();
+  }
+});
+
+test('told to fail, the AI step answers 500, and the inbox answers 500 and queues nothing', async () => {
+  const o = await start();
+  try {
+    await o.call('POST', '/faults', { ai: 'fail', inbox: 'fail' });
+    const ai = await o.call('POST', '/ai/read', { name: 'Maya Rivers', message: 'How much for 12 seats?' });
+    assert.equal(ai.status, 500);
+    const inbox = await o.call('POST', '/inbox', { name: 'Maya Rivers', resumeUrl: 'http://localhost:5678/webhook-waiting/1?signature=s' });
+    assert.equal(inbox.status, 500);
+    assert.equal(o.office.state.approvals.length, 0);
+    assert.equal((await o.call('POST', '/faults', { inbox: 'explode' })).status, 400);
+  } finally {
+    await o.close();
+  }
+});
+
+// ---------- requests from another site ----------
+
+test('a change sent by a page on another site is refused with 403; the office\'s own pages, n8n and tools are not', async () => {
+  const o = await start();
+  try {
+    const host = new URL(o.base).host;
+    const crossSite = [
+      { origin: 'http://elsewhere.example.com' },
+      { origin: 'null' },
+      { 'sec-fetch-site': 'cross-site' },
+    ];
+    for (const headers of crossSite) {
+      await o.call('POST', '/crm/contacts', { name: 'Maya Rivers', email: 'maya.rivers@example.com' }, BADGE);
+      await o.call('POST', '/inbox', { name: 'Maya Rivers', resumeUrl: 'http://localhost:5678/webhook-waiting/1?signature=s' });
+      for (const p of ['/reset', '/inbox/A1/approve', '/inbox/A1/reject', '/faults', '/form/send', '/alerts']) {
+        const r = await o.call('POST', p, {}, headers);
+        assert.equal(r.status, 403, JSON.stringify(headers) + ' ' + p);
+      }
+      assert.ok(o.office.state.contacts.length >= 1, 'the reset was refused');
+      assert.equal(o.office.state.approvals[0].status, 'waiting', 'the decision was refused');
+      await o.call('POST', '/reset', {});
+    }
+    // The office's own page sends its own origin; n8n and curl send none.
+    assert.equal((await o.call('POST', '/faults', { crm: 'fail' }, { origin: 'http://' + host, 'sec-fetch-site': 'same-origin' })).status, 200);
+    assert.equal((await o.call('POST', '/reset', {})).status, 200);
   } finally {
     await o.close();
   }

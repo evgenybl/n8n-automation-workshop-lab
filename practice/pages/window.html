@@ -44,12 +44,20 @@
       <option value="fail">fails (answers 500)</option>
       <option value="slow">is slow (waits 15 seconds)</option>
       <option value="wrong">answers wrongly (says 200, does nothing)</option>
+      <option value="late-writes">writes, but answers too late</option>
     </select>
     &nbsp;
     <label for="ai-fault">Practice AI step:</label>
     <select id="ai-fault">
       <option value="off">works normally</option>
       <option value="invent">invents a figure</option>
+      <option value="fail">fails (answers 500)</option>
+    </select>
+    &nbsp;
+    <label for="inbox-fault">Approval inbox:</label>
+    <select id="inbox-fault">
+      <option value="off">works normally</option>
+      <option value="fail">fails (answers 500)</option>
     </select>
     &nbsp;
     <button type="button" id="apply">Apply</button>
@@ -138,16 +146,18 @@
       if (f !== lastFaults) {
         $('crm-fault').value = s.faults.crm;
         $('ai-fault').value = s.faults.ai;
+        $('inbox-fault').value = s.faults.inbox;
         lastFaults = f;
       }
       $('faults-now').textContent = 'Now: the CRM ' + (s.faults.crm === 'off' ? 'works normally' : 'fault "' + s.faults.crm + '"') +
-        '; the AI step ' + (s.faults.ai === 'off' ? 'works normally' : 'fault "' + s.faults.ai + '"') + '.';
+        '; the AI step ' + (s.faults.ai === 'off' ? 'works normally' : 'fault "' + s.faults.ai + '"') +
+        '; the inbox ' + (s.faults.inbox === 'off' ? 'works normally' : 'fault "' + s.faults.inbox + '"') + '.';
     } catch (e) {
       $('faults-now').textContent = 'The office did not answer: ' + e.message;
     }
   }
   $('apply').addEventListener('click', async () => {
-    await fetch('/faults', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ crm: $('crm-fault').value, ai: $('ai-fault').value }) });
+    await fetch('/faults', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ crm: $('crm-fault').value, ai: $('ai-fault').value, inbox: $('inbox-fault').value }) });
     lastFaults = null;
     refresh();
   });
