@@ -2,9 +2,16 @@
 
 Copyright (c) 2026 Evgeny Blekhman
 
-The teaching text of this lab, the folders `participant/`, `instructor/` and `docs/`, is licensed under the
-**Creative Commons Attribution-NonCommercial 4.0 International** licence (CC BY-NC 4.0). The code and the workflow files
-are under the MIT licence in `LICENSE`. The README's table, under *Licences*, says which folder is under which.
+The teaching text of this lab is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International**
+licence (CC BY-NC 4.0). The teaching text is:
+
+- `participant/`
+- `instructor/`
+- `docs/HOW-THIS-WAS-TESTED.md`
+- `README.md`
+
+Everything else, the pictures in `docs/pictures/` included, is under the MIT licence in `LICENSE`. The README's table,
+under *Licences*, says the same.
 
 In short, and the legal code is what governs: you may copy and share the teaching text, and adapt it, for non-commercial
 purposes, as long as you give appropriate credit, link to the licence, and say whether you made changes. You may not add

@@ -7,7 +7,8 @@ minute before the next.
 
 **How to start each repair.** Create a new workflow in n8n, import the broken file named below (as in the lab guide,
 *How every stage works*), publish it, and use the form address given. Choose **Reset the office** in the office window
-first, so that what you see belongs to this repair.
+first, so that what you see belongs to this repair. As in the guide, paste every value shown in a grey block; do not type
+it.
 
 > The steps for n8n's own screen were written from n8n's documentation and the workflow files, and were not walked through
 > on a screen by a person. Every symptom quoted here is what the broken file did in the lab's automated tests on n8n 2.48.8.
@@ -28,8 +29,9 @@ Status:    404
 Answer:    {"code":404,"message":"The requested webhook \"POST repair-a\" is not registered.","hint":"The workflow must be active for a production URL to run successfully. You can activate the workflow using the toggle in the top-right of the editor. Note that unlike test URL calls, production URL calls aren't shown on the canvas (only in the executions list)"}
 ```
 
-(n8n's hint still speaks of a toggle; in this version of n8n it is the **Publish** button.) On a real website, the person
-who filled in the form would see nothing at all, and nobody would know an enquiry was lost.
+(n8n's hint still speaks of a toggle; in this version of n8n it is the **Publish** button.) If you did publish, the
+problem is not the publishing. On a real website, the person who filled in the form would see nothing at all, and nobody
+would know an enquiry was lost.
 
 <details><summary>Hint 1</summary>
 
@@ -103,9 +105,15 @@ that stays the same for this person?
 **The cause.** The lookup searches by `name`. "Maya Rivers" and "M. Rivers" are different names, so the lookup finds
 nobody, the flow tries to create a second contact with the same e-mail, the CRM refuses with 409, and the run stops.
 
-**The fix.** In *Look up the contact*, change the query parameter's Name to `email` and its Value (Expression) to
-`{{ $('Enquiry arrives').item.json.body.email }}`. Publish and send `M. Rivers` again: a note is added to Maya's contact.
-The repaired file is `workflows/repair-b-fixed.json`.
+**The fix.** In *Look up the contact*, change the query parameter's Name to `email`, and paste this as its Value (as an
+Expression):
+
+```paste
+{{ $('Enquiry arrives').item.json.body.email }}
+```
+
+Publish and send `M. Rivers` again: a note is added to Maya's contact. The repaired file is
+`workflows/repair-b-fixed.json`.
 
 **What to take away.** Match a person by a key that does not change, such as an e-mail address, never by a name.
 
@@ -154,8 +162,14 @@ Open **Approved?**. Which field does it read, and what does it ask of it? Would 
 **The cause.** *Approved?* asks whether `{{ $json.body.approval }}` is not empty. That field is the approval's number,
 such as `A1`, and it is filled in for every decision, so the answer is always "true".
 
-**The fix.** In *Approved?*, set value1 to `{{ $json.body.decision }}`, the operator to String, `is equal to`, and value2
-to `approve`. Publish, send, Reject: nothing is written. The repaired file is `workflows/repair-c-fixed.json`.
+**The fix.** In *Approved?*, paste this into the left box (as an Expression):
+
+```paste
+{{ $json.body.decision }}
+```
+
+then set the operator to String, then `is equal to`, and type `approve` in the right box. Publish, send, Reject: nothing
+is written. The repaired file is `workflows/repair-c-fixed.json`.
 
 **What to take away.** Test the "no" path, not only the "yes" path. A check that is true for every input checks nothing.
 
@@ -203,11 +217,15 @@ if it were a result, so the flow answers "recorded".
 **The cause.** Two faults that hide each other: the note call has no `X-Office-Badge` header, so the CRM refuses it; and
 its failure is ignored, so the flow reports success.
 
-**The fix.** In *Add a note*, turn **Send Headers** on with Name `X-Office-Badge` and Value `practice-badge`. In its
-**Settings**, set **On Error** to `Continue (using error output)`, and connect its error output to a branch that tells the
-office and answers with the failure, as in stage 6. Give *Look up the contact* and *Create the contact* the same setting,
-so that no CRM call can fail silently. The repaired file is `workflows/repair-d-fixed.json`. With the CRM told to fail, it
-answers:
+**The minimum repair.** In *Add a note*, turn **Send Headers** on, with the header's Name `X-Office-Badge` and Value
+`practice-badge`. In its **Settings**, set **On Error** back to `Stop Workflow`. The note is added again; and when a note
+call fails, the run stops and the form gets n8n's own error (as in repair B), not "recorded". Not a good answer, but a
+true one.
+
+**The full repair** is stage 6's. In *Add a note*, set **On Error** to `Continue (using error output)` instead, and
+connect its error output to a branch that tells the office and answers with the failure. Give *Look up the contact* and
+*Create the contact* the same setting and branch, so that no CRM call can fail silently. The repaired file,
+`workflows/repair-d-fixed.json`, is the full repair. With the CRM told to fail, it answers:
 
 <!-- run: reset; fault crm=fail; send repair-d-fixed maya -->
 ```text

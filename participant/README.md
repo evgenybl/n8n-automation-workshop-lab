@@ -2,15 +2,16 @@
 
 You will build, in n8n, a flow that takes enquiries from a website form into a practice CRM, and that keeps working when
 the input is bad, when the same enquiry comes twice, when an AI step makes something up, when a person must decide, and
-when the CRM fails. Everything runs on your own laptop. You need no programming, and no account with any service.
+when the CRM fails. Everything runs on your own laptop. You need no programming, and no account with any online service.
 
-Read in this order:
+**Read these pages on the lab's page on GitHub**, where their tables, grey blocks and folded hints are laid out. If your
+room has no internet, your instructor gives you printed copies.
 
 | Page | What it is | When |
 |---|---|---|
 | [setup.md](setup.md) | Install Docker Desktop, start the lab, and run the check | Before the session |
-| [guide.md](guide.md) | The six stages, step by step | In the session |
-| [repairs.md](repairs.md) | Four broken flows to repair from their symptoms, with hints | In the session, after stage 6 |
+| [guide.md](guide.md) | The six stages, step by step | In the sessions |
+| [repairs.md](repairs.md) | Four broken flows to repair from their symptoms, with hints | In the sessions, after stages 3 and 6 |
 | [card.md](card.md) | Six questions to ask of any automation, on one page | Keep it |
 
 The workflow files you import are in the lab's `workflows` folder: `stage-N-starter.json` to start stage N,

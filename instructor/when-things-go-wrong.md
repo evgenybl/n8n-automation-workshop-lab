@@ -1,23 +1,25 @@
 # When things go wrong in the room
 
 **This lab has not been taught to a class of people;** these are the problems its design expects, with what to do. Each
-starts from what you see.
+starts from what you see. The steps for n8n's own screen were written from n8n's documentation and the workflow files,
+and were not walked through on a screen by a person.
 
 ## Docker will not start
 
-*You see:* Docker Desktop shows an error, or `docker compose up -d` says it cannot connect to the Docker daemon.
+*You see:* Docker Desktop shows an error, or `docker info` or `docker compose up -d` ends with an error that it cannot
+connect to the Docker daemon (Docker's background service).
 
 - Ask whether Docker Desktop is running at all: its icon, its window. Start it and wait until it says it is running.
 - On Windows, Docker Desktop needs its own Linux layer (WSL 2) and may ask to update it or to restart the laptop. A restart
-  in the room costs ten minutes; it is still the fastest fix.
-- A work laptop may forbid Docker. Then pair the person with a neighbour for the session, and say so without fuss: the
-  lab is just as useful at two to a screen.
+  takes the laptop out of the session for a while; it is still the fastest fix.
+- A work laptop may forbid Docker. Then pair the person with a neighbour for the session, and say so without fuss.
 
-*Prevent it:* the setup check a week before (`participant/setup.md`).
+*Prevent it:* the setup check two weeks before (`participant/setup.md`).
 
 ## A port is taken
 
-*You see:* `docker compose up -d` says a port "is already allocated" (5678 or 3333).
+*You see:* `docker compose up -d` ends with a message that a port (5678 or 3333) is already in use or not available. The
+wording differs between systems.
 
 - Another program uses that port; often an earlier n8n. `docker ps` lists running containers: stop the other one with
   `docker stop <its name>`.
@@ -35,12 +37,21 @@ starts from what you see.
   ask whether the program can allow `localhost`.
 - If nothing helps in five minutes, pair the person with a neighbour.
 
+## n8n will not let someone sign in
+
+*You see:* the owner account or the sign-in page of n8n at `http://localhost:5678` does not get past the sign-in, in
+Safari.
+
+- Safari is reported, in a community report the lab has not verified, to refuse n8n's sign-in on `http://localhost`. Use
+  Chrome, Edge or Firefox. Do not change n8n's cookie settings in `compose.yaml` for this: the lab's tests have not run
+  with them changed.
+
 ## A slow laptop
 
 *You see:* the first `docker compose up -d` takes many minutes; n8n is "starting" for a long time; the canvas is sluggish.
 
-- The first start downloads n8n. That is why the setup is done before the session; a laptop that skipped it downloads in
-  the room, on the room's network.
+- The first start downloads n8n, several hundred megabytes. That is why the setup is done before the session; a laptop
+  that skipped it downloads in the room, on the room's network.
 - Close other programs. Keep the office window open in one tab only: it refreshes itself every two seconds.
 
 ## Someone far ahead
@@ -57,6 +68,13 @@ starts from what you see.
   import the solution file into a second workflow and look at both side by side. A solution listens at its own path,
   `stage-N-solution`, so it does not clash with theirs.
 
+## Someone reads raw Markdown
+
+*You see:* tables made of `|` signs, and `<details>` tags around the hints.
+
+- They opened a page from the lab's folder in a text editor. Send them to the lab's page on GitHub, which shows the same
+  page laid out, or give them the printed copy (the run sheet's preparation).
+
 ## The office was reset by mistake
 
 *You see:* the contacts, approvals and calls are gone.
@@ -65,6 +83,13 @@ starts from what you see.
   touched. Send the enquiry again.
 - An approval that waited in the inbox before the reset is gone from the inbox, but its run in n8n still waits; it does
   no harm. Send a new enquiry.
+
+## The office refuses with 403
+
+*You see:* the office answers 403, "The office takes changes only from its own pages, n8n and command-line tools".
+
+- A page on another site sent a change to the office. The office refuses changes sent from another
+  site, so that a web page cannot reset it or decide an approval. Use the office's own pages at `http://localhost:3333`.
 
 ## n8n's screen differs from the guide because the version moved
 
@@ -75,9 +100,8 @@ starts from what you see.
 - If you deliberately run a newer n8n, expect labels to move. The node types and settings in the workflow files may still
   import; run the lab's CI against the new version first (change the image line in `compose.yaml`, push to a copy of the
   repository) and read what fails. Do not teach a version the lab's tests have not run.
-- The steps for n8n's own screen were written from n8n's documentation and the workflow files, and were not walked
-  through on a screen by a person. When your screen and the guide disagree on the pinned version, trust the screen, and
-  note the difference so the guide can be corrected.
+- When your screen and the guide disagree on the pinned version, trust the screen, and note the difference so the guide
+  can be corrected.
 
 ---
 

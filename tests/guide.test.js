@@ -1,0 +1,401 @@
+'use strict';
+// The lab guide, the repairs, the answer key and the practical check, against the workflow files.
+//
+// The main test reads each stage's table in participant/guide.md and applies its rows, one by one, to the stage's
+// starter file, as a participant would on n8n's canvas: delete a connection, add a node, set a setting, paste a block.
+// The result must be exactly the stage's solution file: the same nodes, the same settings, the same connections.
+// Other tests hold the values written in the pages' prose (addresses, methods, status codes, the timeout, the badge, the
+// On Error values, the form paths, the repairs' causes and fixes) to the files.
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { ifNode, TYPES } = require('../tools/flow-kit.js');
+
+const ROOT = path.join(__dirname, '..');
+const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const load = (f) => JSON.parse(read('workflows/' + f));
+const byName = (wf) => new Map(wf.nodes.map((n) => [n.name, n]));
+const webhookOf = (wf) => wf.nodes.find((n) => n.type === 'n8n-nodes-base.webhook');
+const clone = (v) => JSON.parse(JSON.stringify(v));
+const unquote = (cell) => (/^`[^`]*`$/.test(cell) ? cell.slice(1, -1) : cell);
+
+// ---------- reading the guide ----------
+
+function stages() {
+  const text = read('participant/guide.md');
+  return text.split(/\n## Stage /).slice(1).map((s) => ({ n: Number(s[0]), text: s.split(/\n## /)[0] }));
+}
+
+function tableOf(text) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((l) => l.startsWith('| # | Do this |'));
+  assert.ok(start !== -1, 'a table of steps');
+  const rows = [];
+  for (let i = start + 2; i < lines.length && lines[i].startsWith('|'); i++) {
+    rows.push(lines[i].split('|').slice(1, -1).map((c) => c.trim()));
+  }
+  return rows;
+}
+
+function pastesOf(text) {
+  const out = {};
+  for (const m of text.matchAll(/^\*\*(P\d+)\*\* \(step[\s\S]*?```paste\n([\s\S]*?)```/gm)) {
+    assert.ok(!(m[1] in out), 'one block ' + m[1]);
+    out[m[1]] = m[2].replace(/\n$/, '');
+  }
+  return out;
+}
+
+// ---------- what a row does to a node ----------
+
+const LABELS = {
+  responseMode: { Immediately: 'onReceived', "Using 'Respond to Webhook' Node": 'responseNode' },
+  respondWith: { JSON: 'json' },
+  resume: { 'On Webhook Call': 'webhook' },
+  onError: { 'Continue (using error output)': 'continueErrorOutput', Continue: 'continueRegularOutput', 'Stop Workflow': 'stopWorkflow' },
+  onOff: { on: true, off: false },
+};
+const OPERATORS = {
+  contains: { type: 'string', operation: 'contains' },
+  'is equal to': { type: 'string', operation: 'equals' },
+  'is empty': { type: 'string', operation: 'empty', singleValue: true },
+  'is not empty': { type: 'string', operation: 'notEmpty', singleValue: true },
+  'is true': { type: 'boolean', operation: 'true', singleValue: true },
+};
+const NODE_TYPES = { 'Respond to Webhook': 'respond', If: 'if', Wait: 'wait', 'HTTP Request': 'http', Code: 'code' };
+const label = (kind, value) => {
+  assert.ok(value in LABELS[kind], 'a known label for ' + kind + ': ' + value);
+  return LABELS[kind][value];
+};
+
+// A new node as n8n's editor adds it, before the participant sets anything.
+function fresh(kind, name) {
+  if (kind === 'if') return Object.assign({ name }, TYPES.if, { parameters: ifNode(name, [['', 'equals', '']]).parameters });
+  return Object.assign({ name }, TYPES[kind], { parameters: { options: {} } });
+}
+
+function apply(node, setting, value, where) {
+  const p = node.parameters;
+  const t = node.type.replace('n8n-nodes-base.', '');
+  const field = (list, name) => {
+    const f = (list && list.parameters || []).find((x) => x.name === name);
+    assert.ok(f, where + ': ' + node.name + ' has a field ' + name);
+    return f;
+  };
+  if (setting === 'On Error') node.onError = label('onError', value);
+  else if (t === 'webhook' && setting === 'Path') p.path = value;
+  else if ((t === 'webhook' || t === 'wait') && setting === 'HTTP Method') p.httpMethod = value;
+  else if ((t === 'webhook' || t === 'wait') && setting === 'Respond') p.responseMode = label('responseMode', value);
+  else if (t === 'wait' && setting === 'Resume') p.resume = label('resume', value);
+  else if (t === 'respondToWebhook' && setting === 'Respond With') p.respondWith = label('respondWith', value);
+  else if (t === 'respondToWebhook' && setting === 'Response Body') p.responseBody = '=' + value;
+  else if (t === 'if' && setting === 'left box') p.conditions.conditions[0].leftValue = '=' + value;
+  else if (t === 'if' && setting === 'operator') {
+    const m = value.match(/^(String|Boolean), then `([^`]+)`(?:; right box `([^`]*)`)?$/);
+    assert.ok(m, where + ': an operator cell reads "Type, then `operator`; right box `value`": ' + value);
+    const op = OPERATORS[m[2]];
+    assert.ok(op, where + ': a known operator ' + m[2]);
+    assert.equal(op.type, m[1].toLowerCase(), where + ': ' + m[2] + ' is under ' + op.type);
+    p.conditions.conditions[0].operator = clone(op);
+    p.conditions.conditions[0].rightValue = m[3] === undefined ? '' : m[3];
+  } else if (t === 'if' && setting === 'Convert types where required') {
+    p.looseTypeValidation = label('onOff', value);
+    p.conditions.options.typeValidation = p.looseTypeValidation ? 'loose' : 'strict';
+  } else if (t === 'httpRequest' && setting === 'Query Parameters: Name') p.queryParameters.parameters[0].name = value;
+  else if (t === 'httpRequest' && setting === 'Query Parameters: Value') p.queryParameters.parameters[0].value = '=' + value;
+  else if (t === 'httpRequest' && setting.startsWith('Body Parameters: ')) field(p.bodyParameters, setting.slice(17)).value = '=' + value;
+  else if (t === 'code' && setting === 'Code') p.jsCode = value;
+  else assert.fail(where + ': no rule for the setting "' + setting + '" on a ' + t + ' node');
+}
+
+const OUTPUTS = { 'its output': 0, 'its **true** output': 0, 'its **false** output': 1, 'its **success** output': 0, 'its **error** output': 1 };
+
+// ---------- applying a stage's table to its starter ----------
+
+function walk(n, text) {
+  const starter = load('stage-' + n + '-starter.json');
+  const nodes = byName(clone(starter));
+  const links = new Set();
+  for (const [from, entry] of Object.entries(starter.connections)) {
+    entry.main.forEach((list, i) => list.forEach((c) => links.add(from + '|' + i + '|' + c.node)));
+  }
+  const rows = tableOf(text);
+  const pastes = pastesOf(text);
+  const used = new Set();
+  const need = (name, where) => {
+    assert.ok(nodes.has(name), where + ': the node ' + name + ' is on the canvas');
+    return nodes.get(name);
+  };
+  rows.forEach((r, i) => {
+    const where = 'stage ' + n + ' row ' + (i + 1);
+    assert.equal(r.length, 5, where + ' has five cells');
+    assert.equal(Number(r[0]), i + 1, where + ' is numbered');
+    const [, act, nodeCell, setting, valueCell] = r;
+    const name = unquote(nodeCell);
+    let value = unquote(valueCell);
+    const pasted = valueCell.match(/^\*\*(P\d+)\*\*$/);
+    if (pasted) {
+      assert.ok(pasted[1] in pastes, where + ': the block ' + pasted[1] + ' is on the page');
+      value = pastes[pasted[1]];
+      used.add(pasted[1]);
+    }
+    assert.doesNotMatch(valueCell, /\{\{/, where + ': an expression is given in a block to paste, not in the table');
+    if (i === 0) {
+      assert.equal(act, '**Import into a new workflow**', where + ': every stage starts by importing its starter');
+      assert.equal(value, 'workflows/stage-' + n + '-starter.json');
+    } else if (act.startsWith('Publish')) {
+      assert.equal(i, rows.length - 1, where + ': publishing is the last row');
+    } else if (act === 'Look at') {
+      const node = need(name, where);
+      const before = clone(node);
+      apply(node, setting, value, where);
+      assert.deepEqual(node, before, where + ': ' + name + "'s " + setting + ' already is ' + value + ' in the starter');
+    } else if (act === 'Set' || act === 'Paste') {
+      assert.equal(act === 'Paste', Boolean(pasted), where + ': "Paste" rows, and only they, name a block');
+      apply(need(name, where), setting, value, where);
+    } else if (act === 'Delete the node') {
+      need(name, where);
+      nodes.delete(name);
+      for (const l of [...links]) if (l.startsWith(name + '|') || l.endsWith('|' + name)) links.delete(l);
+    } else if (/^Add an? \*\*(.+)\*\* node$/.test(act)) {
+      const kind = NODE_TYPES[act.match(/\*\*(.+)\*\*/)[1]];
+      assert.ok(kind, where + ': a known node type');
+      assert.ok(!nodes.has(name), where + ': ' + name + ' is new');
+      assert.equal(setting, 'after');
+      need(value, where);
+      nodes.set(name, fresh(kind, name));
+      links.add(value + '|0|' + name);
+    } else if (act === 'Connect' || act === 'Delete the connection') {
+      need(name, where);
+      const to = value.match(/^to `([^`]+)`$/);
+      assert.ok(to, where + ': the value names where the connection goes');
+      need(to[1], where);
+      const outs = setting === '' && act === 'Delete the connection' ? [0, 1] : [OUTPUTS[setting]];
+      assert.ok(outs[0] !== undefined, where + ': a known output: ' + setting);
+      const link = outs.map((o) => name + '|' + o + '|' + to[1]).filter((l) => act === 'Connect' || links.has(l));
+      if (act === 'Connect') {
+        assert.ok(!links.has(link[0]), where + ': ' + link[0] + ' is not connected yet');
+        links.add(link[0]);
+      } else {
+        assert.equal(link.length, 1, where + ': exactly one connection from ' + name + ' to ' + to[1] + ' to delete');
+        links.delete(link[0]);
+      }
+    } else {
+      assert.fail(where + ': an unknown step "' + act + '"');
+    }
+  });
+  assert.deepEqual([...used].sort(), Object.keys(pastes).sort(), 'stage ' + n + ': every block on the page is used by a row');
+  return { nodes, links, rows };
+}
+
+const shape = (n) => {
+  const parameters = clone(n.parameters);
+  if (n.type === 'n8n-nodes-base.webhook') delete parameters.path;
+  return { type: n.type, typeVersion: n.typeVersion, parameters, onError: n.onError || null };
+};
+
+test('following each stage\'s table on its starter gives exactly the stage\'s solution: its nodes, settings and connections', () => {
+  const all = stages();
+  assert.deepEqual(all.map((s) => s.n), [1, 2, 3, 4, 5, 6]);
+  for (const { n, text } of all) {
+    const { nodes, links } = walk(n, text);
+    const solution = load('stage-' + n + '-solution.json');
+    const sol = byName(solution);
+    assert.deepEqual([...nodes.keys()].sort(), [...sol.keys()].sort(), 'stage ' + n + ': the same nodes');
+    for (const [name, node] of sol) assert.deepEqual(shape(nodes.get(name)), shape(node), 'stage ' + n + ': ' + name);
+    assert.equal(webhookOf({ nodes: [...nodes.values()] }).parameters.path, 'stage-' + n, 'stage ' + n + ': the flow keeps its own path');
+    const solLinks = new Set();
+    for (const [from, entry] of Object.entries(solution.connections)) {
+      entry.main.forEach((list, i) => list.forEach((c) => solLinks.add(from + '|' + i + '|' + c.node)));
+    }
+    assert.deepEqual([...links].sort(), [...solLinks].sort(), 'stage ' + n + ': the same connections');
+  }
+});
+
+test('no stage has more than 14 steps, and the README says so', () => {
+  for (const { n, text } of stages()) assert.ok(tableOf(text).length <= 14, 'stage ' + n + ' has ' + tableOf(text).length + ' steps');
+  assert.match(read('README.md'), /No stage has more than 14 steps/);
+});
+
+test('the guide gives the two rules in bold at the top, and every check yourself starts by resetting the office', () => {
+  const text = read('participant/guide.md');
+  assert.ok(text.includes('**Every stage starts by importing its starter file into a new workflow.**'));
+  assert.ok(text.includes('**Paste every value shown in a grey block; do not type it.**'));
+  for (const { n, text: s } of stages()) {
+    const checks = [...s.matchAll(/\*\*Check yourself[^*]*\*\* ([^\n]+)/g)];
+    assert.equal(checks.length, 1, 'stage ' + n + ' has one "check yourself"');
+    assert.match(checks[0][1], /^Choose \*\*Reset the office\*\*/, 'stage ' + n);
+  }
+});
+
+test('every expression anywhere in a stage, also in its prose, is in that stage\'s solution file', () => {
+  for (const { n, text } of stages()) {
+    const solution = read('workflows/stage-' + n + '-solution.json');
+    for (const m of text.matchAll(/\{\{ [^`\n]*? \}\}/g)) {
+      assert.ok(solution.includes(JSON.stringify(m[0]).slice(1, -1)), 'stage ' + n + ': ' + m[0]);
+    }
+  }
+});
+
+test('each stage\'s form address and planned minutes agree with its starter and the run sheet', () => {
+  const sheet = read('instructor/run-sheet.md');
+  for (const { n, text } of stages()) {
+    const form = text.match(/\*\*Your form address:\*\*\s+`http:\/\/localhost:3333\/form\?path=([a-z0-9-]+)`/);
+    assert.ok(form, 'stage ' + n + ' names its form address');
+    assert.equal(form[1], webhookOf(load('stage-' + n + '-starter.json')).parameters.path, 'stage ' + n);
+    const minutes = text.match(/\*\*Planned minutes:\*\* (\d+)\./);
+    assert.ok(minutes, 'stage ' + n + ' gives its planned minutes');
+    const row = sheet.match(new RegExp('\\| Stage ' + n + ': [^|]+\\| (\\d+) \\|'));
+    assert.ok(row, 'the run sheet has stage ' + n);
+    assert.equal(minutes[1], row[1], 'stage ' + n + ': the same planned minutes as the run sheet');
+  }
+});
+
+// ---------- the values in the prose ----------
+
+function httpNodes(n) {
+  return load('stage-' + n + '-solution.json').nodes.filter((x) => x.type === 'n8n-nodes-base.httpRequest');
+}
+
+test('every office address a stage names is called by a node of its solution, with the method the text gives', () => {
+  for (const { n, text } of stages()) {
+    for (const m of text.matchAll(/`(http:\/\/office:3333[^`]*)`/g)) {
+      const at = m[1];
+      let nodes = httpNodes(n).filter((x) => x.parameters.url.replace(/^=/, '').startsWith(at));
+      assert.ok(nodes.length, 'stage ' + n + ': a node calls ' + at);
+      // When the sentence names the node in bold just before the address, it is that node's address and method.
+      const before = text.slice(Math.max(0, m.index - 160), m.index);
+      const named = [...before.matchAll(/\*\*([^*]+)\*\*/g)].pop();
+      const own = named && httpNodes(n).find((x) => x.name === named[1]);
+      if (own) {
+        assert.ok(own.parameters.url.replace(/^=/, '').startsWith(at), 'stage ' + n + ': ' + own.name + ' calls ' + at);
+        nodes = [own];
+      }
+      const method = before.slice(-80).match(/`(GET|POST)`[^`]*$/);
+      if (method && at !== 'http://office:3333') {
+        assert.ok(nodes.some((x) => x.parameters.method === method[1]), 'stage ' + n + ': ' + method[1] + ' ' + at);
+      }
+    }
+  }
+});
+
+test('every status code the text gives beside an answer\'s name is that answer\'s code', () => {
+  for (const { n, text } of stages()) {
+    const answers = load('stage-' + n + '-solution.json').nodes.filter((x) => x.type === 'n8n-nodes-base.respondToWebhook');
+    for (const a of answers) {
+      const re = new RegExp('[*`]' + a.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[*`]([^\\n]{0,40})', 'g');
+      for (const m of text.matchAll(re)) {
+        const code = m[1].match(/\b([2-5]\d\d)\b/);
+        if (code) assert.equal(Number(code[1]), a.parameters.options.responseCode || 200, 'stage ' + n + ': ' + a.name + ' ' + m[0]);
+      }
+    }
+  }
+});
+
+test('the timeout, the badge and the On Error settings the text describes are those of the files', () => {
+  for (const { n, text } of stages()) {
+    if (/five-second timeout/.test(text)) {
+      for (const x of httpNodes(n).filter((y) => /\/crm\//.test(y.parameters.url))) assert.equal(x.parameters.options.timeout, 5000, 'stage ' + n + ': ' + x.name);
+    }
+    const badge = text.match(/header\s+`([^`]+)` with the value `([^`]+)`/);
+    if (badge) {
+      for (const x of httpNodes(n).filter((y) => /\/crm\//.test(y.parameters.url))) {
+        assert.deepEqual(x.parameters.headerParameters.parameters, [{ name: badge[1], value: badge[2] }], 'stage ' + n + ': ' + x.name);
+      }
+    }
+    for (const node of load('stage-' + n + '-starter.json').nodes) {
+      const re = new RegExp('\\*\\*' + node.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\*\\*(?:(?!\\*\\*)[^]){0,200}?\\*On Error\\* (?:setting )?is already +\\*([^*]+)\\*', 'g');
+      for (const m of text.matchAll(re)) assert.equal(node.onError, label('onError', m[1]), 'stage ' + n + ': ' + node.name);
+    }
+  }
+  assert.match(stages()[2].text, /header\s+`X-Office-Badge` with the value `practice-badge`/, 'stage 3 names the badge');
+});
+
+// ---------- the repairs ----------
+
+function repairSections() {
+  const text = read('participant/repairs.md');
+  return Object.fromEntries(text.split(/\n## Repair /).slice(1).map((s) => [s[0].toLowerCase(), s.split(/\n## /)[0]]));
+}
+const pick = (text, re, what) => {
+  const m = text.match(re);
+  assert.ok(m, what);
+  return m;
+};
+
+test('each repair names its file and its form address as the files have them', () => {
+  const sections = repairSections();
+  assert.deepEqual(Object.keys(sections), ['a', 'b', 'c', 'd']);
+  for (const [x, s] of Object.entries(sections)) {
+    assert.equal(pick(s, /\*\*The file:\*\* `workflows\/([a-z0-9-]+\.json)`/, x)[1], 'repair-' + x + '-broken.json');
+    const form = pick(s, /form\?path=([a-z0-9-]+)`/, x)[1];
+    const broken = webhookOf(load('repair-' + x + '-broken.json')).parameters.path;
+    const fixed = webhookOf(load('repair-' + x + '-fixed.json')).parameters.path;
+    if (x === 'a') {
+      assert.equal(form, fixed, 'repair A: the form sends to the path the repaired file listens at');
+      assert.notEqual(form, broken);
+    } else {
+      assert.equal(form, broken, 'repair ' + x);
+    }
+  }
+});
+
+test('each repair\'s cause is what its broken file holds, and its fix is what its repaired file holds', () => {
+  const s = repairSections();
+  const node = (f, name) => byName(load(f)).get(name);
+  // A
+  assert.equal(webhookOf(load('repair-a-broken.json')).parameters.path, pick(s.a, /path is `([^`]+)`/, 'A cause')[1]);
+  assert.equal(webhookOf(load('repair-a-fixed.json')).parameters.path, pick(s.a, /\*\*Path\*\* of \*Enquiry arrives\* to `([^`]+)`/, 'A fix')[1]);
+  // B
+  const q = (f) => node(f, 'Look up the contact').parameters.queryParameters.parameters[0];
+  assert.equal(q('repair-b-broken.json').name, pick(s.b, /lookup searches by `([^`]+)`/, 'B cause')[1]);
+  assert.equal(q('repair-b-fixed.json').name, pick(s.b, /query parameter's Name to `([^`]+)`/, 'B fix name')[1]);
+  assert.equal(q('repair-b-fixed.json').value, '=' + pick(s.b, /```paste\n([^\n]+)\n```/, 'B fix value')[1]);
+  // C
+  const c = (f) => node(f, 'Approved?').parameters.conditions.conditions[0];
+  const cause = pick(s.c, /asks whether `([^`]+)` is not empty/, 'C cause')[1];
+  assert.equal(c('repair-c-broken.json').leftValue, '=' + cause);
+  assert.equal(c('repair-c-broken.json').operator.operation, 'notEmpty');
+  assert.equal(c('repair-c-fixed.json').leftValue, '=' + pick(s.c, /```paste\n([^\n]+)\n```/, 'C fix')[1]);
+  const op = pick(s.c, /operator to (String), then `([^`]+)`, and type `([^`]+)` in the right box/, 'C operator');
+  assert.deepEqual(c('repair-c-fixed.json').operator, OPERATORS[op[2]]);
+  assert.equal(c('repair-c-fixed.json').rightValue, op[3]);
+  // D
+  const note = (f) => node(f, 'Add a note');
+  assert.equal(note('repair-d-broken.json').parameters.sendHeaders, undefined, 'D cause: no header');
+  assert.match(s.d, /no `X-Office-Badge` header/);
+  const header = pick(s.d, /Name `([^`]+)` and Value\s+`([^`]+)`/, 'D fix header');
+  assert.deepEqual(note('repair-d-fixed.json').parameters.headerParameters.parameters, [{ name: header[1], value: header[2] }]);
+  assert.equal(note('repair-d-broken.json').onError, label('onError', pick(s.d, /\*On Error\* is `([^`]+)`/, 'D hint')[1]));
+  const full = pick(s.d, /\*\*The full repair\*\*[\s\S]*?set \*\*On Error\*\* to `([^`]+)`/, 'D full repair')[1];
+  for (const n of ['Look up the contact', 'Add a note', 'Create the contact']) assert.equal(node('repair-d-fixed.json', n).onError, label('onError', full), n);
+  assert.equal(label('onError', pick(s.d, /\*\*The minimum repair\.\*\*[\s\S]*?set \*\*On Error\*\* back to `([^`]+)`/, 'D minimum')[1]), 'stopWorkflow');
+});
+
+test('the answer key\'s causes are in the broken files, and its files exist', () => {
+  const key = read('instructor/answer-key.md');
+  for (const m of key.matchAll(/`((?:workflows|docs\/pictures)\/[^`]+)`/g)) assert.ok(fs.existsSync(path.join(ROOT, m[1])), m[1]);
+  const row = (x) => pick(key, new RegExp('\\| ' + x + ' \\| `workflows/repair-' + x.toLowerCase() + '-broken\\.json` \\|[^|]+\\|([^\\n]+)\\|'), 'answer key ' + x)[1];
+  const node = (x, name) => byName(load('repair-' + x + '-broken.json')).get(name);
+  assert.equal(webhookOf(load('repair-a-broken.json')).parameters.path, row('A').match(/`([^`]+)`/)[1]);
+  assert.equal(node('b', 'Look up the contact').parameters.queryParameters.parameters[0].name, row('B').match(/`([^`]+)`/)[1]);
+  assert.equal(node('c', 'Approved?').parameters.conditions.conditions[0].leftValue, '=' + row('C').match(/`([^`]+)`/)[1]);
+  assert.equal(node('d', 'Add a note').onError, row('D').match(/`([^`]+)`/)[1]);
+});
+
+test('the practical check\'s cause is in its broken file, its repair in its repaired file, and its minutes are scheduled', () => {
+  const text = read('instructor/practical-check.md');
+  const broken = read('workflows/check-g-broken.json');
+  const fixed = read('workflows/check-g-fixed.json');
+  const cause = pick(text, /note field reads `([^`]+)`/, 'the cause')[1];
+  const repair = pick(text, /\*note\* in \*Create the contact\*\) to\s+`([^`]+)`/, 'the repair')[1];
+  assert.ok(broken.includes(JSON.stringify('=' + cause)) && !fixed.includes(JSON.stringify('=' + cause)));
+  assert.ok(fixed.includes(JSON.stringify('=' + repair)) && !broken.includes(JSON.stringify('=' + repair)));
+  assert.equal(pick(text, /form\?path=([a-z0-9-]+)`/, 'the form')[1], webhookOf(JSON.parse(broken)).parameters.path);
+  const minutes = Number(pick(text, /\*\*Planned minutes:\*\* (\d+)/, 'its minutes')[1]);
+  const words = { fifteen: 15, ten: 10, twenty: 20 };
+  assert.equal(words[pick(text, /You have (\w+) minutes/, 'the task')[1]], minutes, 'the task gives the planned minutes');
+  assert.match(read('instructor/variants.md'), new RegExp('practical check[^]{0,80}?takes ' + minutes + ' planned minutes'));
+});

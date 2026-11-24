@@ -1,7 +1,8 @@
 'use strict';
 // The pages and the repository as a whole: plain ASCII and LF everywhere; no absolute path; e-mail addresses at
 // example.com only; the honesty lines where they belong; the planned minutes and debrief questions in agreement; links,
-// pictures and quoted answers that resolve; the licence and author lines.
+// pictures and quoted answers that resolve; the evidence rows; the licence, third-party and author lines; the compose file.
+// The lab guide, the repairs, the answer key and the practical check are held to the workflow files in tests/guide.test.js.
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -12,7 +13,7 @@ const { execFileSync } = require('node:child_process');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 // A page's text as one line, with quote marks at line starts removed, so that a sentence split over lines is found.
-const flat = (f) => read(f).replace(/^>\s?/gm, '').replace(/\s+/g, ' ');
+const flat = (f) => read(f).replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
 
 function trackedFiles() {
   try {
@@ -36,6 +37,7 @@ function trackedFiles() {
 }
 const FILES = trackedFiles().filter((f) => fs.existsSync(path.join(ROOT, f)));
 const PAGES = FILES.filter((f) => f.endsWith('.md'));
+const WORKFLOWS = fs.readdirSync(path.join(ROOT, 'workflows')).filter((f) => f.endsWith('.json'));
 
 test('every file is plain ASCII, with LF line ends only', () => {
   for (const f of FILES) {
@@ -76,33 +78,46 @@ test('no page speaks of clients or customers, and none claims a class, a worksho
   }
 });
 
+test('no page says the lab needs no payment, and nothing is left pending', () => {
+  for (const f of PAGES) {
+    assert.doesNotMatch(read(f), /\bpayment\b/i, f + ': Docker Desktop is not free for everyone; say what its terms are instead');
+    assert.doesNotMatch(read(f), /PENDING/, f + ': something is still to be pasted');
+  }
+});
+
+// ---------- the honesty lines ----------
+
 const NOT_TAUGHT = 'has not been taught to a class of people';
 const SCREEN = 'not walked through on a screen by a person';
 const STAND_IN = 'stand-in that is not a model';
 
-test('the "not taught" line is on the README, the testing page, the participant\'s index and every timed instructor page', () => {
-  for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md', 'participant/README.md', 'instructor/run-sheet.md', 'instructor/guide.md', 'instructor/variants.md', 'instructor/rubric.md', 'instructor/when-things-go-wrong.md']) {
+test('the "not taught" line is on the README, the testing page, the participant\'s index and guide, and every timed instructor page', () => {
+  for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md', 'participant/README.md', 'participant/guide.md', 'instructor/run-sheet.md', 'instructor/guide.md', 'instructor/variants.md', 'instructor/rubric.md', 'instructor/when-things-go-wrong.md']) {
     assert.ok(flat(f).includes(NOT_TAUGHT), f);
   }
 });
 
-test('every page that gives minutes calls them planned', () => {
-  for (const f of ['README.md', 'instructor/run-sheet.md', 'instructor/guide.md', 'instructor/variants.md']) {
-    assert.match(read(f), /planned/i, f);
-    assert.match(read(f), /Planned minutes/, f);
+test('every page that gives minutes calls them planned, not measured, and says what has not been done', () => {
+  for (const f of ['README.md', 'instructor/run-sheet.md', 'instructor/guide.md', 'instructor/variants.md', 'participant/guide.md']) {
+    assert.match(flat(f), /planned, not measured/, f);
   }
+  assert.ok(flat('README.md').includes('Every timing in it is planned, not measured.'));
+  assert.ok(flat('instructor/guide.md').includes('the mistakes listed are the ones the design expects, not ones observed in a room'));
+  assert.ok(flat('instructor/rubric.md').includes('the rubric has not been used to mark anyone yet'));
+  assert.ok(flat('instructor/practical-check.md').includes('This check has not been given to anyone yet.'));
 });
 
 test('the pages that describe n8n\'s screen say the steps were not walked through on a screen by a person', () => {
-  for (const f of ['docs/HOW-THIS-WAS-TESTED.md', 'participant/guide.md', 'participant/repairs.md', 'participant/README.md', 'instructor/guide.md', 'instructor/when-things-go-wrong.md']) {
+  for (const f of ['docs/HOW-THIS-WAS-TESTED.md', 'participant/setup.md', 'participant/guide.md', 'participant/repairs.md', 'participant/README.md', 'instructor/run-sheet.md', 'instructor/guide.md', 'instructor/when-things-go-wrong.md']) {
     assert.ok(flat(f).includes(SCREEN), f);
   }
 });
 
-test('the practice AI step is called a stand-in that is not a model wherever it is presented', () => {
-  for (const f of ['README.md', 'participant/guide.md', 'instructor/guide.md', 'practice/pages/window.html', 'practice/server.js']) {
+test('the practice AI step is called a stand-in that is not a model wherever it is presented, and the CRM practice software', () => {
+  for (const f of ['README.md', 'participant/guide.md', 'instructor/guide.md', 'practice/README.md', 'practice/pages/window.html', 'practice/server.js']) {
     assert.ok(flat(f).includes(STAND_IN), f);
   }
+  for (const f of ['README.md', 'practice/README.md']) assert.ok(flat(f).includes('practice software, not a CRM product'), f);
 });
 
 // ---------- the planned minutes and the debrief questions ----------
@@ -117,46 +132,71 @@ function tableRows(text, header) {
   }
   return rows;
 }
+const sum = (rows, col) => rows.reduce((n, r) => n + Number(r[col]), 0);
 
 function runSheet() {
-  return tableRows(read('instructor/run-sheet.md'), '| Part | Planned minutes |').map((r) => ({ part: r[0], minutes: Number(r[1]), debrief: r[3] }));
+  const text = read('instructor/run-sheet.md');
+  return [1, 2].map((s) => {
+    const section = text.split('\n## Session ' + s + '\n')[1];
+    assert.ok(section, 'the run sheet has session ' + s);
+    const rows = tableRows(section, '| Part | Planned minutes |').map((r) => ({ session: s, part: r[0], minutes: Number(r[1]), debrief: r[3] }));
+    const total = section.match(new RegExp('The planned total of session ' + s + ' is (\\d+) minutes'));
+    return { rows, total: total && Number(total[1]) };
+  });
 }
 
-test('the run sheet\'s planned minutes add up to 180, and the README gives the same minutes for the same parts', () => {
-  const sheet = runSheet();
-  assert.equal(sheet.reduce((n, r) => n + r.minutes, 0), 180);
-  const readme = tableRows(read('README.md'), '| Part | What is built | Planned minutes |').map((r) => ({ part: r[0], minutes: Number(r[2]) }));
-  assert.deepEqual(readme.map((r) => [r.part, r.minutes]), sheet.map((r) => [r.part, r.minutes]));
+test('each session of the run sheet adds up to its stated total of 120 planned minutes', () => {
+  for (const [i, s] of runSheet().entries()) {
+    assert.equal(s.total, 120, 'session ' + (i + 1) + ' states 120');
+    assert.equal(s.rows.reduce((n, r) => n + r.minutes, 0), s.total, 'session ' + (i + 1) + ' adds up');
+  }
+});
+
+test('the README gives the same sessions, parts and minutes as the run sheet', () => {
+  const sheet = runSheet().flatMap((s) => s.rows).map((r) => [String(r.session), r.part, r.minutes]);
+  const readme = tableRows(read('README.md'), '| Session | Part | What is built | Planned minutes |').map((r) => [r[0], r[1], Number(r[3])]);
+  assert.deepEqual(readme, sheet);
 });
 
 function guideParts() {
   const text = read('instructor/guide.md');
   return text.split(/\n## /).slice(1).map((s) => {
     const title = s.split('\n')[0].trim();
-    const minutes = (s.match(/\*\*Planned minutes:\*\* (\d+)/) || [])[1];
-    const debrief = (s.match(/\*\*Debrief question:\*\* ([^\n]+(?:\n[^\n*][^\n]*)*)/) || [])[1];
+    const minutes = (s.match(/\*\*Planned\s+minutes:\*\* (\d+)/) || [])[1];
+    const debrief = (s.match(/\*\*Debrief question:\*\* ([^\n]+(?:\n[^\n*-][^\n]*)*)/) || [])[1];
     return { title, minutes: Number(minutes), debrief: debrief ? debrief.replace(/\s+/g, ' ').trim() : '' };
   });
 }
 
-test('the instructor guide gives each part of the run sheet the same planned minutes and the same debrief question', () => {
+test('the instructor guide has each part of the run sheet, in order, with the same planned minutes and debrief question', () => {
   const guide = guideParts();
-  const sheet = runSheet().filter((r) => r.part !== 'Break');
-  const guideTitle = (part) => (part === 'The repairs' ? 'The repairs' : part);
+  const sheet = runSheet().flatMap((s) => s.rows).filter((r) => r.part !== 'Break');
+  assert.deepEqual(guide.map((g) => g.title), sheet.map((r) => r.part));
   for (const r of sheet) {
-    const g = guide.find((x) => x.title === guideTitle(r.part));
-    assert.ok(g, 'the instructor guide has a section for ' + r.part);
+    const g = guide.find((x) => x.title === r.part);
     assert.equal(g.minutes, r.minutes, r.part);
-    if (r.debrief) assert.equal(g.debrief, r.debrief, r.part);
+    assert.equal(g.debrief, r.debrief || '', r.part);
   }
-  for (const g of guide) assert.ok(g.minutes > 0, g.title + ' has planned minutes');
 });
 
-test('each variant\'s sessions are ninety minutes', () => {
-  const rows = tableRows(read('instructor/variants.md'), '| Session | Part | Planned minutes |');
-  const bySession = {};
-  for (const r of rows) bySession[r[0]] = (bySession[r[0]] || 0) + Number(r[2]);
-  assert.deepEqual(bySession, { 1: 90, 2: 90 });
+test('each variant adds up to its stated total, and gives every stage the run sheet\'s minutes', () => {
+  const text = read('instructor/variants.md');
+  const stageMinutes = Object.fromEntries(runSheet().flatMap((s) => s.rows).map((r) => [r.part, r.minutes]));
+  for (const [heading, name] of [['## One half day', 'the half day'], ['## A ninety-minute taster', 'the taster']]) {
+    const section = text.split(heading)[1].split('\n## ')[0];
+    const rows = tableRows(section, '| Part | Planned minutes |');
+    const total = section.match(new RegExp('The planned total of ' + name + ' is (\\d+) minutes'));
+    assert.ok(total, name + ' states its total');
+    assert.equal(sum(rows, 1), Number(total[1]), name);
+    for (const r of rows.filter((x) => /^Stage \d/.test(x[0]))) assert.equal(Number(r[1]), stageMinutes[r[0]], name + ': ' + r[0]);
+  }
+  assert.ok(/ninety-minute/.test(text) && /The planned total of the taster is 90 minutes/.test(text));
+  const check = text.match(/practical check[\s\S]{0,80}?takes (\d+) planned minutes[\s\S]*?in place of repair D: (\d+) of that part's (\d+) planned minutes/);
+  assert.ok(check, 'the practical check is scheduled');
+  const partD = runSheet()[1].rows.find((r) => r.part === 'Repairs C and D');
+  assert.equal(Number(check[3]), partD.minutes);
+  assert.equal(check[1], check[2]);
+  assert.ok(Number(check[2]) <= partD.minutes);
 });
 
 // ---------- links, files named, quoted answers ----------
@@ -167,6 +207,7 @@ test('every link and picture on every page resolves to a file in the repository'
     for (const m of text.matchAll(/\]\(([^)\s]+)\)/g)) {
       const target = m[1];
       if (/^(https?:|mailto:|#)/.test(target)) continue;
+      if (f === 'README.md' && /^\.\.\/\.\.\/actions\/workflows\/ci\.yml(\/badge\.svg\?branch=main)?$/.test(target)) continue; // the CI badge, on GitHub
       const resolved = path.join(ROOT, path.dirname(f), target.split('#')[0]);
       assert.ok(fs.existsSync(resolved), f + ' links to ' + target);
     }
@@ -183,11 +224,18 @@ test('every workflow file, picture and page named in backticks on a page exists'
 });
 
 const VERBS = ['reset', 'fault', 'send', 'form', 'approve', 'reject', 'note', 'alert', 'check', 'offline', 'online'];
-const WHO = ['maya', 'tom', 'm-rivers', 'no-email', 'robot', 'no-consent'];
+const WHO = ['maya', 'tom', 'm-rivers', 'no-email', 'robot', 'no-consent', 'consent-on', 'quoted', 'forging'];
+const FAULT = /^(crm=(off|fail|slow|wrong|late-writes)|ai=(off|invent|fail)|inbox=(off|fail))$/;
 
-test('every quoted answer is marked with the steps that produce it, and the steps name real flows and people', () => {
-  const paths = new Set(fs.readdirSync(path.join(ROOT, 'workflows')).map((f) => JSON.parse(read('workflows/' + f)).nodes.find((n) => n.type === 'n8n-nodes-base.webhook').parameters.path));
-  // The quoted repair A answer is sent to repair-a while the repaired file is offline; that path is the repaired file's.
+test('every quoted answer is marked with the steps that produce it, and the steps name real flows, people and faults', () => {
+  const paths = new Set(WORKFLOWS.map((f) => JSON.parse(read('workflows/' + f)).nodes.find((n) => n.type === 'n8n-nodes-base.webhook').parameters.path));
+  const server = read('practice/server.js');
+  for (const m of FAULT.source.matchAll(/(\w+)=\(([^)]+)\)/g)) {
+    // the faults a marker may name are the faults the office offers
+    const list = server.match(new RegExp('const ' + m[1].toUpperCase() + "_FAULTS = \\[([^\\]]+)\\]"));
+    assert.ok(list, m[1]);
+    assert.deepEqual(m[2].split('|').sort(), list[1].split(',').map((x) => x.trim().replace(/'/g, '')).sort(), m[1]);
+  }
   let count = 0;
   for (const f of PAGES) {
     const text = read(f);
@@ -204,11 +252,11 @@ test('every quoted answer is marked with the steps that produce it, and the step
           assert.ok(WHO.includes(args[1]), f + ': nobody called ' + args[1]);
         }
         if (verb === 'offline' || verb === 'online') assert.ok(fs.existsSync(path.join(ROOT, 'workflows', args[0] + '.json')), f + ': ' + args[0]);
-        if (verb === 'fault') assert.match(args[0], /^(crm=(off|fail|slow|wrong)|ai=(off|invent))$/, f);
+        if (verb === 'fault') assert.match(args[0], FAULT, f);
       }
     }
   }
-  assert.ok(count >= 20, 'the guides quote at least twenty answers, each replayed in CI; found ' + count);
+  assert.ok(count >= 25, 'the guides quote at least twenty-five answers, each replayed in CI; found ' + count);
 });
 
 test('every output block on a page is either replayed in CI or marked as pasted, so none is typed', () => {
@@ -222,55 +270,37 @@ test('every output block on a page is either replayed in CI or marked as pasted,
   }
 });
 
-// ---------- the lab guide against the solution files ----------
+// ---------- the evidence the README and the testing page state ----------
 
-function guideStages() {
-  const text = read('participant/guide.md');
-  return text.split(/\n## Stage /).slice(1).map((s) => ({ n: Number(s[0]), text: s.split(/\n## /)[0] }));
-}
-
-test('each stage of the lab guide names only nodes that its solution file has, and every node of the solution is built', () => {
-  for (const { n, text } of guideStages()) {
-    const solution = JSON.parse(read('workflows/stage-' + n + '-solution.json'));
-    const names = new Set(solution.nodes.map((x) => x.name));
-    const named = [...text.matchAll(/\| Name \| `([^`]+)` \|/g)].map((m) => m[1]);
-    for (const name of named) assert.ok(names.has(name), 'stage ' + n + ' names "' + name + '", which its solution does not have');
-    const previous = n > 1 ? new Set(JSON.parse(read('workflows/stage-' + n + '-starter.json')).nodes.map((x) => x.name)) : new Set(['Enquiry arrives']);
-    for (const name of names) assert.ok(previous.has(name) || named.includes(name), 'stage ' + n + ' never builds "' + name + '"');
+test('the README and the testing page agree on what was done, at which commit, and what was not', () => {
+  for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md']) {
+    const text = read(f);
+    assert.match(text, /\| A new-user test \|[^\n]*Done once, at commit 9785e5b, by a separate AI agent[^\n]*not repeated on the current version/, f);
+    assert.match(text, /\| An independent review \|[^\n]*Done once, at commit 9785e5b, by a separate AI agent[^\n]*not repeated on the current version/, f);
+    assert.match(text, /\| The steps in n8n's own screen,? walked through by a person \|[^\n]*Not done/, f);
+    assert.match(text, /\| Taught to a class of people \|[^\n]*Not done/, f);
+    assert.ok(flat(f).includes('all ' + WORKFLOWS.length + ' '), f + ' gives the number of workflow files, ' + WORKFLOWS.length);
+    for (const m of text.matchAll(/\ball (\d+) (?:imported|workflow files)/g)) assert.equal(Number(m[1]), WORKFLOWS.length, f);
   }
+  assert.match(read('README.md'), new RegExp('\\| `workflows/` \\| ' + WORKFLOWS.length + ' workflow files'));
 });
 
-test('every expression the lab guide gives for a stage is in that stage\'s solution file', () => {
-  for (const { n, text } of guideStages()) {
-    const solution = read('workflows/stage-' + n + '-solution.json');
-    for (const m of text.matchAll(/\{\{ [^`]*? \}\}/g)) {
-      assert.ok(solution.includes(JSON.stringify(m[0]).slice(1, -1)), 'stage ' + n + ': ' + m[0]);
-    }
-  }
+test('the testing page cites a CI run only with its commit, and the README carries the badge of the latest run', () => {
+  const text = read('docs/HOW-THIS-WAS-TESTED.md');
+  const runs = [...text.matchAll(/CI run (\d{8,})/g)];
+  assert.ok(runs.length > 0);
+  for (const m of runs) assert.match(text.slice(m.index, m.index + 80), /at commit [0-9a-f]{7}/, 'CI run ' + m[1]);
+  assert.match(read('README.md'), /\[!\[CI[^\]]*\]\(\.\.\/\.\.\/actions\/workflows\/ci\.yml\/badge\.svg\?branch=main\)\]/);
 });
 
-test('every answer body the lab guide gives is the one in the solution file, as JSON', () => {
-  const asJson = (body) => JSON.parse(body.replace(/^=/, '').replace(/\{\{[^}]*\}\}/g, (e) => e.replace(/"/g, "'")));
-  for (const { n, text } of guideStages()) {
-    const bodies = JSON.parse(read('workflows/stage-' + n + '-solution.json')).nodes
-      .filter((x) => x.type === 'n8n-nodes-base.respondToWebhook')
-      .map((x) => JSON.stringify(asJson(x.parameters.responseBody)));
-    for (const m of text.matchAll(/\| Response Body(?: \(Expression\))? \| `([^`]+)` \|/g)) {
-      assert.ok(bodies.includes(JSON.stringify(asJson(m[1]))), 'stage ' + n + ': ' + m[1]);
-    }
-  }
+test('every test file the testing page names exists, and every test file is named there', () => {
+  const text = read('docs/HOW-THIS-WAS-TESTED.md');
+  const named = new Set([...text.matchAll(/`((?:practice\/)?tests\/[a-z-]+\.test\.js)`/g)].map((m) => m[1]));
+  const actual = ['tests', 'practice/tests'].flatMap((d) => fs.readdirSync(path.join(ROOT, d)).filter((f) => f.endsWith('.test.js')).map((f) => d + '/' + f));
+  assert.deepEqual([...named].sort(), actual.sort());
 });
 
-test('the code the lab guide gives for stage 4 is exactly the Code node of the solution files', () => {
-  const m = read('participant/guide.md').match(/```javascript\n([\s\S]*?)```/);
-  assert.ok(m);
-  for (const f of ['stage-4-solution', 'stage-5-solution', 'stage-6-solution', 'check-g-fixed']) {
-    const node = JSON.parse(read('workflows/' + f + '.json')).nodes.find((x) => x.name === 'Check the AI figures');
-    assert.equal(node.parameters.jsCode + '\n', m[1], f);
-  }
-});
-
-// ---------- licence and author ----------
+// ---------- licence, third parties, author ----------
 
 test('every teaching page carries the licence line', () => {
   for (const f of PAGES.filter((x) => /^(participant|instructor)\//.test(x))) {
@@ -279,6 +309,45 @@ test('every teaching page carries the licence line', () => {
   }
   assert.match(read('LICENSE'), /MIT License\n\nCopyright \(c\) 2026 Evgeny Blekhman/);
   assert.match(read('LICENSE-TEXT.md'), /Creative Commons Attribution-NonCommercial 4\.0 International/);
+});
+
+test('the README\'s licence table and the licence notice name the same teaching text, and every tracked file has one licence', () => {
+  const rows = tableRows(read('README.md'), '| Folder or file | Licence |');
+  const paths = (cell) => [...cell.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+  const cc = rows.filter((r) => /BY-NC/.test(r[1])).flatMap((r) => paths(r[0]));
+  const mit = rows.filter((r) => /MIT/.test(r[1])).flatMap((r) => paths(r[0]));
+  const notice = [...read('LICENSE-TEXT.md').matchAll(/^- `([^`]+)`$/gm)].map((m) => m[1]);
+  assert.deepEqual(cc.sort(), notice.sort());
+  assert.ok(read('LICENSE-TEXT.md').includes('`docs/pictures/` included, is under the MIT licence'));
+  const covers = (list, f) => list.some((p) => (p.endsWith('/') ? f.startsWith(p) : f === p));
+  for (const f of FILES.filter((x) => !['LICENSE', 'LICENSE-TEXT.md'].includes(x))) {
+    const inCc = covers(cc, f);
+    const inMit = covers(mit, f);
+    assert.ok(inCc !== inMit, f + ' is under exactly one licence in the README\'s table');
+  }
+});
+
+test('the README and the setup page give the third parties\' terms', () => {
+  for (const f of ['README.md', 'participant/setup.md']) {
+    const text = flat(f);
+    assert.ok(text.includes('not affiliated with or endorsed by n8n'), f);
+    assert.ok(text.includes('https://docs.n8n.io/n8n-community-license/community-license'), f);
+    assert.ok(text.includes('does not redistribute n8n'), f);
+    assert.ok(text.includes('https://docs.docker.com/subscription-billing/desktop-license/'), f);
+    assert.match(text, /fewer than 250 employees and less than 10 million US dollars in annual revenue/, f);
+  }
+});
+
+test('the setup page names the browsers, the documented password rule, the check by docker info, and the proxy', () => {
+  const text = flat('participant/setup.md');
+  assert.ok(text.includes('Chrome, Edge or Firefox'));
+  assert.match(text, /Safari is reported, in a community report the lab has not verified/);
+  assert.ok(text.includes('at least eight characters with at least one number and one capital letter'));
+  assert.match(read('participant/setup.md'), /```bash\n\s*docker info\n/);
+  assert.match(text, /Behind a company proxy\?/);
+  assert.match(text, /Apple silicon/);
+  assert.match(text, /several hundred megabytes/);
+  assert.doesNotMatch(text, /port is already allocated/, 'the port message differs between systems: describe it, do not quote one');
 });
 
 test('the README ends with the author line, and says nothing else about the author', () => {
@@ -290,23 +359,18 @@ test('the README ends with the author line, and says nothing else about the auth
 test('the README marks its "Try it" command and output, as the scenario test that runs the command reads them', () => {
   const m = read('README.md').match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```[\s\S]*?<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
   assert.ok(m);
-  assert.deepEqual(m[1].trim().split('\n').map((l) => l.split(' ')[0]), ['docker', 'node', 'curl']);
+  assert.deepEqual(m[1].trim().split('\n').map((l) => l.split(' ').slice(0, 2).join(' ')), ['docker compose', 'node tools/load.js', 'curl -s']);
+  assert.match(m[1], /node tools\/load\.js --solutions\n/);
   assert.match(m[1], /http:\/\/localhost:5678\/webhook\/stage-6-solution/);
 });
 
-test('the README and the testing page agree on what is owed', () => {
-  for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md']) {
-    const text = read(f);
-    assert.match(text, /\| A new-user test \|[^\n]*Owed/, f);
-    assert.match(text, /\| An independent review \|[^\n]*Owed/, f);
-    assert.match(text, /Taught to a class of people \|[^\n]*Not done/, f);
-  }
-});
+// ---------- the compose file and CI ----------
 
 test('the pinned n8n version is the same in the compose file, the README and the testing page', () => {
   assert.match(read('compose.yaml'), /image: docker\.n8n\.io\/n8nio\/n8n:2\.48\.8\n[\s\S]*image: docker\.n8n\.io\/n8nio\/n8n:2\.48\.8\n/);
   assert.ok(read('README.md').includes('n8n 2.48.8'));
   assert.ok(read('docs/HOW-THIS-WAS-TESTED.md').includes('n8n 2.48.8'));
+  assert.match(flat('README.md'), /pinned by its tag, not by its digest/);
 });
 
 test('every published port in the compose file is bound to 127.0.0.1', () => {
@@ -315,6 +379,29 @@ test('every published port in the compose file is bound to 127.0.0.1', () => {
   for (const p of ports) assert.match(p, /- "127\.0\.0\.1:/);
 });
 
+test('the compose file gives the office and n8n the addresses the flows, the load script and the setup check use', () => {
+  const compose = read('compose.yaml');
+  const { OFFICE } = require('../tools/flow-kit.js');
+  const office = new URL(OFFICE);
+  assert.match(compose, new RegExp('\\n  ' + office.hostname + ':\\n'), 'a service named ' + office.hostname);
+  assert.match(compose, new RegExp('PORT[=:] ?"?' + office.port + '\\b'), 'the office listens on ' + office.port);
+  assert.match(compose, /N8N_URL[=:] ?"?http:\/\/n8n:5678\b/);
+  assert.ok(read('participant/setup.md').includes('"n8nAddress":"http://n8n:5678"'));
+  assert.match(compose, /- \.\/workflows:\/lab\/workflows:ro\n/);
+  assert.ok(read('tools/load.js').includes('=/lab/workflows'));
+});
+
 test('every action in CI is pinned by its commit', () => {
   for (const m of read('.github/workflows/ci.yml').matchAll(/uses: (\S+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, m[1]);
+});
+
+test('CI loads every file for the scenarios, then proves the instructor\'s order frees the participants\' paths', () => {
+  const ci = read('.github/workflows/ci.yml');
+  const all = ci.indexOf('node tools/load.js --all');
+  const scenarios = ci.indexOf('LAB_LIVE');
+  const clear = ci.indexOf('node tools/load.js --clear');
+  const solutions = ci.indexOf('node tools/load.js --solutions');
+  assert.ok(all !== -1 && all < scenarios && scenarios < clear && clear < solutions);
+  const sheet = read('instructor/run-sheet.md');
+  assert.ok(sheet.indexOf('node tools/load.js --clear') < sheet.indexOf('node tools/load.js --solutions'));
 });

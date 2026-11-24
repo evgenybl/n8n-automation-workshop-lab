@@ -1,7 +1,8 @@
 # The practical check: a seventh flow, unseen
 
 **This check has not been given to anyone yet.** It shows objective O7 (and O4) on a flow the participant has not seen.
-Give only the file and the task below; keep the answer.
+Give only the file and the task below; keep the answer. **Planned minutes:** 15, given in session 2 in place of repair D,
+as `instructor/variants.md` says.
 
 ## What you give
 
@@ -9,8 +10,8 @@ The file `workflows/check-g-broken.json`, and this text:
 
 > This flow records enquiries in the practice CRM, with a note that should only carry an AI summary that has been
 > checked. A colleague says that a note in the CRM mentions a budget that the person never wrote. Import the flow, publish
-> it, and use the form at `http://localhost:3333/form?path=check-g`. In the office window, set the practice AI step to
-> `invents a figure`. Find the cause from the symptom, repair it, and write two sentences: what you saw, and what you
+> it, and use the form at `http://localhost:3333/form?path=check-g`. In the office window, choose Reset the office, then
+> set the practice AI step to `invents a figure`. Find the cause from the symptom, repair it, and write two sentences: what you saw, and what you
 > changed. You have fifteen minutes. No hints.
 
 ## What a participant sees

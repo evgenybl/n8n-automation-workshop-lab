@@ -1,32 +1,44 @@
 # Variants
 
-**This lab has not been taught to a class of people; every minute here is planned, not measured.**
+**This lab has not been taught to a class of people; every minute here is planned, not measured.** The main plan is two
+sessions of two hours (`instructor/run-sheet.md`). Each variant below keeps the stages' planned minutes from that plan.
 
-## Two sessions of ninety minutes
+## One half day
 
-| Session | Part | Planned minutes |
-|---|---|---|
-| 1 | Opening | 10 |
-| 1 | Stage 1: Catch an enquiry | 15 |
-| 1 | Stage 2: Refuse a bad one | 20 |
-| 1 | Stage 3: No duplicates | 25 |
-| 1 | Repair A | 10 |
-| 1 | Close: what to look at before session 2 | 10 |
-| 2 | Recap: each person sends one enquiry to their stage-3 flow and reads the office window aloud | 5 |
-| 2 | Stage 4: Ask the AI step, and check it | 20 |
-| 2 | Stage 5: A person approves | 25 |
-| 2 | Stage 6: When it fails | 20 |
-| 2 | Repair C | 10 |
-| 2 | Close: the card | 10 |
+| Part | Planned minutes |
+|---|---|
+| Opening and the setup check | 15 |
+| Stage 1: Catch an enquiry | 20 |
+| Stage 2: Refuse a bad one | 25 |
+| Stage 3: No duplicates | 30 |
+| Break | 15 |
+| Stage 4: Ask the AI step, and check it | 25 |
+| Stage 5: A person approves | 30 |
+| Stage 6: When it fails | 25 |
+| The repairs: A, then C; B and D for those ahead | 30 |
+| Close | 10 |
 
-Between the sessions, ask everyone to stop the lab with `docker compose down` (not `down -v`), so their flows are still
-there in session 2. If a laptop lost its flows, that person imports `stage-4-starter.json` and goes on.
+The planned total of the half day is 225 minutes, with one break. It is long for people new to all of this: keep the
+break, and cut as the run sheet says if you fall behind.
 
 ## A ninety-minute taster: stages 1 to 3
 
-The same as session 1 above. Its close is different: show stages 4 to 6 on the projector from the solution files
-(`node tools/load.js` on your laptop publishes them all), with the office window beside them, so that people see where the
-lab goes. Hand out the card.
+| Part | Planned minutes |
+|---|---|
+| Opening and the setup check | 10 |
+| Stage 1: Catch an enquiry | 20 |
+| Stage 2: Refuse a bad one | 25 |
+| Stage 3: No duplicates | 30 |
+| Close | 5 |
+
+The planned total of the taster is 90 minutes. At the close, show stage 6's solution on the projector (prepared as the run
+sheet says, with `--solutions`), with the office window beside it, so that people see where the lab goes. Hand out the
+card.
+
+## When you want to assess
+
+The practical check (`instructor/practical-check.md`) takes 15 planned minutes. In the two-session plan, give it in
+session 2 in place of repair D: 15 of that part's 20 planned minutes, after repair C.
 
 ---
 
