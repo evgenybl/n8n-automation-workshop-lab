@@ -191,7 +191,8 @@ it did:** it read every participant page in order as a newcomer, ran the practic
 calls to it, wrote down what it believed each flow it would build was, and logged every point of friction at the moment
 it met it, before it opened any solution or instructor file; then it compared what it believed with the solution files.
 **What it found:** all six stages could be followed, and every value it believed it had set is in the solution files; 29
-points of friction, the main ones below. Not repeated on the current version.
+points of friction, the main ones below. Its own notes are not in this repository: the counts and findings here are a
+summary of its report. Not repeated on the current version.
 
 | Finding | What was changed |
 |---|---|
@@ -228,7 +229,8 @@ be followed, and the flow it believed it had built matched every solution file i
 "check yourself" it could reproduce with the office matched; 25 points of friction, the main ones below. **Its limits:**
 it never had n8n's screen, so every label and place on the screen is unchecked; it read the repairs page as raw text, so it
 saw each cause before the hints, and its estimates of the hint at which each repair is found are estimates, not
-measurements. Not repeated on the current version.
+measurements. Its own notes are not in this repository: the counts and findings here are a summary of its report. Not
+repeated on the current version.
 
 Its counts per stage, from the guide's tables, beside the planned minutes:
 
