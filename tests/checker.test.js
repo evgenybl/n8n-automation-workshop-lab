@@ -103,6 +103,71 @@ refuses('two nodes with the same name', (wf) => {
   node(wf, 'Create the contact').name = 'Add a note';
 }, /two nodes named/);
 
+// Key-shaped values are built at run time, so that this repository holds none written out.
+const TOKEN = ['sk', 'live', 'A1b2C3d4E5f6G7h8I9j0K1l2'].join('-');
+const LONG = ['Q7w2E9r4T6y1U3i8', 'O5p0A2s7D4f9G6h3'].join('');
+
+refuses('a key-shaped value as a header value', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters[0].value = TOKEN;
+}, /token-like value/);
+refuses('a long run of letters and digits as a query value', (wf) => {
+  node(wf, 'Look up the contact').parameters.queryParameters.parameters.push({ name: 'ref', value: LONG });
+}, /token-like value/);
+refuses('a bearer token in a body field', (wf) => {
+  node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name: 'auth', value: 'Bearer ' + LONG });
+}, /token-like value/);
+refuses('a header named like a secret', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'Authorization', value: 'x' });
+}, /header named like a secret: Authorization/);
+refuses('a query parameter named like a secret', (wf) => {
+  node(wf, 'Look up the contact').parameters.queryParameters.parameters.push({ name: 'api_key', value: 'x' });
+}, /query parameter named like a secret: api_key/);
+refuses('an address with no scheme', (wf) => {
+  node(wf, 'Add a note').parameters.url = 'collector.vendor.example.org/in';
+}, /not written out as one of the practice office/);
+refuses('an address built in an expression', (wf) => {
+  node(wf, 'Add a note').parameters.url = "={{ 'ht' + 'tp:' + '//collector.vendor.example.org/in' }}";
+}, /not written out as one of the practice office/);
+refuses('an address that hides another host behind the office\'s name', (wf) => {
+  node(wf, 'Add a note').parameters.url = ['http://office:3333', 'vendor.example.org/in'].join('@');
+}, /not written out as one of the practice office/);
+refuses('a phone-like number in a body field', (wf) => {
+  node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name: 'phone', value: '+1 415 555 0134' });
+}, /phone-like number/);
+refuses('an address in a node name', (wf) => {
+  node(wf, 'Known contact?').name = 'Known at https://crm.example.com';
+  wf.connections['Look up the contact'].main[0][0].node = 'Known at https://crm.example.com';
+  wf.connections['Known at https://crm.example.com'] = wf.connections['Known contact?'];
+  delete wf.connections['Known contact?'];
+}, /node name "Known at https:\/\/crm\.example\.com" holds an address/);
+refuses('an e-mail address in the workflow name', (wf) => {
+  wf.name = 'For ' + ['someone', 'realmail.test'].join('@');
+}, /workflow name .* holds an e-mail address/);
+refuses('a node name longer than sixty characters', (wf) => {
+  node(wf, 'Known contact?').name = 'K'.repeat(61);
+}, /longer than 60 characters/);
+refuses('an error workflow or another setting', (wf) => {
+  wf.settings.errorWorkflow = 'abc123';
+}, /settings must be exactly/);
+refuses('a disabled node', (wf) => {
+  node(wf, 'Known contact?').disabled = true;
+}, /unexpected key "disabled"/);
+
+test('the checker allows a key-free value: the practice badge, the stage-4 code, and the ids n8n gives If conditions', () => {
+  for (const f of ['stage-3-solution.json', 'stage-4-solution.json', 'stage-6-solution.json']) {
+    const wf = JSON.parse(fs.readFileSync(path.join(ROOT, 'workflows', f), 'utf8'));
+    assert.deepEqual(checkText(f, JSON.stringify(wf)).problems, [], f);
+  }
+});
+
+test('a starter may bring nodes that the trigger does not lead to yet (the stage\'s parts); any other file may not', () => {
+  const starter = JSON.parse(fs.readFileSync(path.join(ROOT, 'workflows', 'stage-3-starter.json'), 'utf8'));
+  const r = checkText('stage-3-starter.json', JSON.stringify(starter));
+  assert.deepEqual(r.problems, []);
+  assert.equal(r.parts, 4);
+  assert.match(checkText('stage-3-solution.json', JSON.stringify(starter)).problems.join(' '), /"Look up the contact" is not connected/);
+});
+
 test('the checker refuses two files with the same webhook path, or the same id', () => {
   const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'lab-checker-'));
   try {
