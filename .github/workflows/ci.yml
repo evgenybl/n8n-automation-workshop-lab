@@ -35,6 +35,9 @@ jobs:
       - name: Every picture is drawn again and compared with its file
         run: node tools/draw-workflow.js --check
 
+      - name: The repairs page for printing is what its script writes from the participant page
+        run: node tools/print-repairs.js --check
+
       - name: Start n8n and the practice office, as the compose file starts them
         run: |
           docker compose version
@@ -49,6 +52,12 @@ jobs:
           docker manifest inspect --verbose docker.n8n.io/n8nio/n8n:2.48.8 > "$RUNNER_TEMP/manifest.json" || echo "could not read the manifest"
           node -e "const m=[].concat(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')));for(const e of m){const p=e.Descriptor&&e.Descriptor.platform;const v=e.OCIManifest||e.SchemaV2Manifest;if(!p||!v||p.os==='unknown')continue;const l=v.layers||[];console.log('download for '+p.os+'/'+p.architecture+': '+l.reduce((s,x)=>s+x.size,0)+' bytes in '+l.length+' layers')}" "$RUNNER_TEMP/manifest.json" || echo "could not add up the layers"
           docker info | grep -E '^Server:|Server Version:' || echo "docker info printed no such lines"
+
+      - name: What starting the lab prints in a folder without compose.yaml (for the setup page)
+        run: |
+          mkdir -p "$RUNNER_TEMP/not-the-lab"
+          cd "$RUNNER_TEMP/not-the-lab"
+          docker compose up -d 2>&1 || true
 
       - name: Load and publish every workflow file
         run: node tools/load.js --all
@@ -96,6 +105,9 @@ jobs:
 
       - name: The picture tool, compared with every picture
         run: node tools/draw-workflow.js --check
+
+      - name: The repairs page for printing, compared with what its script writes
+        run: node tools/print-repairs.js --check
 
       - name: The local test summary pasted on the testing page is the one this run printed
         run: node tools/check-pasted.js "$RUNNER_TEMP/local-tap.txt" docs/HOW-THIS-WAS-TESTED.md local
