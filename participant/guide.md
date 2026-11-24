@@ -97,11 +97,11 @@ workflow, so that only one flow listens at the stage's path.
 
 | What | Page |
 |---|---|
-| The create button, then Workflow | *Create and run workflows* (https://docs.n8n.io/workflows/create/) |
-| The Publish button in the canvas header, and the window it opens | *Save and publish workflows* (https://docs.n8n.io/build/understand-workflows/save-and-publish-workflows.md) |
-| Add node, Add first step, the nodes panel, Rename node in the node's context menu, the Settings tab | *Nodes* (https://docs.n8n.io/workflows/components/nodes/) |
-| The grey dot, the grey rectangle, and Delete on a connection | *Connections* (https://docs.n8n.io/workflows/components/connections/) |
-| The Executions tab in the top menu | *View executions for a single workflow* (https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow.md) |
+| The create button, then Workflow | *Create and run workflows* (https://docs.n8n.io/build/understand-workflows/create-and-run-workflows) |
+| The Publish button in the canvas header, and the window it opens | *Save and publish workflows* (https://docs.n8n.io/build/understand-workflows/save-and-publish-workflows) |
+| Add node, Add first step, the nodes panel, Rename node in the node's context menu, the Settings tab | *Work with nodes* (https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes) |
+| The grey dot, the grey rectangle, and Delete on a connection | *Connect nodes together* (https://docs.n8n.io/build/understand-workflows/workflow-components/connect-nodes-together) |
+| The Executions tab in the top menu | *View executions for a single workflow* (https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow) |
 | The Wait node's Respond parameter for On Webhook Call | *Wait* (https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/) |
 
 **Live or test address.** The form can send to the *live* address (`/webhook/...`), which answers once the flow is

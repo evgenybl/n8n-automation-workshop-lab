@@ -39,8 +39,9 @@ If your room has no internet, your instructor gives you printed copies.
   folder where you can see `compose.yaml`**, beside `participant`, `practice` and `workflows`.
 
 **About n8n.** This lab is not affiliated with or endorsed by n8n. n8n is used under its own licence, the Sustainable Use
-License (https://docs.n8n.io/n8n-community-license/community-license). The lab does not redistribute n8n: when you start
-the lab, Docker downloads n8n's own image from n8n's registry, `docker.n8n.io`, onto your laptop.
+License (see n8n's documentation page *Community license*, https://docs.n8n.io/n8n-community-license). The lab does not
+redistribute n8n: when you start the lab, Docker downloads n8n's own image from n8n's registry, `docker.n8n.io`, onto your
+laptop.
 
 ## Start the lab
 

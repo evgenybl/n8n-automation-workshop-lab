@@ -366,7 +366,7 @@ test('the README and the setup page give the third parties\' terms', () => {
   for (const f of ['README.md', 'participant/setup.md']) {
     const text = flat(f);
     assert.ok(text.includes('not affiliated with or endorsed by n8n'), f);
-    assert.ok(text.includes('https://docs.n8n.io/n8n-community-license/community-license'), f);
+    assert.ok(text.includes('https://docs.n8n.io/n8n-community-license)'), f);
     assert.ok(text.includes('does not redistribute n8n'), f);
     assert.ok(text.includes('https://docs.docker.com/subscription-billing/desktop-license/'), f);
     assert.match(text, /fewer than 250 employees and less than 10 million US dollars in annual revenue/, f);

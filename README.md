@@ -127,8 +127,8 @@ teaching it.
 ## Third parties and their terms
 
 - **This lab is not affiliated with or endorsed by n8n.** n8n is used under its own licence, the Sustainable Use License
-  (https://docs.n8n.io/n8n-community-license/community-license). The lab does not redistribute n8n: `compose.yaml` names
-  n8n's own image, which Docker downloads from n8n's registry onto each laptop.
+  (see n8n's documentation page *Community license*, https://docs.n8n.io/n8n-community-license). The lab does not
+  redistribute n8n: `compose.yaml` names n8n's own image, which Docker downloads from n8n's registry onto each laptop.
 - **Docker Desktop** is free only for personal use, education, non-commercial open source projects and small businesses
   (fewer than 250 employees and less than 10 million US dollars in annual revenue), under Docker's terms
   (https://docs.docker.com/subscription-billing/desktop-license/). Staff of larger organisations need their employer's

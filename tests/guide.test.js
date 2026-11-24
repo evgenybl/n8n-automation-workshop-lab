@@ -263,14 +263,34 @@ test('the guide places things on n8n\'s screen only as n8n\'s documentation does
   // Places the first versions of these pages invented; none is in n8n's documentation.
   for (const f of pages) assert.doesNotMatch(read(f), /top right|above the box|right-click it|the top one|the bottom one|at the top of the canvas|beside \*\*Parameters\*\*/, f);
   const text = read('participant/guide.md');
-  for (const url of ['https://docs.n8n.io/workflows/create/', 'https://docs.n8n.io/build/understand-workflows/save-and-publish-workflows.md', 'https://docs.n8n.io/workflows/components/nodes/', 'https://docs.n8n.io/workflows/components/connections/', 'https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow.md', 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/']) {
-    assert.ok(text.includes(url), 'the guide names its documentation page ' + url);
+  const pagesNamed = {
+    'Create and run workflows': 'https://docs.n8n.io/build/understand-workflows/create-and-run-workflows',
+    'Save and publish workflows': 'https://docs.n8n.io/build/understand-workflows/save-and-publish-workflows',
+    'Work with nodes': 'https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes',
+    'Connect nodes together': 'https://docs.n8n.io/build/understand-workflows/workflow-components/connect-nodes-together',
+    'View executions for a single workflow': 'https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow',
+    Wait: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/',
+  };
+  for (const [title, url] of Object.entries(pagesNamed)) {
+    assert.ok(text.includes('*' + title + '* (' + url + ')'), 'the guide names its documentation page ' + title + ', ' + url);
   }
   const unsure = 'This page was not written from a screen: if you cannot';
   assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 3, 'the guide says so where the documentation does not place a thing');
   const tested = read('docs/HOW-THIS-WAS-TESTED.md');
   for (const row of ['| The *Fixed* / *Expression* switch of a box, and where it sits |', '| The label *Convert types where required*, and where the switch sits on the If node |', "| Where a node's error output sits beside its normal one,"]) {
     assert.ok(tested.includes(row), 'the testing page lists ' + row);
+  }
+});
+
+test('every address of n8n\'s documentation on a page is a page, not its source text or an address that only redirects', () => {
+  // Addresses ending in .md serve the page's source text; these older ones redirect to the pages the lab now names.
+  const old = ['https://docs.n8n.io/workflows/create/', 'https://docs.n8n.io/workflows/components/nodes/', 'https://docs.n8n.io/workflows/components/connections/', 'https://docs.n8n.io/n8n-community-license/community-license'];
+  for (const f of fs.readdirSync(ROOT).filter((x) => x.endsWith('.md')).concat(['participant', 'instructor', 'docs', 'practice'].flatMap((d) => fs.readdirSync(path.join(ROOT, d)).filter((x) => x.endsWith('.md')).map((x) => d + '/' + x)))) {
+    const text = read(f);
+    for (const m of text.matchAll(/https:\/\/docs\.n8n\.io\/[^\s)]*/g)) {
+      assert.doesNotMatch(m[0], /\.md$/, f + ': ' + m[0]);
+      assert.ok(!old.includes(m[0]), f + ': ' + m[0]);
+    }
   }
 });
 
