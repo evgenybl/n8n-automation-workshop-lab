@@ -242,7 +242,6 @@ test('every link and picture on every page resolves to a file in the repository'
     for (const m of text.matchAll(/\]\(([^)\s]+)\)/g)) {
       const target = m[1];
       if (/^(https?:|mailto:|#)/.test(target)) continue;
-      if (f === 'README.md' && /^\.\.\/\.\.\/actions\/workflows\/ci\.yml(\/badge\.svg\?branch=main)?$/.test(target)) continue; // the CI badge, on GitHub
       const resolved = path.join(ROOT, path.dirname(f), target.split('#')[0]);
       assert.ok(fs.existsSync(resolved), f + ' links to ' + target);
     }
@@ -325,7 +324,8 @@ test('the testing page cites a CI run only with its commit, and the README carri
   const runs = [...text.matchAll(/CI run (\d{8,})/g)];
   assert.ok(runs.length > 0);
   for (const m of runs) assert.match(text.slice(m.index, m.index + 80), /at commit [0-9a-f]{7}/, 'CI run ' + m[1]);
-  assert.match(read('README.md'), /\[!\[CI[^\]]*\]\(\.\.\/\.\.\/actions\/workflows\/ci\.yml\/badge\.svg\?branch=main\)\]/);
+  const actions = 'https://github.com/evgenybl/n8n-automation-workshop-lab/actions/workflows/ci.yml';
+  assert.ok(read('README.md').includes('[![CI: the latest run on main](' + actions + '/badge.svg?branch=main)](' + actions + ')'), 'the badge, with its full addresses');
 });
 
 test('every test file the testing page names exists, and every test file is named there', () => {

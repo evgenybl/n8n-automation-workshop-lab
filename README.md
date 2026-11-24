@@ -1,6 +1,6 @@
 # n8n automation workshop lab: lead intake that says what happened
 
-[![CI: the latest run on main](../../actions/workflows/ci.yml/badge.svg?branch=main)](../../actions/workflows/ci.yml)
+[![CI: the latest run on main](https://github.com/evgenybl/n8n-automation-workshop-lab/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/evgenybl/n8n-automation-workshop-lab/actions/workflows/ci.yml)
 
 **A hands-on lab, in two sessions of about two hours each (planned), in which people with no programming background
 build, in n8n, a flow that takes website enquiries into a CRM and keeps working when the input is bad, the same enquiry
