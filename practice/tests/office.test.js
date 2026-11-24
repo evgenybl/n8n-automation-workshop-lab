@@ -236,15 +236,20 @@ test('the AI step reads the intent from fixed words', () => {
   assert.equal(aiRead({ name: 'A', message: '' }).summary, 'A asks a general question. The message begins: (the message is empty)');
 });
 
-test('told to invent, the AI step adds a figure that is not in the enquiry; its answers carry no quote marks', () => {
+test('told to invent, the AI step adds a figure that is not in the messages tried; its summaries of them carry no quote marks', () => {
   const msg = 'How much for 12 seats?';
   const normal = aiRead({ name: 'Maya Rivers', message: msg }, 'off');
   const invented = aiRead({ name: 'Maya Rivers', message: msg }, 'invent');
   assert.deepEqual(figuresIn(normal.summary), ['12']);
   assert.deepEqual(figuresIn(invented.summary), ['12', '4800']);
   const avoids = aiRead({ name: 'A', message: 'We have 4800 cups.' }, 'invent');
-  assert.deepEqual(figuresIn(avoids.summary), ['4800', '7350'], 'the invented figure is never one the enquiry has');
+  assert.deepEqual(figuresIn(avoids.summary), ['4800', '7350'], 'the invented figure is not one this message has');
   for (const a of [normal, invented]) assert.doesNotMatch(JSON.stringify(a.summary), /\\"/);
+  // The limits the testing page states: a message holding the four fixed figures gets 8888, even when it holds 8888 too;
+  // a name with quote marks gives a summary with them.
+  const full = aiRead({ name: 'A', message: 'I have 4800 and 7350 and 9120 and 6475 and 8888' }, 'invent');
+  assert.match(full.summary, / The budget is 8888\.$/);
+  assert.match(aiRead({ name: 'Studio "Team"', message: 'Hi' }, 'off').summary, /^Studio "Team" /);
 });
 
 test('figures are read with their thousands commas removed', () => {
