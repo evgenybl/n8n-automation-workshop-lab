@@ -305,7 +305,21 @@ function createOffice(options) {
   }
 
   async function handle(req, res) {
-    const url = new URL(req.url, 'http://office.local');
+    // A request target that is not a path from the office's root, such as //, names no address here.
+    let url = null;
+    if (!String(req.url).startsWith('//')) {
+      try {
+        url = new URL(req.url, 'http://office.local');
+      } catch (e) {
+        url = null;
+      }
+    }
+    if (!url) {
+      req.resume();
+      const target = String(req.url).slice(0, 200);
+      logCall({ method: req.method, path: target, status: 404, detail: 'The office has no such address.' });
+      return sendJson(res, 404, { error: 'The practice office has no such address: ' + req.method + ' ' + target });
+    }
     const p = url.pathname.replace(/\/+$/, '') || '/';
     let raw = '';
     let body = {};
@@ -544,6 +558,13 @@ if (require.main === module) {
   const host = process.env.HOST || '127.0.0.1';
   const port = Number(process.env.PORT || 3333);
   const office = createOffice();
+  office.server.on('error', (e) => {
+    const where = host + ':' + port;
+    const line = e.code === 'EADDRINUSE'
+      ? 'The practice office cannot start: ' + where + ' is already in use by another program.'
+      : 'The practice office cannot start on ' + where + ': ' + e.message;
+    process.stderr.write(line + '\n', () => process.exit(1));
+  });
   office.server.listen(port, host, () => {
     const a = office.server.address();
     process.stdout.write('The practice office is open on http://' + a.address + ':' + a.port + '\n');

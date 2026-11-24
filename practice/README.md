@@ -6,7 +6,8 @@ practice software, not a CRM product, and its AI step is a stand-in that is not 
 
 `compose.yaml` starts it beside n8n on the n8n image's own Node, at `http://localhost:3333` for the browser and
 `http://office:3333` for n8n. To run it alone: `node practice/server.js` (it listens on 127.0.0.1:3333; settings `HOST`,
-`PORT` and `N8N_URL`, the address at which it reaches n8n). Its tests: `node --test "practice/tests/*.test.js"`.
+`PORT` and `N8N_URL`, the address at which it reaches n8n). Started on a port another program uses, it says so in one
+line and stops. Its tests: `node --test "practice/tests/*.test.js"`.
 
 ## Pages
 
@@ -50,7 +51,7 @@ secret; without it the CRM answers 401.
 
 ## What the office refuses
 
-- A body that is not one JSON object: 400. A body over 100 KB: 413.
+- A body that is not one JSON object: 400. A body over 100 KB: 413. An address it does not have, such as `//`: 404.
 - A change (any request other than GET) sent by a page on another site: 403. The office tells such a request by its
   `Origin` header, when that names another host than the one the request was sent to, or by its `Sec-Fetch-Site` header,
   when that says `cross-site`. Its own pages send their own origin; n8n and command-line tools send neither header. This

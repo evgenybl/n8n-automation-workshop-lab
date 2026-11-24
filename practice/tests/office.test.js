@@ -529,6 +529,54 @@ test('the three pages are served with a content security policy and load nothing
   }
 });
 
+test('a request target that names no address of the office, such as //, is answered 404, not 500', async () => {
+  const o = await start();
+  try {
+    const port = new URL(o.base).port;
+    for (const target of ['//', '//elsewhere.example.com/crm/contacts', '//x']) {
+      const r = await new Promise((resolve, reject) => {
+        const req = http.request({ host: '127.0.0.1', port, path: target, method: 'GET', headers: BADGE }, (res) => {
+          let body = '';
+          res.on('data', (c) => (body += c));
+          res.on('end', () => resolve({ status: res.statusCode, body }));
+        });
+        req.on('error', reject);
+        req.end();
+      });
+      assert.equal(r.status, 404, target);
+      assert.match(JSON.parse(r.body).error, /^The practice office has no such address/, target);
+    }
+  } finally {
+    await o.close();
+  }
+});
+
+test('started on its own on a port another program uses, the office says so in one plain line and exits non-zero', async () => {
+  const taken = http.createServer(() => {});
+  await new Promise((r) => taken.listen(0, '127.0.0.1', r));
+  const port = taken.address().port;
+  try {
+    const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
+      env: Object.assign({}, process.env, { PORT: String(port), HOST: '127.0.0.1' }),
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let out = '';
+    child.stdout.on('data', (c) => (out += c));
+    child.stderr.on('data', (c) => (out += c));
+    const code = await new Promise((resolve, reject) => {
+      child.on('exit', resolve);
+      setTimeout(() => {
+        child.kill();
+        reject(new Error('the office did not stop: ' + out));
+      }, 5000);
+    });
+    assert.notEqual(code, 0);
+    assert.equal(out, 'The practice office cannot start: 127.0.0.1:' + port + ' is already in use by another program.\n');
+  } finally {
+    await new Promise((r) => taken.close(r));
+  }
+});
+
 test('started on its own, the office listens on 127.0.0.1 only', async () => {
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
     env: Object.assign({}, process.env, { PORT: '0', HOST: '' }),
