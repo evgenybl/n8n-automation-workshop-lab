@@ -1,16 +1,16 @@
 {
-  "id": "xValidate0000001",
-  "name": "X1 validate",
+  "id": "labStage2Solution",
+  "name": "Stage 2 solution: Refuse a bad one",
   "active": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "x-validate",
+        "path": "stage-2-solution",
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "8d35d54a-1b01-4c8d-bd76-ef62032f7c8b",
+      "id": "d63513b5-fd82-42d5-a257-b49609f2d402",
       "name": "Enquiry arrives",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.2,
@@ -18,7 +18,7 @@
         0,
         0
       ],
-      "webhookId": "ecf8d7b6-7a95-481a-b2a7-a8a7f68c1b45"
+      "webhookId": "a4792448-4843-40a9-9eb8-4a254f11de7c"
     },
     {
       "parameters": {
@@ -45,47 +45,12 @@
         "looseTypeValidation": false,
         "options": {}
       },
-      "id": "7807080b-98d9-4b14-a8a2-0fda58eb9a00",
+      "id": "897c53c0-23c6-4755-b4d2-38c29f0366d3",
       "name": "Has an e-mail?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
         260,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 4
-          },
-          "conditions": [
-            {
-              "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
-              "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": false,
-        "options": {}
-      },
-      "id": "5b620c74-204e-4f1c-829d-bc18a98c555b",
-      "name": "Consent given?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.4,
-      "position": [
-        520,
         0
       ]
     },
@@ -115,8 +80,43 @@
         "looseTypeValidation": false,
         "options": {}
       },
-      "id": "b86ca84d-2fbb-4ea2-b564-c0a5b337e5b1",
+      "id": "eaddcd3f-37b0-413a-9e8a-0a60d5e8cf2c",
       "name": "Honeypot empty?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
+              "leftValue": "={{ $json.body.consent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "c2cc3776-0755-4738-aa67-aba7a0d71a62",
+      "name": "Consent given?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
@@ -127,27 +127,12 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"received\": \"{{ $json.body.name }}\"\n}",
-        "options": {}
-      },
-      "id": "de8c56a2-700e-4afd-b956-c2f690ccb56b",
-      "name": "Answer: received",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        1040,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\n  \"refused\": \"no e-mail\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry has no e-mail address.\"\n}",
         "options": {
           "responseCode": 400
         }
       },
-      "id": "fe93dc56-58c6-4917-b6a3-19a32fc98243",
+      "id": "4530547a-bb1f-49c5-9c04-6865cab89adf",
       "name": "Refuse: no e-mail",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
@@ -159,13 +144,13 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"refused\": \"no consent\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The hidden website field is filled in, so this looks like a robot.\"\n}",
         "options": {
           "responseCode": 400
         }
       },
-      "id": "f5f3a172-cf2e-4a08-ba68-39a773893bd9",
-      "name": "Refuse: no consent",
+      "id": "3db3582c-e7da-4590-b40d-1ab59ae6821e",
+      "name": "Refuse: looks like a robot",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
@@ -176,18 +161,33 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"refused\": \"robot\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
         "options": {
           "responseCode": 400
         }
       },
-      "id": "746071b3-afa6-4cae-8d9d-d1239f2359a4",
-      "name": "Refuse: robot",
+      "id": "13fded30-d4c7-43f2-9c34-3d7c4ca58501",
+      "name": "Refuse: no consent",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
         1040,
         180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": \"{{ $json.body.name }}\"\n}",
+        "options": {}
+      },
+      "id": "888f717e-5826-4001-ab1d-a2307affb3a6",
+      "name": "Answer with the name",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        0
       ]
     }
   ],
@@ -207,7 +207,7 @@
       "main": [
         [
           {
-            "node": "Consent given?",
+            "node": "Honeypot empty?",
             "type": "main",
             "index": 0
           }
@@ -221,11 +221,29 @@
         ]
       ]
     },
+    "Honeypot empty?": {
+      "main": [
+        [
+          {
+            "node": "Consent given?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: looks like a robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Consent given?": {
       "main": [
         [
           {
-            "node": "Honeypot empty?",
+            "node": "Answer with the name",
             "type": "main",
             "index": 0
           }
@@ -233,24 +251,6 @@
         [
           {
             "node": "Refuse: no consent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Honeypot empty?": {
-      "main": [
-        [
-          {
-            "node": "Answer: received",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Refuse: robot",
             "type": "main",
             "index": 0
           }

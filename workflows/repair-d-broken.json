@@ -1,0 +1,454 @@
+{
+  "id": "labRepairDBroken0",
+  "name": "Repair D, broken: says done, no note",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "repair-d",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "4ab95af4-9030-4400-a934-b7b2a9c859fe",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "d1e198b7-9800-4a5e-8212-2d042acd4593"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "44b79c78-f8af-4582-ace9-702a34527430",
+              "leftValue": "={{ $json.body.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "5cc0fb96-d23d-426c-a336-71685e393731",
+      "name": "Has an e-mail?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "53509c13-4e00-497d-acb8-291b81c3dc3b",
+              "leftValue": "={{ $json.body.website }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "a04686a2-a1ba-40d6-b2a7-1aa31b4c57a7",
+      "name": "Honeypot empty?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
+              "leftValue": "={{ $json.body.consent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "32d67d37-6a7c-4d38-a83a-36748dd8b744",
+      "name": "Consent given?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry has no e-mail address.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "5e0610a5-a4ba-4a92-8f8d-b51f4cedee12",
+      "name": "Refuse: no e-mail",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The hidden website field is filled in, so this looks like a robot.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "8cfd0b55-aeba-4cb4-8247-01265ccdb1c5",
+      "name": "Refuse: looks like a robot",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "7d2294a0-331b-4cb8-b756-e14961d2e7d8",
+      "name": "Refuse: no consent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://office:3333/crm/contacts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Office-Badge",
+              "value": "practice-badge"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "290a3db3-9026-4310-898a-d2cca89ad4ee",
+      "name": "Look up the contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "93d7ec73-d3d0-49d3-ad61-19044bbc8fc9",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "d0af07de-2753-4af1-ad27-90150dc96360",
+      "name": "Known contact?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        260,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://office:3333/crm/contacts/{{ $json.contact.id }}/notes",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $('Enquiry arrives').item.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff13f9cd-67ba-4dd7-a962-5df1c4177ab9",
+      "name": "Add a note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        360
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/crm/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Office-Badge",
+              "value": "practice-badge"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Enquiry arrives').item.json.body.name }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            },
+            {
+              "name": "company",
+              "value": "={{ $('Enquiry arrives').item.json.body.company }}"
+            },
+            {
+              "name": "note",
+              "value": "={{ $('Enquiry arrives').item.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3060cdac-ff72-4cfb-922e-6aec5d0d80cf",
+      "name": "Create the contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"recorded\",\n  \"contact\": \"{{ $json.contact }}\"\n}",
+        "options": {}
+      },
+      "id": "8d3f448a-6e14-4e35-8688-fcb743edf2a5",
+      "name": "Answer: recorded",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Has an e-mail?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has an e-mail?": {
+      "main": [
+        [
+          {
+            "node": "Honeypot empty?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: no e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Honeypot empty?": {
+      "main": [
+        [
+          {
+            "node": "Consent given?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: looks like a robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consent given?": {
+      "main": [
+        [
+          {
+            "node": "Look up the contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: no consent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look up the contact": {
+      "main": [
+        [
+          {
+            "node": "Known contact?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known contact?": {
+      "main": [
+        [
+          {
+            "node": "Add a note",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create the contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a note": {
+      "main": [
+        [
+          {
+            "node": "Answer: recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create the contact": {
+      "main": [
+        [
+          {
+            "node": "Answer: recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

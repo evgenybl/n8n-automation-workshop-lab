@@ -224,7 +224,7 @@ function createOffice(options) {
       const firstNote = clean(body.note, 4000);
       if (firstNote) contact.notes.push({ id: 'N' + state.next.note++, text: firstNote, at: nowIso() });
       state.contacts.push(contact);
-      return [201, Object.assign(contactView(contact), { created: true })];
+      return [201, Object.assign(contactView(contact), { contact: contact.id, created: true })];
     }
     if (parts.length === 4 && parts[3] === 'notes' && req.method === 'POST') {
       const contact = state.contacts.find((c) => c.id === parts[2]);
@@ -288,6 +288,17 @@ function createOffice(options) {
     if (req.method === 'GET' && p === '/form') return page(res, 'form.html');
     if (req.method === 'GET' && p === '/inbox') return page(res, 'inbox.html');
     if (req.method === 'GET' && p === '/health') return sendJson(res, 200, { ok: true });
+    if (req.method === 'GET' && p === '/api/check') {
+      // The setup check: is the office open, and can it reach n8n by the address it was given?
+      let n8n = 'not reachable';
+      try {
+        const r = await fetch(n8nUrl + '/healthz/readiness', { signal: AbortSignal.timeout(3000) });
+        n8n = r.status === 200 ? 'ready' : 'starting (readiness answered ' + r.status + ')';
+      } catch (e) {
+        n8n = 'not reachable';
+      }
+      return sendJson(res, 200, { office: 'open', n8n, n8nAddress: n8nUrl });
+    }
     if (req.method === 'GET' && p === '/api/state') {
       return sendJson(res, 200, {
         contacts: state.contacts,
@@ -481,7 +492,8 @@ if (require.main === module) {
   const port = Number(process.env.PORT || 3333);
   const office = createOffice();
   office.server.listen(port, host, () => {
-    process.stdout.write('The practice office is open on http://' + host + ':' + port + '\n');
+    const a = office.server.address();
+    process.stdout.write('The practice office is open on http://' + a.address + ':' + a.port + '\n');
   });
   const stop = () => office.server.close(() => process.exit(0));
   process.on('SIGTERM', stop);

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="554" height="212" viewBox="0 0 554 212" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Stage 2 starter: Refuse a bad one</title>
+<desc id="d">Drawn by tools/draw-workflow.js from workflows/stage-2-starter.json. Nodes: Enquiry arrives; Answer with the name.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6570"/></marker></defs>
+<rect x="0" y="0" width="554" height="212" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="bold" fill="#1b1f24">Stage 2 starter: Refuse a bad one</text>
+<text x="40" y="48" font-size="11" fill="#4a5561">Drawn from workflows/stage-2-starter.json by tools/draw-workflow.js</text>
+<path d="M 254 106 C 294 106, 260 114, 300 114" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<g>
+<rect x="40" y="76" width="214" height="76" rx="8" fill="#e3f4e6" stroke="#2e7d3c" stroke-width="1.6"/>
+<text x="50" y="91" font-size="10" fill="#2e7d3c">Trigger: webhook</text>
+<text x="50" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Enquiry arrives</text>
+<text x="50" y="145" font-size="10" fill="#4a5561">POST /stage-2</text>
+</g>
+<g>
+<rect x="300" y="76" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="310" y="91" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="310" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Answer with the name</text>
+<text x="310" y="145" font-size="10" fill="#4a5561">answers 200</text>
+</g>
+</svg>

@@ -1,0 +1,56 @@
+{
+  "id": "labStage2Starter00",
+  "name": "Stage 2 starter: Refuse a bad one",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stage-2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c70e0c6c-d72a-410b-957a-e612f96f6c7c",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "31a32042-3a31-4891-a129-8a971a4eba84"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": \"{{ $json.body.name }}\"\n}",
+        "options": {}
+      },
+      "id": "8a94ee70-250d-477b-ba8c-e45e09e000b4",
+      "name": "Answer with the name",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        260,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Answer with the name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1334" height="752" viewBox="0 0 1334 752" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Stage 3 solution: No duplicates</title>
+<desc id="d">Drawn by tools/draw-workflow.js from workflows/stage-3-solution.json. Nodes: Enquiry arrives; Has an e-mail?; Honeypot empty?; Consent given?; Refuse: no e-mail; Refuse: looks like a robot; Refuse: no consent; Look up the contact; Known contact?; Add a note; Create the contact; Answer: recorded.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6570"/></marker></defs>
+<rect x="0" y="0" width="1334" height="752" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="bold" fill="#1b1f24">Stage 3 solution: No duplicates</text>
+<text x="40" y="48" font-size="11" fill="#4a5561">Drawn from workflows/stage-3-solution.json by tools/draw-workflow.js</text>
+<path d="M 254 106 C 294 106, 260 114, 300 114" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 514 106 C 554 106, 520 114, 560 114" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="520" y="101" font-size="11" fill="#5b6570">true</text>
+<path d="M 514 122 C 554 122, 520 294, 560 294" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="520" y="135" font-size="11" fill="#5b6570">false</text>
+<path d="M 774 106 C 814 106, 780 114, 820 114" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="780" y="101" font-size="11" fill="#5b6570">true</text>
+<path d="M 774 122 C 814 122, 780 294, 820 294" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="780" y="135" font-size="11" fill="#5b6570">false</text>
+<path d="M 1034 106 L 1046 106 L 1046 404 L 16 404 L 16 474 L 40 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1040" y="101" font-size="11" fill="#5b6570">true</text>
+<path d="M 1034 122 C 1074 122, 1040 294, 1080 294" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1040" y="135" font-size="11" fill="#5b6570">false</text>
+<path d="M 254 466 C 294 466, 260 474, 300 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 514 466 C 554 466, 520 474, 560 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="520" y="461" font-size="11" fill="#5b6570">true</text>
+<path d="M 514 482 C 554 482, 520 654, 560 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="520" y="495" font-size="11" fill="#5b6570">false</text>
+<path d="M 774 466 C 814 466, 780 474, 820 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 774 646 C 814 646, 780 474, 820 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<g>
+<rect x="40" y="76" width="214" height="76" rx="8" fill="#e3f4e6" stroke="#2e7d3c" stroke-width="1.6"/>
+<text x="50" y="91" font-size="10" fill="#2e7d3c">Trigger: webhook</text>
+<text x="50" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Enquiry arrives</text>
+<text x="50" y="145" font-size="10" fill="#4a5561">POST /stage-3-solution</text>
+</g>
+<g>
+<rect x="300" y="76" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
+<text x="310" y="91" font-size="10" fill="#9a7400">If</text>
+<text x="310" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Has an e-mail?</text>
+<text x="310" y="145" font-size="10" fill="#4a5561">true / false</text>
+</g>
+<g>
+<rect x="560" y="76" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
+<text x="570" y="91" font-size="10" fill="#9a7400">If</text>
+<text x="570" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Honeypot empty?</text>
+<text x="570" y="145" font-size="10" fill="#4a5561">true / false</text>
+</g>
+<g>
+<rect x="820" y="76" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
+<text x="830" y="91" font-size="10" fill="#9a7400">If</text>
+<text x="830" y="110" font-size="14" font-weight="bold" fill="#1b1f24">Consent given?</text>
+<text x="830" y="145" font-size="10" fill="#4a5561">true / false</text>
+</g>
+<g>
+<rect x="560" y="256" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="570" y="271" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="570" y="290" font-size="14" font-weight="bold" fill="#1b1f24">Refuse: no e-mail</text>
+<text x="570" y="325" font-size="10" fill="#4a5561">answers 400</text>
+</g>
+<g>
+<rect x="820" y="256" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="830" y="271" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="830" y="290" font-size="14" font-weight="bold" fill="#1b1f24">Refuse: looks like a</text>
+<text x="830" y="307" font-size="14" font-weight="bold" fill="#1b1f24">robot</text>
+<text x="830" y="325" font-size="10" fill="#4a5561">answers 400</text>
+</g>
+<g>
+<rect x="1080" y="256" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="1090" y="271" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="1090" y="290" font-size="14" font-weight="bold" fill="#1b1f24">Refuse: no consent</text>
+<text x="1090" y="325" font-size="10" fill="#4a5561">answers 400</text>
+</g>
+<g>
+<rect x="40" y="436" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="50" y="451" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="50" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Look up the contact</text>
+<text x="50" y="505" font-size="10" fill="#4a5561">GET /crm/contacts</text>
+</g>
+<g>
+<rect x="300" y="436" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
+<text x="310" y="451" font-size="10" fill="#9a7400">If</text>
+<text x="310" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Known contact?</text>
+<text x="310" y="505" font-size="10" fill="#4a5561">true / false</text>
+</g>
+<g>
+<rect x="560" y="436" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="570" y="451" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="570" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Add a note</text>
+<text x="570" y="505" font-size="10" fill="#4a5561">POST /crm/contacts/{id}/notes</text>
+</g>
+<g>
+<rect x="560" y="616" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="570" y="631" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="570" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Create the contact</text>
+<text x="570" y="685" font-size="10" fill="#4a5561">POST /crm/contacts</text>
+</g>
+<g>
+<rect x="820" y="436" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="830" y="451" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="830" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Answer: recorded</text>
+<text x="830" y="505" font-size="10" fill="#4a5561">answers 200</text>
+</g>
+</svg>

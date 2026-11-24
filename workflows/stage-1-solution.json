@@ -1,0 +1,56 @@
+{
+  "id": "labStage1Solution",
+  "name": "Stage 1 solution: Catch an enquiry",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stage-1-solution",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "dffdfab3-d7ac-46f7-beb2-b6cc4f4c5369",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "8bb4e92f-93ca-448b-85ae-de4d652f2328"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": \"{{ $json.body.name }}\"\n}",
+        "options": {}
+      },
+      "id": "4bf72453-5c9a-4339-86e1-35c93b0a4f12",
+      "name": "Answer with the name",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        260,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Answer with the name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

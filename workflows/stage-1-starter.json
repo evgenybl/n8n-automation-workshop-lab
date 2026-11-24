@@ -1,0 +1,29 @@
+{
+  "id": "labStage1Starter00",
+  "name": "Stage 1 starter: Catch an enquiry",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stage-1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "6effe182-5dbc-443d-a559-4839696857d8",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "922128fd-8ab8-479f-986d-384c6be46b1f"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -2,30 +2,71 @@ name: CI
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  experiments:
-    name: n8n experiments (Linux)
+  lab:
+    name: The lab on Linux, with n8n
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38  # v6
         with:
           node-version: 24
-      - name: Start n8n and the practice office
-        run: docker compose up -d
-      - name: Load every workflow
+
+      - name: The office's tests and the other tests that need no container
+        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js"
+
+      - name: The static checks of every workflow file
+        run: node tools/check-workflows.js
+
+      - name: Every workflow file is what the generator writes
+        run: node tools/build-workflows.js --check
+
+      - name: Every picture is drawn again and compared with its file
+        run: node tools/draw-workflow.js --check
+
+      - name: Start n8n and the practice office, as the compose file starts them
+        run: |
+          docker compose up -d
+          docker compose ps
+
+      - name: Load and publish every workflow file
         run: node tools/load.js
-      - name: Run the experiments
-        run: node experiments/run.js
-      - name: The office's log
-        if: always()
-        run: docker compose logs office 2>&1 | tail -40
-      - name: n8n's log
-        if: always()
-        run: docker compose logs n8n 2>&1 | tail -150
+
+      - name: Every scenario, through the published webhooks
+        env:
+          LAB_LIVE: "1"
+        run: node --test --test-reporter=tap tests/scenarios.test.js
+
+      - name: The logs, when something failed
+        if: failure()
+        run: |
+          docker compose logs office 2>&1 | tail -60
+          docker compose logs n8n 2>&1 | tail -200
+
+  windows:
+    name: What needs no container, on Windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38  # v6
+        with:
+          node-version: 24
+
+      - name: The office's tests and the other tests that need no container
+        run: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js"
+
+      - name: The static checks of every workflow file
+        run: node tools/check-workflows.js
+
+      - name: The picture tool, compared with every picture
+        run: node tools/draw-workflow.js --check
