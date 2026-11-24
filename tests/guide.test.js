@@ -501,6 +501,31 @@ test('the timeout, the badge and the On Error settings the text describes are th
   assert.match(stages()[2].text, /header\s+`X-Office-Badge` with the value `practice-badge`/, 'stage 3 names the badge');
 });
 
+test('the status the pages give for a second contact with the same e-mail is the one the practice CRM answers', async () => {
+  const { createOffice } = require('../practice/server.js');
+  const said = [];
+  const s3 = stages()[2].text.replace(/\s+/g, ' ').match(/refuses a second contact with the same e-mail, with status (\d+)/);
+  assert.ok(s3, 'stage 3 says what the practice CRM answers to a second contact');
+  said.push(['participant/guide.md', s3[1]]);
+  for (const m of read('instructor/guide.md').replace(/\s+/g, ' ').matchAll(/refuses the second with (\d+)/g)) said.push(['instructor/guide.md', m[1]]);
+  assert.ok(said.length >= 3, 'the stage 3 guide and the instructor guide give it');
+  const office = createOffice({ n8nUrl: 'http://127.0.0.1:9' });
+  await new Promise((r) => office.server.listen(0, '127.0.0.1', r));
+  try {
+    const base = 'http://127.0.0.1:' + office.server.address().port;
+    const create = () => fetch(base + '/crm/contacts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-office-badge': 'practice-badge' },
+      body: JSON.stringify({ name: 'Maya Rivers', email: 'maya.rivers@example.com' }),
+    });
+    assert.equal((await create()).status, 201);
+    const second = (await create()).status;
+    for (const [f, code] of said) assert.equal(Number(code), second, f);
+  } finally {
+    await new Promise((r) => office.server.close(r));
+  }
+});
+
 // ---------- the repairs ----------
 
 function repairSections() {
