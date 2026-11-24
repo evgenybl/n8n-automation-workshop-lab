@@ -109,7 +109,7 @@ The full account, in the same plain terms, is `docs/HOW-THIS-WAS-TESTED.md`. In 
 
 | Kind of evidence | State |
 |---|---|
-| Automated tests of the office, the checker, the workflow files, the lab guide against them, the pictures and these pages | Done; run on Linux and Windows in CI, and locally on Windows |
+| Automated tests of the office, the checker, the workflow files, the lab guide against them, the pictures and these pages | Done; run on Linux and Windows in CI, and locally on macOS (arm64) and, up to commit 1f75afb, on Windows |
 | Every workflow file run in CI on n8n 2.48.8 | Done: all 22 imported, published and driven through their webhooks with no screen; each solution passes its checks, each broken file shows its symptom, each repaired file does not |
 | A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version |
 | An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it; not repeated after that |

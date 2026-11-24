@@ -5,7 +5,7 @@ and with the version it was done on.
 
 | Kind of evidence | What it is here | State |
 |---|---|---|
-| Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: on Windows locally and in CI, and on Linux in CI. The last local run is pasted below. |
+| Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: in CI on Linux and on Windows; locally on macOS (arm64) with Node 24.22.3 and with Node 22.23.5, and before that on Windows with Node 24, up to commit 1f75afb. The last local run is pasted below. |
 | Every workflow file run in CI on n8n 2.48.8 | n8n and the practice office started as `compose.yaml` starts them; all 22 workflow files imported and published with n8n's own command line; every one driven through its webhook with no screen, and every answer quoted in the guides replayed and compared | Done in CI. The run and its summary are pasted below; the badge at the top of the README shows the latest run on `main`. |
 | A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what each was given, did and found, and what was changed. |
 | An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it; not repeated after that | See below: what each was given, did and found, and what was changed. |
@@ -43,19 +43,22 @@ everywhere.
 | `tests/docs.test.js` | Plain ASCII and LF line ends in every file; no absolute path; every e-mail address at example.com; no package files; no claim of a class taught, a workshop delivered, production use, clients or results; no claim that nothing needs paying for, and nothing left to paste; the "not taught", "planned, not measured", screen-steps and "stand-in that is not a model" lines where they belong; each session of the run sheet adds up to its stated 120 minutes, the README and the instructor guide give the same parts, minutes and debrief questions, each variant adds up to its stated total with the run sheet's stage minutes, and session 2 when assessing gives repair C and the practical check their own planned minutes, the same on every page that states them; links and pictures resolve; every quoted answer is marked for replay, with real flows, people and faults; the README's and this page's evidence rows, the number of workflow files, and that a CI run is cited only with its commit; the README's badge with its full addresses; the README's text for the finished flow's picture against which calls in the file have an error branch; the practical check's page on keeping it unseen; every test file is named on this page; the licence line on every teaching page, the README's licence table and the licence notice in agreement, every file under exactly one licence; the third parties' terms; the setup page's browsers, password rule, check and proxy; the author line; the compose file's ports and addresses; pinned actions; the order of the load script's modes in CI and on the run sheet. |
 | `tests/scenarios.test.js` | In CI only: see the next section. |
 
-**The last lines of the last local run**, as printed, on Windows with Node 24:
+**The last lines of the last local run**, as printed, on macOS (arm64) with Node 24.22.3, on the files of commit d5b1d0f
+with this change to the page. The run with Node 22.23.5 printed the same counts. The local run on Windows with Node 24
+at commit 1f75afb printed 201 tests, 144 passed and 57 skipped; the 22 tests added since are tests of the practice
+office, the checker, the lab guide and these pages.
 
 <!-- pasted (local) from: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" (the last lines) -->
 ```text
-1..201
-# tests 201
+1..223
+# tests 223
 # suites 0
-# pass 144
+# pass 166
 # fail 0
 # cancelled 0
 # skipped 57
 # todo 0
-# duration_ms 10777.5189
+# duration_ms 9683.430917
 ```
 
 The skipped tests are the scenario tests, which need n8n.
