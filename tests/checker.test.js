@@ -136,6 +136,9 @@ refuses('a basic credential under a header not named like a secret', (wf) => {
 refuses('a key-shaped value written inside an expression', (wf) => {
   node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Thing', value: '={{ "' + TOKEN + '" }}' });
 }, /token-like value/);
+refuses('a key-shaped value inside an expression and outside any quoted text', (wf) => {
+  node(wf, 'Look up the contact').parameters.headerParameters.parameters.push({ name: 'X-Thing', value: '={{ $json.id /* ' + TOKEN + ' */ }}' });
+}, /token-like value/);
 refuses('a long run of letters and digits written as a text inside an expression', (wf) => {
   node(wf, 'Create the contact').parameters.bodyParameters.parameters.push({ name: 'ref', value: "={{ '" + LONG + "' }}" });
 }, /token-like value/);
