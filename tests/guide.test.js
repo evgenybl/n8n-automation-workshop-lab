@@ -360,6 +360,21 @@ test('each stage\'s form address and planned minutes agree with its starter and 
   }
 });
 
+test('stage 2 says which checks compare text as it is, as its solution sets them, and asks about an enquiry with no name', () => {
+  const text = stages()[1].text.replace(/\s+/g, ' ');
+  const said = text.match(/\*\*The other two checks compare text as it is\.\*\* \*([^*]+)\* and \*([^*]+)\* leave \*Convert types where required\* off/);
+  assert.ok(said, 'stage 2 names the two checks that compare text as it is');
+  const nodes = byName(load('stage-2-solution.json'));
+  for (const name of [said[1], said[2]]) {
+    assert.equal(nodes.get(name).parameters.looseTypeValidation, false, name);
+    assert.equal(nodes.get(name).parameters.conditions.options.typeValidation, 'strict', name);
+  }
+  assert.equal(nodes.get('Consent given?').parameters.looseTypeValidation, true, 'the third converts types');
+  assert.ok(text.includes('is not tried by any test of this lab.'));
+  assert.ok(text.includes('The stage 2 flow does not check the name.'));
+  assert.ok(text.includes('An enquiry with no name is not tried by any test of this lab'));
+});
+
 // ---------- the values in the prose ----------
 
 function httpNodes(n) {

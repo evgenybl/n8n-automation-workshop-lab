@@ -249,6 +249,11 @@ checkbox on a real website sends `on` instead. With *Convert types where require
 into text and asks whether it is exactly `true`: `true` passes, and `false`, `on` or a missing value are refused with the
 reason. Decide what a valid value is, and refuse everything else with a reason, rather than guessing what a sender meant.
 
+**The other two checks compare text as it is.** *Has an e-mail?* and *Honeypot empty?* leave *Convert types where
+required* off, so they expect text. A plain web form sends every field as text, and the lab's form sends the e-mail and
+the hidden field as text. What these two checks do with a value that is not text, such as a number, is not tried by any
+test of this lab.
+
 **Look at it afterwards.** Send four enquiries from the form: the sample as it is (answered as in stage 1); the sample
 with the e-mail box emptied; the sample with *Act as a robot* ticked; the sample with the consent box unticked.
 
@@ -281,6 +286,11 @@ Answer:    {"status":"refused","reason":"The enquiry does not agree to be contac
 **Check yourself in the office window.** Choose **Reset the office**, send the three bad enquiries again, and look: they
 reached nothing but your flow. There is no CRM call, no AI step call and no inbox call, only **Form** rows with "the flow
 answered 400".
+
+**Going further: a question, not a step.** The stage 2 flow does not check the name. An enquiry with no name at all (the
+lab's form always sends one, even an empty one, but another sender may not) passes the three checks and reaches the answer
+that carries the name. What should your flow answer to it, and which check would you add? An enquiry with no name is not
+tried by any test of this lab, so this guide does not say what n8n answers to it.
 
 ---
 

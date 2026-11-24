@@ -1,7 +1,7 @@
 'use strict';
 // The workflow files: current with their generator; each starter is the previous stage's solution plus that stage's parts,
 // each part as it is in the stage's solution except the setting left to the participant; each broken file differs from its
-// repaired file in exactly the places its exercise names; every answer a flow gives is valid JSON whatever the enquiry says.
+// repaired file in exactly the places its exercise names; every answer stays valid JSON for the worst names tried.
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -175,7 +175,7 @@ test('check G: they differ only in the note text, which is the unchecked AI summ
 // The fields an enquiry fills in, and an error's text: free text a person or a system wrote.
 const FREE_TEXT = /\b(name|email|message|company|website|consent|reason|error|summary|note)\b/;
 
-test('every answer is valid JSON whatever the enquiry says: free text enters an answer only through JSON.stringify, never inside quote marks', () => {
+test('every answer stays valid JSON for a name with quote marks, a forging name, a backslash or a line break: free text enters an answer only through JSON.stringify, never inside quote marks', () => {
   // CI run 45318193799 showed why: an error message with quote marks inside a JSON answer broke the answer. The first
   // review showed that a name does the same, and can forge a field.
   for (const f of files()) {
