@@ -69,12 +69,20 @@ test('there are no package files: the lab installs nothing', () => {
   for (const f of ['package.json', 'package-lock.json', 'node_modules']) assert.ok(!fs.existsSync(path.join(ROOT, f)), f);
 });
 
-test('no page speaks of clients or customers, and none claims a class, a workshop delivered, or production use', () => {
-  // This file is the one place that names the words, in order to look for them.
+// Phrases that would claim the lab was taught or delivered, that it runs somewhere for real, or that it has clients,
+// users or results to show. This file is the one place that names them, in order to look for them.
+const CLAIMS = [
+  /\b(was taught|we taught|has been taught|delivered (this|the) (workshop|lab)|in production at)\b/i,
+  /\b(our|my|his|her|their) (clients?|customers?)\b/i,
+  /\b(clients?|customers?|participants|students|attendees) (said|say|reported|saw|loved|rated)\b/i,
+  /\b(used|trusted|taught) by (teams|companies|businesses|organi[sz]ations|clients|customers)\b/i,
+  /\b(case stud(y|ies)|testimonials?)\b/i,
+];
+
+test('no file claims a class taught, a workshop delivered, production use, clients or results', () => {
   for (const f of FILES.filter((x) => /\.(md|html|js|json|yaml|yml)$/.test(x) && x !== 'tests/docs.test.js')) {
     const text = read(f);
-    assert.doesNotMatch(text, /\b(clients?|customers?)\b/i, f);
-    assert.doesNotMatch(text, /\b(was taught|we taught|has been taught|delivered (this|the) (workshop|lab)|in production at)\b/i, f);
+    for (const re of CLAIMS) assert.doesNotMatch(text, re, f);
   }
 });
 
