@@ -497,7 +497,7 @@ for (const q of quotedAnswers()) {
 
 test('the README\'s "Try it" command gives the output the README shows', live, async (t) => {
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  const m = readme.match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```\s*<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
+  const m = readme.match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```[\s\S]*?<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
   assert.ok(m, 'the README marks its command and its output');
   const commands = m[1].trim().split('\n').filter((l) => l.startsWith('curl '));
   assert.equal(commands.length, 1, 'one curl command');

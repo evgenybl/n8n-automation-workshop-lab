@@ -239,6 +239,13 @@ test('the README ends with the author line, and says nothing else about the auth
   assert.equal((text.match(/Evgeny Blekhman/g) || []).length, 1);
 });
 
+test('the README marks its "Try it" command and output, as the scenario test that runs the command reads them', () => {
+  const m = read('README.md').match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```[\s\S]*?<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
+  assert.ok(m);
+  assert.deepEqual(m[1].trim().split('\n').map((l) => l.split(' ')[0]), ['docker', 'node', 'curl']);
+  assert.match(m[1], /http:\/\/localhost:5678\/webhook\/stage-6-solution/);
+});
+
 test('the README and the testing page agree on what is owed', () => {
   for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md']) {
     const text = read(f);

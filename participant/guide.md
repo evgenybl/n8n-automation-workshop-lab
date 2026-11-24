@@ -26,7 +26,10 @@ Before you start, do the setup page (`setup.md`) and its check. Every person and
 | **Path** | The last part of a webhook's address, such as `stage-3` in `http://localhost:5678/webhook/stage-3`. |
 | **Execution** | One run of a flow. n8n keeps a record of each one, step by step. |
 | **Expression** | A value that n8n works out while the flow runs, written between `{{` and `}}`, such as `{{ $json.body.email }}` (the e-mail of the enquiry this node received). |
-| **Publish** | Make a flow live, so its webhook answers. A change takes effect only when you publish again. |
+| **Publish** | Make a flow live, so its webhook answers. n8n's documentation says your edits stay a draft until you publish again. |
+| **JSON** | A plain-text way of writing data as names and values, such as `{"name": "Maya Rivers"}`. The form, the flow and the office send each other JSON. |
+| **HTTP request** | How programs on the web call each other: an address, a method (`GET` to read, `POST` to send), and sometimes headers and a body of data. n8n's **HTTP Request** node makes one. |
+| **Status** | The number every answer on the web starts with: `200` fine; `202` accepted, not finished yet; `400` the request was wrong; `401` not allowed; `404` nothing here; `409` a conflict, such as a record that exists already; `500` the server failed; `502` a system behind it failed. |
 | **CRM** | The system where a business keeps its contacts and notes. Here it is a practice CRM inside the practice office: practice software, not a CRM product. |
 | **Duplicate** | A second record for the same person. Stage 3 stops them. |
 
@@ -44,6 +47,9 @@ Before you start, do the setup page (`setup.md`) and its check. Every person and
    gives the full address). Choose **Fill a sample enquiry**, then **Send**. The form shows what your flow answered.
 6. **Check yourself** in the office window, `http://localhost:3333`: it shows the contacts, the notes, the approvals, the
    failures your flow reported, and every call the office received, newest first.
+
+**Starting a stage again?** Import its starter into a new workflow as above, but first unpublish or delete your earlier
+copy (the arrow next to **Publish** has **Unpublish**), so that only one flow listens at the stage's path.
 
 **Four habits that save time**
 
@@ -183,7 +189,8 @@ harm when it runs twice *idempotent*; here, it means "the second time, add a not
 `practice-badge`. This is a practice value printed in this guide, not a secret: the point is to see, in repair D, what
 happens when a call does not carry it. And n8n reaches the office at `http://office:3333`, not `localhost`: inside the lab,
 n8n and the office run in two containers that know each other by name. (A *header* is a line of extra information sent
-with a call, before the data.)
+with a call, before the data. A *query parameter* is a name and a value added to an address after a `?`, such as
+`?email=maya.rivers@example.com`: here, it tells the CRM whom to look up.)
 
 | # | Node | Setting | Value |
 |---|---|---|---|

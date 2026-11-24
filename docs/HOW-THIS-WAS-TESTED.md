@@ -44,15 +44,15 @@ current) run everywhere.
 
 <!-- pasted (local) from: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" (the last lines) -->
 ```text
-1..137
-# tests 137
+1..138
+# tests 138
 # suites 0
-# pass 89
+# pass 90
 # fail 0
 # cancelled 0
 # skipped 48
 # todo 0
-# duration_ms 9023.5437
+# duration_ms 9064.8761
 ```
 
 The 48 skipped are the scenario tests, which need n8n.

@@ -51,7 +51,8 @@ starts from what you see.
 ## Someone lost
 
 - Every stage has a starter file. A person who is lost imports the next stage's starter and goes on from there: they lose
-  one stage, not the session.
+  one stage, not the session. A person who restarts the *same* stage should unpublish or delete their earlier copy first,
+  so that only one flow listens at that stage's path.
 - If they are lost inside a stage, compare their canvas with the stage's picture (`docs/pictures/stage-N-solution.svg`) or
   import the solution file into a second workflow and look at both side by side. A solution listens at its own path,
   `stage-N-solution`, so it does not clash with theirs.
