@@ -20,17 +20,19 @@ If your room has no internet, your instructor gives you printed copies.
   needs, so nothing else is installed on your laptop. Install it from Docker's own site, docs.docker.com, following its
   guide for your system, and start it once so that it finishes its own setup; it may ask for a restart.
   - **On Windows**, Docker's installation page (https://docs.docker.com/desktop/setup/install/windows-install/) asks
-    for the WSL 2 feature turned on, and hardware virtualisation enabled in the BIOS/UEFI. It says the per-user
-    installation it recommends needs no administrator rights, but that turning on WSL 2 the first time does, once per
-    computer. On a work laptop, ask your IT department before you start.
+    for the WSL 2 feature turned on, and hardware virtualisation enabled in the BIOS/UEFI (the settings a computer offers
+    as it starts, before Windows). It says the per-user installation it recommends needs no administrator rights, but
+    that turning on WSL 2 the first time does, once per computer. On a work laptop, ask your IT department before you
+    start.
   - **Docker Desktop's terms.** Under Docker's terms (https://docs.docker.com/subscription-billing/desktop-license/),
     Docker Desktop is free for personal use, for education, for non-commercial open source projects, and for small
     businesses (fewer than 250 employees and less than 10 million US dollars in annual revenue). If you work for a larger
     organisation and use your work laptop, your employer needs a paid Docker subscription that covers you: ask your IT
     department before you install it.
   - **On a Mac**, choose the Docker Desktop download for your Mac's chip (Apple silicon, or Intel). The pinned n8n
-    image is published for Apple silicon too (linux/arm64; `docs/HOW-THIS-WAS-TESTED.md` shows what CI read); the lab
-    has not been tried on a Mac.
+    image is published for Apple silicon too (linux/arm64; `docs/HOW-THIS-WAS-TESTED.md` shows what CI read, CI being
+    the lab's automated tests, which GitHub runs whenever a change to the lab is pushed); the lab has not been tried on
+    a Mac.
 - **A web browser: Chrome, Edge or Firefox.** Safari is reported, in a community report the lab has not verified, to
   refuse n8n's sign-in at `http://localhost:5678`; use one of the other three.
 - **The lab's folder.** Your instructor gives it to you, or you download it from the lab's page on GitHub: the green
@@ -57,7 +59,8 @@ laptop.
    ```
 
    It prints a long report. When Docker Desktop runs, the report has a part headed `Server:` with a `Server Version:`
-   line. On the GitHub runner that tested this lab, those lines were:
+   line. On the GitHub runner that tested this lab (one of GitHub's computers, which ran the lab's CI), those lines
+   were:
 
    <!-- pasted from: the step "The n8n image this run used" of CI run 45339281817, at commit b229a23 -->
    ```text
