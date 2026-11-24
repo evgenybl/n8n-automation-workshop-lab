@@ -400,6 +400,7 @@ test('the setup page names the right folder, keeps down -v out of the ordinary t
   assert.ok(flat('instructor/run-sheet.md').includes('send you the line the setup check shows, or, if `docker info` fails, its last lines'));
   assert.match(text, /If it still says so after three minutes, type `docker compose ps` and `docker compose logs --tail 20 n8n`/);
   assert.match(page, /<!-- pasted from: the step "Start n8n and the practice office" of CI run \d+, at commit [0-9a-f]{7} -->\n\s*```text\n(\s+ (Network|Volume|Container) [^\n]+\n)+\s*```/);
+  assert.match(page, /no configuration file[\s\S]{0,400}<!-- pasted from: the step "What starting the lab prints in a folder without compose\.yaml" of CI run \d+, at commit [0-9a-f]{7} -->\n\s*```text\n\s*no configuration file provided[^\n]*\n\s*```/);
 });
 
 test('the README ends with the author line, and says nothing else about the author', () => {

@@ -97,7 +97,12 @@ the lab, Docker downloads n8n's own image from n8n's registry, `docker.n8n.io`, 
    ```
 
    If it ends with an error that it found no configuration file, the terminal is not in the folder where you can see
-   `compose.yaml`: go back to step 1.
+   `compose.yaml`: go back to step 1. On the GitHub runner, in a folder without `compose.yaml`, that error read:
+
+   <!-- pasted from: the step "What starting the lab prints in a folder without compose.yaml" of CI run 45345044613, at commit 2f3c4a7 -->
+   ```text
+   no configuration file provided: not found
+   ```
 
    **Behind a company proxy?** A proxy is a computer that some companies put between their laptops and the internet.
    If your laptop reaches the internet through one, the download may fail or hang. Docker
