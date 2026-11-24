@@ -79,6 +79,18 @@ function notes(s) {
   return s.contacts.flatMap((c) => c.notes.map((n) => n.text));
 }
 
+// Waits until a POST webhook is live (or, with wanted false, gone), probing with GET, which starts no flow: n8n answers a
+// GET to a path registered for POST with "Did you mean to make a POST request?".
+async function waitLive(p, wanted) {
+  for (let i = 0; i < 90; i++) {
+    const r = await call('GET', N8N + '/webhook/' + p);
+    const isLive = r.status !== 404 || /Did you mean to make a POST request/.test(r.text);
+    if (isLive === wanted) return true;
+    await sleep(1000);
+  }
+  return false;
+}
+
 function compose(args) {
   return execFileSync('docker', ['compose', ...args], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -255,19 +267,17 @@ const SCENARIOS = {
   },
 
   // Repair A: the form sends to repair-a; the broken file listens at repiar-a.
+  // The repaired file is unpublished for this test, so that only the broken one is live, then published again.
   'repair-a-broken.json': async (t, p) => {
     const fixedId = JSON.parse(fs.readFileSync(path.join(ROOT, 'workflows', 'repair-a-fixed.json'), 'utf8')).id;
-    await reset();
     compose(['exec', '-T', 'n8n', 'n8n', 'unpublish:workflow', '--id=' + fixedId]);
     try {
-      let r;
-      for (let i = 0; i < 30; i++) {
-        r = await post('repair-a', MAYA);
-        if (r.status === 404) break;
-        await sleep(1000);
-      }
+      assert.ok(await waitLive('repair-a', false), 'the repaired flow went off');
+      await reset();
+      const r = await post('repair-a', MAYA);
       t.diagnostic('with only the broken flow published, the form path answered ' + r.status + ' ' + r.text);
       assert.equal(r.status, 404, 'the form path answers 404: nothing listens there');
+      assert.match(r.json.message, /The requested webhook "POST repair-a" is not registered/);
       const s = await state();
       assert.equal(s.contacts.length, 0, 'nothing happens');
       const elsewhere = await post(p, MAYA);
@@ -278,13 +288,9 @@ const SCENARIOS = {
   },
   'repair-a-fixed.json': async (t, p) => {
     assert.equal(p, 'repair-a', 'the repaired flow listens at the path the form sends to');
+    assert.ok(await waitLive(p, true), 'the repaired flow is live again');
     await reset();
-    let r;
-    for (let i = 0; i < 30; i++) {
-      r = await post(p, MAYA);
-      if (r.status !== 404) break;
-      await sleep(1000);
-    }
+    const r = await post(p, MAYA);
     t.diagnostic('the form path answered ' + r.status + ' ' + r.text);
     assert.equal(r.status, 200);
     assert.equal(r.json.status, 'recorded');

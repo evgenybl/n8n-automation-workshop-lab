@@ -304,6 +304,41 @@ test('a rejection is sent as "reject"; when n8n cannot be reached the approval w
   }
 });
 
+test('a decision made before the flow reaches its Wait node is tried again until n8n takes it', async () => {
+  let calls = 0;
+  const n8n = await fakeN8n(() => {
+    calls++;
+    return calls < 3
+      ? { status: 409, body: '{"code":409,"message":"The execution \\"54\\" is running already."}' }
+      : { status: 200, body: '{"status":"rejected","written":"nothing"}' };
+  });
+  const o = await start({ n8nUrl: n8n.url, resumeRetryMs: 10 });
+  try {
+    await o.call('POST', '/inbox', { name: 'Tom Ash', resumeUrl: 'http://localhost:5678/webhook-waiting/54?signature=z' });
+    const d = await o.call('POST', '/inbox/A1/reject', {});
+    assert.equal(d.json.approval.answer.status, 200);
+    assert.equal(d.json.approval.answer.attempts, 3);
+    assert.equal(n8n.seen.length, 3);
+  } finally {
+    await o.close();
+    await n8n.close();
+  }
+});
+
+test('another 409 from n8n is not tried again', async () => {
+  const n8n = await fakeN8n({ status: 409, body: '{"code":409,"message":"Something else"}' });
+  const o = await start({ n8nUrl: n8n.url, resumeRetryMs: 10 });
+  try {
+    await o.call('POST', '/inbox', { name: 'Tom Ash', resumeUrl: 'http://localhost:5678/webhook-waiting/9?signature=z' });
+    const d = await o.call('POST', '/inbox/A1/approve', {});
+    assert.equal(d.json.approval.answer.status, 409);
+    assert.equal(n8n.seen.length, 1);
+  } finally {
+    await o.close();
+    await n8n.close();
+  }
+});
+
 // ---------- alerts, the lead form, the check, reset ----------
 
 test('failures a flow reports are kept, newest first', async () => {

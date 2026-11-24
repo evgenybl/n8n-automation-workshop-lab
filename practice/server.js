@@ -21,6 +21,7 @@ const AI_FAULTS = ['off', 'invent'];
 const SLOW_MS_DEFAULT = 15000;
 const MAX_BODY = 100 * 1024;
 const MAX_CALLS = 300;
+const RESUME_ATTEMPTS = 20;
 
 function freshState() {
   return {
@@ -150,6 +151,7 @@ function createOffice(options) {
   const opts = options || {};
   const n8nUrl = String(opts.n8nUrl || process.env.N8N_URL || 'http://127.0.0.1:5678').replace(/\/+$/, '');
   const slowMs = Number(opts.slowMs || process.env.OFFICE_SLOW_MS || SLOW_MS_DEFAULT);
+  const resumeRetryMs = Number(opts.resumeRetryMs || 250);
   const pagesDir = path.join(__dirname, 'pages');
   let state = freshState();
 
@@ -248,24 +250,32 @@ function createOffice(options) {
     } catch (e) {
       return { status: 0, body: 'The resume address is not an address: ' + approval.resumeUrl };
     }
-    try {
-      const r = await fetch(target, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ decision, decidedBy: 'the approval inbox', approval: approval.id }),
-        signal: AbortSignal.timeout(30000),
-      });
-      const text = await r.text();
-      let parsed = text;
+    // A flow answers the form (202) a moment before it reaches its Wait node. A decision made in that moment gets
+    // 409 "The execution ... is running already" from n8n, so the office tries again for a few seconds.
+    let answer;
+    for (let attempt = 1; attempt <= RESUME_ATTEMPTS; attempt++) {
       try {
-        parsed = JSON.parse(text);
+        const r = await fetch(target, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ decision, decidedBy: 'the approval inbox', approval: approval.id }),
+          signal: AbortSignal.timeout(30000),
+        });
+        const text = await r.text();
+        let parsed = text;
+        try {
+          parsed = JSON.parse(text);
+        } catch (e) {
+          // keep the text
+        }
+        answer = { status: r.status, body: parsed, sentTo: target, attempts: attempt };
       } catch (e) {
-        // keep the text
+        return { status: 0, body: 'The office could not reach n8n at ' + target + ': ' + e.message, sentTo: target, attempts: attempt };
       }
-      return { status: r.status, body: parsed, sentTo: target };
-    } catch (e) {
-      return { status: 0, body: 'The office could not reach n8n at ' + target + ': ' + e.message, sentTo: target };
+      if (!(answer.status === 409 && /running already/.test(JSON.stringify(answer.body)))) return answer;
+      await new Promise((r) => setTimeout(r, resumeRetryMs));
     }
+    return answer;
   }
 
   async function handle(req, res) {

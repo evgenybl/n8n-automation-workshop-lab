@@ -48,8 +48,21 @@ function workflowFiles() {
     .sort()
     .map((f) => {
       const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-      return { file: f, id: data.id, name: data.name };
+      const trigger = data.nodes.find((n) => n.type === 'n8n-nodes-base.webhook');
+      return { file: f, id: data.id, name: data.name, path: trigger.parameters.path };
     });
+}
+
+// Is a POST webhook live at this path? A GET to it answers 404 either way, but n8n's message differs: for a path that is
+// registered for POST it asks "Did you mean to make a POST request?". A GET starts no flow, so this probe has no effect.
+async function live(webhookPath) {
+  try {
+    const r = await fetch(N8N_URL + '/webhook/' + webhookPath, { signal: AbortSignal.timeout(3000) });
+    const text = await r.text();
+    return r.status !== 404 || /Did you mean to make a POST request/.test(text);
+  } catch (e) {
+    return false;
+  }
 }
 
 async function main() {
@@ -79,6 +92,18 @@ async function main() {
     compose(['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=' + f.id], { stdio: ['ignore', 'pipe', 'inherit'] });
     console.log('published  ' + f.file + '  (' + f.name + ')');
   }
+
+  // A running n8n applies a publish shortly, not at once: wait until every webhook is live.
+  const waiting = new Set(files.map((f) => f.path));
+  for (let i = 0; i < WAIT_SECONDS && waiting.size; i++) {
+    for (const p of [...waiting]) if (await live(p)) waiting.delete(p);
+    if (waiting.size) await sleep(1000);
+  }
+  if (waiting.size) {
+    console.error('These webhooks did not go live: ' + [...waiting].join(', '));
+    process.exit(1);
+  }
+  console.log('Every webhook is live: ' + files.map((f) => '/webhook/' + f.path).join(' '));
   console.log('Loaded and published ' + files.length + ' workflows in ' + Math.round((Date.now() - started) / 1000) + ' seconds.');
 }
 

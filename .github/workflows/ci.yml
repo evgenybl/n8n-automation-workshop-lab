@@ -34,6 +34,7 @@ jobs:
 
       - name: Start n8n and the practice office, as the compose file starts them
         run: |
+          docker compose version
           docker compose up -d
           docker compose ps
 
