@@ -155,7 +155,7 @@ download for linux/arm64: 377577771 bytes in 20 layers
 | Point | Where it comes from |
 |---|---|
 | Every label and step in n8n's own screen | n8n's documentation and n8n 2.48.8's own English text |
-| *Import from File* in the workflow's menu | n8n's documentation; n8n's English text has *Import*, then *From file* |
+| *Import from File* in the workflow's menu | n8n's documentation; n8n's English text has *Import*, then *From file*. The guide gives both labels; it does not say where the workflow's menu sits, and asks the participant to ask the instructor if they cannot find it |
 | The create button in the upper-left corner of the side menu, then *Workflow* | n8n's documentation |
 | How a node is added (*Add node* on the right side of a node, *Add first step*, the nodes panel), and *Rename node* in the node's context menu | n8n's documentation, *Work with nodes* |
 | Connecting two nodes (the grey dot, the grey rectangle) and deleting a connection (hover over it, then *Delete*) | n8n's documentation, *Connect nodes together* |

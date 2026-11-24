@@ -274,6 +274,11 @@ test('the guide places things on n8n\'s screen only as n8n\'s documentation does
   for (const [title, url] of Object.entries(pagesNamed)) {
     assert.ok(text.includes('*' + title + '* (' + url + ')'), 'the guide names its documentation page ' + title + ', ' + url);
   }
+  // The import, the first step of every stage: both labels, and where to ask.
+  const flatText = text.replace(/^>\s?/gm, '').replace(/\s+/g, ' ');
+  assert.ok(flatText.includes("n8n's documentation calls it **Import from File**; n8n's own English text has **Import**, then **From file**."));
+  assert.ok(flatText.includes('It is in the workflow\'s menu; ask your instructor if you cannot find it.'));
+  assert.ok(flatText.includes('on your screen it may read **Import**, then **From file**'));
   const unsure = 'This page was not written from a screen: if you cannot';
   assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 3, 'the guide says so where the documentation does not place a thing');
   const tested = read('docs/HOW-THIS-WAS-TESTED.md');

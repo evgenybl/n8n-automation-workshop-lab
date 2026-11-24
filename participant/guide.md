@@ -19,6 +19,10 @@ folded hints display properly; in a plain text editor they do not.
 > empty boxes, shown as value1 and value2. Every flow these steps build was run by the lab's automated tests on n8n
 > 2.48.8, and every answer quoted below is what those flows answered there. If a label on your screen differs, look for
 > the nearest match, and tell your instructor.
+>
+> **The first step of every stage, the import, has two labels.** n8n's documentation calls it **Import from File**; n8n's
+> own English text has **Import**, then **From file**. Your screen may show either. It is in the workflow's menu; ask your
+> instructor if you cannot find it.
 
 **Two rules for every stage.**
 
@@ -57,7 +61,8 @@ folded hints display properly; in a plain text editor they do not.
    documentation calls it the universal create resource icon), then select **Workflow**. On n8n's Overview page there is
    also a create button in the upper-right corner.
 2. **Import the stage's starter file** (rule 1). In the workflow's menu, choose **Import from File** (the label n8n's
-   documentation uses), and pick the starter from the lab's `workflows` folder. *If your screen differs:* open the file in
+   documentation uses; on your screen it may read **Import**, then **From file**), and pick the starter from the lab's
+   `workflows` folder. *If your screen differs:* open the file in
    a text editor, copy all of it, click on n8n's empty canvas and paste.
 3. **Build** what the stage's table says. Each row is one thing to do; a row that says **P1** means "paste block P1".
 4. **Publish**: select the **Publish** button in the canvas header, then **Publish** again in the window that opens. Do
@@ -140,6 +145,9 @@ chooses the second, and step 5 adds that node.
 | 6 | Set | `Answer with the name` | Respond With | `JSON` |
 | 7 | Select everything in the box, then paste (as an Expression) | `Answer with the name` | Response Body | **P1** |
 | 8 | Publish; reset the office; send the sample | | | |
+
+Row 1, the import: **Import from File** in n8n's documentation, perhaps **Import**, then **From file** on your screen (the
+box at the top of this guide).
 
 **P1** (step 7: the box already holds a sample body, so select everything in it first):
 
