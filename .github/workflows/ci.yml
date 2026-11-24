@@ -41,13 +41,27 @@ jobs:
           docker compose up -d
           docker compose ps
 
+      - name: The n8n image this run used (its digest, size and platforms, for the setup page)
+        run: |
+          docker image inspect docker.n8n.io/n8nio/n8n:2.48.8 --format 'digest {{index .RepoDigests 0}}'
+          docker image inspect docker.n8n.io/n8nio/n8n:2.48.8 --format 'size on disk {{.Size}} bytes'
+          docker buildx imagetools inspect docker.n8n.io/n8nio/n8n:2.48.8 | grep -E 'Platform:' | sort -u || echo "no platforms listed"
+          docker manifest inspect --verbose docker.n8n.io/n8nio/n8n:2.48.8 > "$RUNNER_TEMP/manifest.json" || echo "could not read the manifest"
+          node -e "const m=[].concat(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')));for(const e of m){const p=e.Descriptor&&e.Descriptor.platform;const v=e.OCIManifest||e.SchemaV2Manifest;if(!p||!v||p.os==='unknown')continue;const l=v.layers||[];console.log('download for '+p.os+'/'+p.architecture+': '+l.reduce((s,x)=>s+x.size,0)+' bytes in '+l.length+' layers')}" "$RUNNER_TEMP/manifest.json" || echo "could not add up the layers"
+          docker info | grep -E '^Server:|Server Version:' || echo "docker info printed no such lines"
+
       - name: Load and publish every workflow file
-        run: node tools/load.js
+        run: node tools/load.js --all
 
       - name: Every scenario, through the published webhooks
         env:
           LAB_LIVE: "1"
         run: node --test --test-reporter=tap tests/scenarios.test.js | tee "$RUNNER_TEMP/scenario-tap.txt"
+
+      - name: The instructor's preparation, as the run sheet gives it, leaves the participants' paths free
+        run: |
+          node tools/load.js --clear
+          node tools/load.js --solutions
 
       - name: The test summaries pasted on the testing page are the ones this run printed
         run: |

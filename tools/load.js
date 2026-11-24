@@ -1,12 +1,18 @@
 'use strict';
-// The load script: waits until the n8n started by compose.yaml is ready, imports every workflow file in workflows/,
-// and publishes each one, so that its webhook answers at /webhook/<path>. Used by CI and by the instructor.
+// The load script: waits until the n8n started by compose.yaml is ready, then loads workflow files into it, or clears it.
 //
-//   docker compose up -d
-//   node tools/load.js
+//   node tools/load.js --solutions   the instructor's own check: imports and publishes the six stage solutions only.
+//                                    They listen at stage-N-solution, so the paths a participant uses (stage-N,
+//                                    repair-x) stay free, and the instructor can still do the lab on the same n8n.
+//   node tools/load.js --all         CI: imports and publishes every file in workflows/ (starters, solutions, repairs,
+//                                    the practical check). This takes the participants' paths; use it only for testing.
+//   node tools/load.js --clear       unpublishes every workflow in this n8n (n8n's unpublish:workflow --all), so that
+//                                    every path is free again. The workflows stay, unpublished.
 //
-// It runs n8n's own command line inside the container (docker compose exec). Run it from the lab's folder.
-// Settings (environment variables): N8N_URL (default http://127.0.0.1:5678), LOAD_WAIT_SECONDS (default 240).
+// After loading, it waits until every published webhook is live, and checks that no other lab path answers.
+// It runs n8n's own command line inside the container (docker compose exec). Run it from the lab's folder, after
+// "docker compose up -d". Settings (environment variables): N8N_URL (default http://127.0.0.1:5678),
+// LOAD_WAIT_SECONDS (default 240).
 
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -15,6 +21,7 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const N8N_URL = (process.env.N8N_URL || 'http://127.0.0.1:5678').replace(/\/+$/, '');
 const WAIT_SECONDS = Number(process.env.LOAD_WAIT_SECONDS || 240);
+const USAGE = 'usage: node tools/load.js --solutions | --all | --clear';
 
 function compose(args, options) {
   return execFileSync('docker', ['compose', ...args], Object.assign({ cwd: ROOT, encoding: 'utf8' }, options || {}));
@@ -65,7 +72,22 @@ async function live(webhookPath) {
   }
 }
 
-async function main() {
+// Waits until each path is live (wanted true) or gone (wanted false). Returns the paths that did not get there.
+async function settle(paths, wanted) {
+  const waiting = new Set(paths);
+  for (let i = 0; i < WAIT_SECONDS && waiting.size; i++) {
+    for (const p of [...waiting]) if ((await live(p)) === wanted) waiting.delete(p);
+    if (waiting.size) await sleep(1000);
+  }
+  return [...waiting];
+}
+
+async function main(argv) {
+  const mode = argv[0];
+  if (!['--solutions', '--all', '--clear'].includes(mode) || argv.length !== 1) {
+    console.error(USAGE);
+    return 2;
+  }
   const started = Date.now();
   process.stdout.write('Waiting for n8n to be ready');
   let ok = false;
@@ -80,34 +102,56 @@ async function main() {
   process.stdout.write('\n');
   if (!ok) {
     console.error('n8n did not become ready within ' + WAIT_SECONDS + ' seconds. Is "docker compose up -d" running?');
-    process.exit(1);
+    return 1;
   }
   console.log('n8n is ready after ' + Math.round((Date.now() - started) / 1000) + ' seconds.');
 
-  const files = workflowFiles();
-  console.log('Importing ' + files.length + ' workflow files from workflows/ ...');
-  compose(['exec', '-T', 'n8n', 'n8n', 'import:workflow', '--separate', '--input=/lab/workflows'], { stdio: 'inherit' });
+  const all = workflowFiles();
+  if (mode === '--clear') {
+    compose(['exec', '-T', 'n8n', 'n8n', 'unpublish:workflow', '--all'], { stdio: ['ignore', 'pipe', 'inherit'] });
+    const still = await settle(all.map((f) => f.path), false);
+    if (still.length) {
+      console.error('These paths still answer: ' + still.join(', '));
+      return 1;
+    }
+    console.log('Every workflow is unpublished; no lab path answers.');
+    return 0;
+  }
 
-  for (const f of files) {
+  const chosen = mode === '--all' ? all : all.filter((f) => /^stage-\d-solution\.json$/.test(f.file));
+  console.log('Importing ' + chosen.length + ' workflow files ...');
+  if (mode === '--all') {
+    compose(['exec', '-T', 'n8n', 'n8n', 'import:workflow', '--separate', '--input=/lab/workflows'], { stdio: 'inherit' });
+  } else {
+    for (const f of chosen) compose(['exec', '-T', 'n8n', 'n8n', 'import:workflow', '--input=/lab/workflows/' + f.file], { stdio: 'inherit' });
+  }
+  for (const f of chosen) {
     compose(['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=' + f.id], { stdio: ['ignore', 'pipe', 'inherit'] });
     console.log('published  ' + f.file + '  (' + f.name + ')');
   }
 
-  // A running n8n applies a publish shortly, not at once: wait until every webhook is live.
-  const waiting = new Set(files.map((f) => f.path));
-  for (let i = 0; i < WAIT_SECONDS && waiting.size; i++) {
-    for (const p of [...waiting]) if (await live(p)) waiting.delete(p);
-    if (waiting.size) await sleep(1000);
+  // A running n8n applies a publish shortly, not at once: wait until every published webhook is live.
+  const notLive = await settle(chosen.map((f) => f.path), true);
+  if (notLive.length) {
+    console.error('These webhooks did not go live: ' + notLive.join(', '));
+    return 1;
   }
-  if (waiting.size) {
-    console.error('These webhooks did not go live: ' + [...waiting].join(', '));
-    process.exit(1);
+  console.log('Every published webhook is live: ' + chosen.map((f) => '/webhook/' + f.path).join(' '));
+  const others = [];
+  for (const f of all) if (!chosen.includes(f) && (await live(f.path))) others.push(f.path);
+  if (others.length) {
+    console.error('Other lab paths answer too, so a participant could not publish there: ' + others.join(', ') + '. Run "node tools/load.js --clear" first.');
+    return 1;
   }
-  console.log('Every webhook is live: ' + files.map((f) => '/webhook/' + f.path).join(' '));
-  console.log('Loaded and published ' + files.length + ' workflows in ' + Math.round((Date.now() - started) / 1000) + ' seconds.');
+  if (mode === '--solutions') console.log('No other lab path answers: stage-1 to stage-6 and the repair paths are free.');
+  console.log('Done in ' + Math.round((Date.now() - started) / 1000) + ' seconds.');
+  return 0;
 }
 
-main().catch((e) => {
-  console.error(e.message);
-  process.exit(1);
-});
+main(process.argv.slice(2)).then(
+  (code) => process.exit(code),
+  (e) => {
+    console.error(e.message);
+    process.exit(1);
+  },
+);
