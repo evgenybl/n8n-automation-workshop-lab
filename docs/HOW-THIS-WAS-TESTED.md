@@ -8,7 +8,7 @@ and with the version it was done on.
 | Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: on Windows locally and in CI, and on Linux in CI. The last local run is pasted below. |
 | Every workflow file run in CI on n8n 2.48.8 | n8n and the practice office started as `compose.yaml` starts them; all 22 workflow files imported and published with n8n's own command line; every one driven through its webhook with no screen, and every answer quoted in the guides replayed and compared | Done in CI. The run and its summary are pasted below; the badge at the top of the README shows the latest run on `main`. |
 | A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what each was given, did and found, and what was changed. |
-| An independent review | Done once, at commit 9785e5b, by a separate AI agent (a Claude model with no part in the build); not repeated on the current version | See below. |
+| An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it; not repeated after that | See below: what each was given, did and found, and what was changed. |
 | The steps in n8n's own screen, walked through by a person | A person follows the participant guide on n8n's editor, stage by stage, and notes every label or step that differs | Not done. |
 | Taught to a class of people | | Not done. |
 
@@ -301,9 +301,46 @@ publish after its blockers and majors. Not repeated on the current version.
 | The licences | The README's table and the licence notice name the same files; the pictures are MIT; a test checks every file has one licence; the image is said to be pinned by tag, not digest |
 | A run cited that was not the latest; a large body reset; two phrases | A run is cited only with its commit, and the README has the badge; 413; the phrases removed |
 
+## The second independent review, at commit 1f75afb
+
+**Who:** a separate AI agent, a Claude model with no part in the build. **What it was given:** the repository at commit
+1f75afb, as a clone, on macOS arm64, with no n8n, no Docker, no browser and no network. **What it did:** it ran the local
+tests and the four tools on Node 24.22.3 and Node 22.23.5, also from a copy with no `.git` in a folder whose name holds a
+space; ran the practice office and attacked it (bodies that are not JSON or too large, path
+tricks, markup in every field, requests from another site, many calls at once, a caller that gives up); changed the pages
+and the code in copies, one edit at a time, to see whether a test noticed; probed the static checker with altered files;
+ran the stage 4 code in plain Node; and traced the finished flow's paths by reading its file. It ran no workflow and saw
+no page rendered. **Its verdict:** publish after named fixes; no blocker. Its two main points: where the CI runs cited on
+these pages can be found, and that nobody has carried out the guide on n8n's screen. Its own notes are not in this
+repository: the findings here are a summary of its report. Not repeated after the changes below.
+
+| Finding | What was changed |
+|---|---|
+| The CI runs cited by number: where a reader finds them | This page says they are runs of this repository's own Actions |
+| Nobody has carried out the guide on n8n's screen, and the first step of every stage uses a label the lab records as different from n8n's own text | The guide gives both labels, *Import from File* and *Import*, then *From file*, and says to ask the instructor where the menu is; the walk-through on a screen is still not done |
+| The README's text for the finished flow's picture said every outgoing call has an error branch; the three alert calls have none | Reworded; a test holds it to the file |
+| This page said every answer is valid JSON whatever the enquiry holds; an enquiry with no name would break the stage 1 and 2 answers (its reading, not run) | This page says what the test tries; stage 2 says the name is not checked, and asks about an enquiry with no name as a question to go further; not tried by any test |
+| The stage 4 check reports a figure in the name as invented, labels an answer with no summary, or a summary that is not text, "checked", and writes "Message: undefined" for an enquiry with no message | Said in stage 4's box, with an exercise; a test runs the code in plain Node and holds the box to it |
+| The first two checks compare text strictly, so a value that is not text would get n8n's own error, not a refusal (its reading, not run) | Stage 2 says they compare text as it is, that a web form sends text, and that a value that is not text is not tried by any test |
+| Rubric: O1's first level matched a correct flow; O7's top level needed repairs outside the plan; the check's levels were not tied to O7 | Both levels reworded; one sentence ties the practical check's levels to O7 |
+| When assessing, repair C had 5 planned minutes | Repair C 15 and the check 15, so the assessed session 2 is 130 planned minutes, in its own table on the variants page; the main plan is unchanged; a test holds the numbers |
+| A printed page cannot be pasted from | The guide's rule and the run sheet say every block is also in `participant/guide.md` in the lab's folder |
+| No participant page said that the flow's own webhook takes an enquiry from anyone who can reach it | Stage 5's box of limits and *Going further* say so, with the honeypot, the kept run data, and that the lab is a place to learn; a test holds the box |
+| The static checker let six shapes of a secret through, and the README read as if it were complete | All six refused, each with a test, all 22 files still passing; the README says the checker is a set of patterns |
+| Two sentences on the practice AI step held only for the inputs tried | This page says what is tried and what happens beyond it; the office's test holds both limits |
+| The instructor guide's "two contacts after two sends" cannot happen with the practice CRM | Corrected to what the files and the CRM allow, marked as not tried; the rubric's first level for O3 too |
+| The practical check is unseen by convention only | Its page says the file and the answer are in the lab's folder, and two ways to keep the check unseen |
+| Smaller points: no test held stage 3's 409 or stage 5's box; the image size's label; stage 1's Fixed-box symptom; the reading tests' notes; three words on the setup page; the calls with no timeout and the first answer only; a test that forbade words; the office's raw error on a taken port and its 500 for `//`; two documentation addresses that served a page's source text | A test for each of the two; the size said as printed, not verified; the symptom marked not verified; the notes said not to be here; glosses; said in stage 5's box; a test for claim phrases instead; one plain line and 404, with the office's other answers compared before and after on both Node versions; the pages' own addresses |
+
+**Left as stated limits.** Nobody has carried out the guide on n8n's screen, and the lab has not been taught: both rows
+at the top of this page still say "Not done". An enquiry with no name, a value that is not text in the first two checks,
+and how long n8n waits for the AI step and the inbox are not tried by any test; the pages say so. The checker is a set of
+patterns. And, as before, CI runs the run sheet's `--clear` and the README's `--solutions` only after `--all` has
+imported every file, never on a fresh n8n.
+
 ## What a reading test without n8n's screen cannot show
 
-The three passes read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
+The two reading tests and the two reviews read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
 labels in the guide are the ones on the screen; how n8n's editor behaves when a node is added, a block is pasted, or a
 setting is switched; whether dragging and connecting nodes is as easy as the steps suggest; whether Docker Desktop
 installs and runs on a newcomer's own laptop; and how long a room of people takes for each stage.
