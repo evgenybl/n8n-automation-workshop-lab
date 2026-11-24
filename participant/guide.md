@@ -594,9 +594,20 @@ Answer:    {"status":"not queued","reason":"The approval inbox did not answer, s
 Approve: the contact, with its note. With the inbox failing: no approval and no contact. In n8n's **Executions** tab, a
 run that waits for a person shows as waiting until the decision comes.
 
-> **Two limits of this design.** The resume address works for anyone who holds it: whoever has the link can approve. That
-> is acceptable only in this practice office, on your own laptop. And an enquiry that nobody decides waits with no time
-> limit. *Going further*, at the end of this guide, names what n8n offers for both; the lab does not teach them.
+> **The limits of this design.** This flow is a place to learn, not something to put in front of real enquiries as it is.
+>
+> - The resume address works for anyone who holds it: whoever has the link can approve. That is acceptable only in this
+>   practice office, on your own laptop.
+> - An enquiry that nobody decides waits with no time limit. And the person who sent it gets only the first answer,
+>   "waiting for approval": nothing tells them what was decided.
+> - The flow's own webhook takes an enquiry from anyone who can reach its address; it asks for no login and no key. In
+>   this lab, only your own laptop can reach it.
+> - The hidden website field, the honeypot, is the flow's only defence against robots.
+> - n8n keeps each run's data, the enquirer's name and e-mail address included: the *Executions* tab shows them.
+> - The calls to the AI step and to the inbox have no timeout of their own in the files, unlike the CRM calls; how long
+>   n8n then waits for an answer is not tried by any test of this lab.
+>
+> *Going further*, at the end of this guide, names what n8n offers for the first two; the lab does not teach them.
 
 ---
 
@@ -719,6 +730,12 @@ the repairs, in `repairs.md`. Keep the card, `card.md`, for the next flow you bu
 - n8n can run a separate **error workflow** whenever a flow fails (n8n's documentation: *Workflow Settings*, *Error
   workflow*, starting with the *Error Trigger* node), so that a failure nobody handled is still reported.
 - A real CRM is reached with a credential that n8n keeps encrypted, never with a value written in the workflow file.
+- The flow's own webhook takes an enquiry from anyone who can reach its address, and the honeypot is its only defence
+  against robots. A flow in front of real enquiries needs more than that; the lab does not teach it.
+- n8n keeps each run's data, names and e-mail addresses included. A flow that handles real people's enquiries needs a
+  decision on how long that is kept; the lab does not teach n8n's settings for it.
+
+This lab is a place to learn, not something to put in front of real enquiries as it is.
 
 ---
 

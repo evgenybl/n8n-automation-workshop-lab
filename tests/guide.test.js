@@ -414,6 +414,33 @@ test('the stage 4 check, run in plain Node, lets through what the guide says it 
   assert.equal(run(maya, aiRead(maya, 'invent')).note, 'Message: How much for 12 seats?\nAI summary not used: it gives figures that are not in the enquiry (4800).');
 });
 
+test('stage 5 states the limits of its design, the entry webhook\'s among them, and going further repeats them', () => {
+  const s5 = stages()[4].text;
+  const start = s5.indexOf('> **The limits of this design.**');
+  assert.ok(start !== -1, 'stage 5 has its limits box');
+  const box = s5.slice(start).split('\n').filter((l, i, all) => all.slice(0, i + 1).every((x) => x.startsWith('>'))).join(' ').replace(/>\s?/g, ' ').replace(/\s+/g, ' ');
+  for (const point of [
+    'a place to learn, not something to put in front of real enquiries as it is',
+    'whoever has the link can approve',
+    'waits with no time limit',
+    'the person who sent it gets only the first answer',
+    "The flow's own webhook takes an enquiry from anyone who can reach its address",
+    "the honeypot, is the flow's only defence against robots",
+    "n8n keeps each run's data, the enquirer's name and e-mail address included",
+    'The calls to the AI step and to the inbox have no timeout of their own in the files, unlike the CRM calls',
+  ]) assert.ok(box.includes(point), 'the limits box says: ' + point);
+  // What the box says of the timeouts is what the files hold.
+  for (const n of httpNodes(5)) {
+    const crm = /\/crm\//.test(n.parameters.url);
+    assert.equal(n.parameters.options.timeout, crm ? 5000 : undefined, n.name);
+  }
+  assert.deepEqual(httpNodes(5).filter((n) => !/\/crm\//.test(n.parameters.url)).map((n) => n.name).sort(), ['Ask a person', 'Ask the AI step']);
+  const further = read('participant/guide.md').split('**Going further: not taught here')[1].replace(/\s+/g, ' ');
+  assert.ok(further.includes("The flow's own webhook takes an enquiry from anyone who can reach its address, and the honeypot is its only defence against robots."));
+  assert.ok(further.includes("n8n keeps each run's data, names and e-mail addresses included."));
+  assert.ok(further.includes('This lab is a place to learn, not something to put in front of real enquiries as it is.'));
+});
+
 // ---------- the values in the prose ----------
 
 function httpNodes(n) {
