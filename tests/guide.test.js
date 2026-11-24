@@ -330,6 +330,10 @@ test('the guide gives the two rules in bold at the top, and every check yourself
   const text = read('participant/guide.md');
   assert.ok(text.includes('**Every stage starts by importing its starter file into a new workflow.**'));
   assert.ok(text.includes('**Paste every value shown in a grey block; do not type it.**'));
+  // A printout cannot be pasted from: the blocks are in the file in the lab's folder.
+  const where = "is also in this page's file in the lab's folder, `participant/guide.md`, which you can open in a text editor and copy from.";
+  assert.ok(text.replace(/\s+/g, ' ').includes(where));
+  assert.ok(read('instructor/run-sheet.md').replace(/\s+/g, ' ').includes("A printout cannot be pasted from: every grey block of the guide is also in the same page's file in the lab's folder, `participant/guide.md`"));
   for (const { n, text: s } of stages()) {
     const checks = [...s.matchAll(/\*\*Check yourself[^*]*\*\* ([^\n]+)/g)];
     assert.equal(checks.length, 1, 'stage ' + n + ' has one "check yourself"');

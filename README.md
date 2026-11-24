@@ -47,7 +47,8 @@ automation.**
 
 **Participants read the pages on this repository's web page** (GitHub shows their tables, paste blocks and folded hints
 laid out); opened in a text editor, the same files show raw text. For a room without internet, the instructor prints the
-participant pages beforehand, as the run sheet says.
+participant pages beforehand, as the run sheet says, and participants copy the grey blocks from the same files in the
+lab's folder.
 
 ## Try it
 

@@ -31,7 +31,8 @@ folded hints display properly; in a plain text editor they do not.
    answer the new stage's form with 404.
 2. **Paste every value shown in a grey block; do not type it.** Each block has a copy button on GitHub. A typing slip in
    an expression fails only when the flow runs, with n8n's own message. The short values written in the tables, such as
-   `@` or `approve`, you type as they are.
+   `@` or `approve`, you type as they are. Working from a printed copy? Every block is also in this page's file in the
+   lab's folder, `participant/guide.md`, which you can open in a text editor and copy from.
 
 ---
 

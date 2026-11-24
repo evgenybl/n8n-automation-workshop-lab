@@ -21,7 +21,9 @@ not downloaded n8n yet.
   `participant/setup.md` and, for the repairs, `instructor/repairs-for-printing.md` from that page beforehand (the
   browser's Print), one set per person. A printout cannot fold, so `participant/repairs.md` would show each repair's cause
   before its hints; the copy for printing is the same page without the causes (a test keeps the two equal apart from
-  them), and the causes are in `instructor/answer-key.md`. Print `participant/card.md` in any case, one per person.
+  them), and the causes are in `instructor/answer-key.md`. Print `participant/card.md` in any case, one per person. A
+  printout cannot be pasted from: every grey block of the guide is also in the same page's file in the lab's folder,
+  `participant/guide.md`, which a participant opens in a text editor and copies from.
 - **Prepare your own n8n for showing the solutions**, in this order, in the lab's folder:
   1. `docker compose up -d`
   2. `node tools/load.js --clear` unpublishes every workflow in your n8n, so that no lab path is taken.
