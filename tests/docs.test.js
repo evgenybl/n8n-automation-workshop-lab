@@ -409,6 +409,20 @@ test('the README ends with the author line, and says nothing else about the auth
   assert.equal((text.match(/Evgeny Blekhman/g) || []).length, 1);
 });
 
+test('the README\'s text for the finished flow\'s picture says which calls have an error branch, as the file has them', () => {
+  const wf = JSON.parse(read('workflows/stage-6-solution.json'));
+  const calls = wf.nodes.filter((n) => n.type === 'n8n-nodes-base.httpRequest');
+  const branch = (n) => n.onError === 'continueErrorOutput' && ((wf.connections[n.name] || {}).main || [])[1] && wf.connections[n.name].main[1].length > 0;
+  const service = (n) => n.parameters.url.replace(/^=/, '').split('/')[3];
+  assert.deepEqual(calls.filter(branch).map(service).sort(), ['ai', 'crm', 'crm', 'crm', 'inbox']);
+  const without = calls.filter((n) => !branch(n));
+  assert.ok(without.every((n) => service(n) === 'alerts' && /^Tell the office/.test(n.name)), 'the calls with no error branch are the alerts');
+  const alt = read('README.md').match(/\[!\[The finished flow:([^\]]*)\]/)[1];
+  assert.ok(alt.includes('each call to the AI step, the approval inbox and the CRM has an error branch'));
+  assert.ok(alt.includes('the ' + ['zero', 'one', 'two', 'three', 'four'][without.length] + ' calls that tell the office about a failure have none'));
+  assert.doesNotMatch(alt, /every outgoing call/);
+});
+
 test('the README marks its "Try it" command and output, as the scenario test that runs the command reads them', () => {
   const m = read('README.md').match(/<!-- try-it:command -->\s*```(?:bash)?\n([\s\S]*?)```[\s\S]*?<!-- try-it:output -->\s*```(?:text)?\n([\s\S]*?)```/);
   assert.ok(m);

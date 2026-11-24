@@ -14,7 +14,7 @@ practice AI step, so no account with an online service and no key is needed.
 
 The finished flow, drawn from its workflow file (`workflows/stage-6-solution.json`):
 
-[![The finished flow: an enquiry arrives, is checked three times, an AI step's summary is checked, a person approves, the contact is looked up, then noted or created; every outgoing call has an error branch, and the answer says what was written.](docs/pictures/stage-6-solution.svg)](docs/pictures/stage-6-solution.svg)
+[![The finished flow: an enquiry arrives, is checked three times, an AI step's summary is checked, a person approves, the contact is looked up, then noted or created; each call to the AI step, the approval inbox and the CRM has an error branch, the three calls that tell the office about a failure have none, and the answer says what was written.](docs/pictures/stage-6-solution.svg)](docs/pictures/stage-6-solution.svg)
 
 After the lab, a participant can:
 
