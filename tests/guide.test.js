@@ -375,6 +375,41 @@ test('stage 2 says which checks compare text as it is, as its solution sets them
   assert.ok(text.includes('An enquiry with no name is not tried by any test of this lab'));
 });
 
+test('the stage 4 check, run in plain Node, lets through what the guide says it lets through', () => {
+  const { aiRead } = require('../practice/server.js');
+  const js = byName(load('stage-6-solution.json')).get('Check the AI figures').parameters.jsCode;
+  assert.equal(pastesOf(stages()[3].text).P1, js, 'the code the guide pastes is the finished flow\'s');
+  // The Code node's two inputs, as n8n hands them over: the enquiry (read with $) and the AI step's answer ($input).
+  const run = (body, answer) => new Function('$', '$input', js)(() => ({ first: () => ({ json: { body } }) }), { first: () => ({ json: answer }) })[0].json;
+  const text = stages()[3].text.replace(/\s+/g, ' ');
+  const box = text.split('It also reads only the message,')[1];
+  assert.ok(box, 'stage 4 says what else its check lets through');
+  // A figure in the name.
+  const m = box.match(/the name `([^`]+)` with the message `([^`]+)` gives "([^"]+)"/);
+  assert.ok(m, 'the example of a figure in the name');
+  const enquiry = { name: m[1], message: m[2] };
+  const named = run(enquiry, aiRead(enquiry, 'off'));
+  assert.equal(named.note, 'Message: ' + m[2] + '\n' + m[3]);
+  assert.equal(named.summaryUsed, false);
+  assert.ok(!m[2].includes(named.notInEnquiry[0]) && m[1].includes(named.notInEnquiry[0]), 'the figure reported as invented is the name\'s');
+  // An answer with no summary, and a summary that is not text, are labelled checked.
+  const maya = { name: 'Maya Rivers', message: 'How much for 12 seats?' };
+  const none = run(maya, {});
+  assert.equal(none.note, 'Message: How much for 12 seats?\nAI summary (checked): ');
+  assert.ok(box.includes('An answer with no summary is labelled checked: the note says "AI summary (checked):" and no summary follows.'));
+  const shaped = run(maya, { summary: { budget: 9999 } });
+  assert.equal(shaped.summaryUsed, true);
+  assert.equal(shaped.note, 'Message: How much for 12 seats?\nAI summary (checked): [object Object]');
+  assert.ok(box.includes('a summary sent as an object gives "AI summary (checked): [object Object]"'));
+  // An enquiry with no message.
+  const silent = run({ name: 'Maya Rivers' }, aiRead({ name: 'Maya Rivers' }, 'off'));
+  assert.match(silent.note, /^Message: undefined\n/);
+  assert.ok(box.includes('An enquiry with no message gives a note that starts "Message: undefined".'));
+  // And what the guide shows in its runs: a failed AI step, and an invented figure.
+  assert.equal(run(maya, { error: { message: '500' } }).note, 'Message: How much for 12 seats?\nAI summary not used: the AI step did not answer.');
+  assert.equal(run(maya, aiRead(maya, 'invent')).note, 'Message: How much for 12 seats?\nAI summary not used: it gives figures that are not in the enquiry (4800).');
+});
+
 // ---------- the values in the prose ----------
 
 function httpNodes(n) {

@@ -475,6 +475,21 @@ figure*, the call list says the AI step "Answered, with an invented figure (faul
 ("five thousand"), or a right figure with the wrong meaning ("12 seats" summarised as "a budget of 12"). A check catches
 exactly what it checks.
 
+It also reads only the message, and takes whatever the AI step sent as its summary. One of the lab's tests runs the code
+above in plain Node, not in n8n, and shows four more limits of it:
+
+- A figure in the person's name is reported as invented, because the summary starts with the name: the name `Agent 47`
+  with the message `What is the price of 3 seats?` gives "AI summary not used: it gives figures that are not in the
+  enquiry (47)."
+- An answer with no summary is labelled checked: the note says "AI summary (checked):" and no summary follows.
+- A summary that is not text is labelled checked too: a summary sent as an object gives "AI summary (checked): [object
+  Object]".
+- An enquiry with no message gives a note that starts "Message: undefined".
+
+**Going further: an exercise, not a step.** Change the code so that it also reads the name, refuses an answer whose summary
+is missing or is not text, and writes something better than "undefined" when there is no message. The lab does not teach
+or test such a version.
+
 > **What changes with a real model.** Its answers vary from one call to the next, so the same enquiry can pass the check
 > once and fail it the next time. Each call costs money. It needs a key, which belongs in n8n's credentials, never in a
 > workflow file. The enquiry, with the person's name and e-mail, leaves your laptop for the model's provider. And the
