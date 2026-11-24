@@ -45,7 +45,8 @@ marks of your own would break the answer, or add a field to it."
 **Mistakes to expect.**
 - Forgetting to publish after a change, so the form gets the old answer. Say it once to the room: every change needs
   Publish again.
-- Pasting the Response Body while the box is **Fixed**, so the answer is the text with the braces in it.
+- Pasting the Response Body while the box is **Fixed**. The text with the braces in it is not valid JSON, so n8n may
+  answer with its own error rather than with that text: not verified, and not tried by any test.
 - Leaving the webhook's **Respond** on `Immediately`: the Respond to Webhook node then has nothing to answer.
 
 **Debrief question:** What did the sender learn from n8n's first answer, and what does it learn now?
