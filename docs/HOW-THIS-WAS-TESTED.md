@@ -64,7 +64,8 @@ The skipped tests are the scenario tests, which need n8n.
 
 ## What runs only in CI
 
-The workflow in `.github/workflows/ci.yml` has two jobs; actions are pinned by commit.
+The workflow in `.github/workflows/ci.yml` has two jobs; actions are pinned by commit. The CI runs cited by number on this
+page and on the setup page are runs of this repository's own Actions.
 
 **On Linux**, in this order:
 
