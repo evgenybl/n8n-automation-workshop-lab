@@ -206,6 +206,9 @@ test run broke exactly that way, which is why the answer names the step, and the
 
 **Purpose:** find and repair a broken flow from its symptoms; test the "no" path. **Planned minutes:** 20
 
+When you assess, this part runs as `instructor/variants.md` gives it: repair C, then the practical check, in 30 planned
+minutes.
+
 **What to say.** As for repairs A and B. Everyone does C; those who finish do D. For D, the minimum repair is enough for
 the room; the full repair is stage 6's branch, which they have just built.
 

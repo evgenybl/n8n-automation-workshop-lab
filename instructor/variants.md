@@ -35,9 +35,21 @@ The planned total of the taster is 90 minutes. At the close, show stage 6's solu
 sheet says, with `--solutions`), with the office window beside it, so that people see where the lab goes. Hand out the
 card.
 
-## When you want to assess
+## Session 2 when you assess
 
-The practical check takes 15 planned minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. The run sheet says the same.
+| Part | Planned minutes |
+|---|---|
+| Recap | 5 |
+| Stage 4: Ask the AI step, and check it | 25 |
+| Stage 5: A person approves | 30 |
+| Break | 10 |
+| Stage 6: When it fails | 25 |
+| Repair C | 15 |
+| The practical check | 15 |
+| Close | 5 |
+
+The planned total of session 2 when you assess is 130 minutes, ten more than the run sheet's: book the room for it. The
+practical check takes 15 planned minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D, and the part *Repairs C and D* takes 30 planned minutes instead of 20: repair C in 15, then the practical check in 15, so session 2 takes 130 (`instructor/variants.md`). The run sheet says the same.
 
 ---
 

@@ -182,7 +182,7 @@ test('the instructor guide has each part of the run sheet, in order, with the sa
 test('each variant adds up to its stated total, and gives every stage the run sheet\'s minutes', () => {
   const text = read('instructor/variants.md');
   const stageMinutes = Object.fromEntries(runSheet().flatMap((s) => s.rows).map((r) => [r.part, r.minutes]));
-  for (const [heading, name] of [['## One half day', 'the half day'], ['## A ninety-minute taster', 'the taster']]) {
+  for (const [heading, name] of [['## One half day', 'the half day'], ['## A ninety-minute taster', 'the taster'], ['## Session 2 when you assess', 'session 2 when you assess']]) {
     const section = text.split(heading)[1].split('\n## ')[0];
     const rows = tableRows(section, '| Part | Planned minutes |');
     const total = section.match(new RegExp('The planned total of ' + name + ' is (\\d+) minutes'));
@@ -194,20 +194,32 @@ test('each variant adds up to its stated total, and gives every stage the run sh
 });
 
 // The one plan for the practical check, word for word on every page that schedules it.
-const CHECK_PLAN = /When you assess, the practical check \(`instructor\/practical-check\.md`\) takes the place of repair D: repair C, then the practical check, in this part's (\d+) planned minutes\./;
+const CHECK_PLAN = /When you assess, the practical check \(`instructor\/practical-check\.md`\) takes the place of repair D, and the part \*Repairs C and D\* takes (\d+) planned minutes instead of (\d+): repair C in (\d+), then the practical check in (\d+), so session 2 takes (\d+) \(`instructor\/variants\.md`\)\./;
 
 test('the practical check has one plan, the same on the run sheet, the README, the variants and its own page', () => {
-  const partD = runSheet()[1].rows.find((r) => r.part === 'Repairs C and D');
+  const session2 = runSheet()[1];
+  const partD = session2.rows.find((r) => r.part === 'Repairs C and D');
+  const own = Number(flat('instructor/practical-check.md').match(/\*\*Planned minutes:\*\* (\d+)\./)[1]);
+  const assessed = tableRows(read('instructor/variants.md').split('## Session 2 when you assess')[1], '| Part | Planned minutes |');
+  const minutesOf = (part) => Number((assessed.find((r) => r[0] === part) || [])[1]);
+  const plans = new Set();
   for (const f of ['instructor/run-sheet.md', 'README.md', 'instructor/variants.md', 'instructor/practical-check.md']) {
     const m = flat(f).match(CHECK_PLAN);
     assert.ok(m, f + ' gives the plan');
-    assert.equal(Number(m[1]), partD.minutes, f + ': the part it replaces has the run sheet\'s minutes');
+    plans.add(m[0]);
+    const [part, instead, repairC, check, total] = m.slice(1).map(Number);
+    assert.equal(instead, partD.minutes, f + ': the part it replaces has the run sheet\'s minutes');
+    assert.equal(repairC + check, part, f + ': repair C and the practical check add up to the part');
+    assert.equal(check, own, f + ': the practical check has its own page\'s minutes');
+    assert.equal(repairC, minutesOf('Repair C'), f + ': repair C has the assessed session\'s minutes');
+    assert.equal(check, minutesOf('The practical check'), f + ': the check has the assessed session\'s minutes');
+    assert.equal(total, session2.total - partD.minutes + part, f + ': session 2 grows by what the part grows');
+    assert.equal(total, assessed.reduce((n, r) => n + Number(r[1]), 0), f + ': the assessed session adds up');
   }
+  assert.equal(plans.size, 1, 'word for word the same on every page');
   assert.match(read('instructor/run-sheet.md'), /\| Repairs C and D \| \d+ \|[^\n]*when you assess, the practical check in place of repair D/);
   assert.match(read('README.md'), /\| Repairs C and D \|[^\n]*when assessing, the practical check in place of repair D/);
-  const own = Number(flat('instructor/practical-check.md').match(/\*\*Planned minutes:\*\* (\d+)\./)[1]);
   assert.match(flat('instructor/variants.md'), new RegExp('The practical check takes ' + own + ' planned minutes\\.'));
-  assert.ok(own <= partD.minutes, 'it fits the part it replaces');
   assert.ok(flat('instructor/practical-check.md').includes('It is handed out by the instructor only: no participant page mentions it.'));
   for (const f of PAGES.filter((x) => x.startsWith('participant/'))) assert.doesNotMatch(read(f), /practical check|check-g/i, f);
 });

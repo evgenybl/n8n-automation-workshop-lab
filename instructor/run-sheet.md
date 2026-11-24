@@ -61,7 +61,7 @@ The planned total of session 1 is 120 minutes.
 | Repairs C and D | 20 | Repair C for everyone; D for those who finish C; when you assess, the practical check in place of repair D | What did the "no" path show you that the "yes" path did not? |
 | Close | 5 | The card; what each person will look at in their own work | |
 
-The planned total of session 2 is 120 minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. The instructor guide, `instructor/guide.md`, has what to say in each part
+The planned total of session 2 is 120 minutes. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D, and the part *Repairs C and D* takes 30 planned minutes instead of 20: repair C in 15, then the practical check in 15, so session 2 takes 130 (`instructor/variants.md`). The instructor guide, `instructor/guide.md`, has what to say in each part
 and the mistakes to expect.
 
 ## Between the sessions

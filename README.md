@@ -98,7 +98,7 @@ editor at `http://localhost:5678`.
 **Audience and level:** a group of 4 to 12, each on a laptop with Docker Desktop installed beforehand (the setup page has
 a check the participant runs). No programming: each stage's starter file brings its nodes already placed and mostly set
 up, every expression is pasted, not typed, and the one piece of code, in stage 4, is pasted and explained, not written.
-No stage has more than 14 steps. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D: repair C, then the practical check, in this part's 20 planned minutes. Other shapes are in `instructor/variants.md`: one half day, and a ninety-minute taster of
+No stage has more than 14 steps. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D, and the part *Repairs C and D* takes 30 planned minutes instead of 20: repair C in 15, then the practical check in 15, so session 2 takes 130 (`instructor/variants.md`). Other shapes are in `instructor/variants.md`: one half day, and a ninety-minute taster of
 stages 1 to 3.
 
 ## How it was tested
