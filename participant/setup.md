@@ -1,8 +1,8 @@
 # Setup: before the session
 
 Do this at home or at work, before the session, on the laptop you will bring. It takes a while the first time, because
-it downloads n8n; after that, the lab starts in under a minute on most laptops. Nothing here needs an account with any
-service, a key, or a payment.
+it downloads n8n; after that, it starts without downloading anything. Nothing here needs an account with any service, a
+key, or a payment.
 
 ## What you need
 

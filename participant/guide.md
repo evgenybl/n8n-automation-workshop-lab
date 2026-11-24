@@ -309,7 +309,7 @@ AI summary not used: it gives figures that are not in the enquiry (4800).
 ```
 
 **Check yourself in the office window.** With the fault on, the call list says the AI step "Answered, with an invented
-figure", and the note holds no AI summary and says why. Set the fault back to `works normally` before the next stage.
+figure (fault on).", and the note holds no AI summary and says why. Set the fault back to `works normally` before the next stage.
 
 ---
 

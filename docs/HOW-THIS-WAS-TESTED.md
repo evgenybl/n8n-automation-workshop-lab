@@ -37,22 +37,23 @@ current) run everywhere.
 | `tests/checker.test.js` | The static checker refuses each kind of bad file (no JSON, a wrong file name, no id, a credentials block anywhere, an account or owner record, an unknown key, a node type outside the list or at another version, an address beyond the practice office, an e-mail outside example.com, an IP address, authentication, an unconnected node, a connection to nothing, two triggers, a bad path, a published file, recorded data, two nodes of one name, two files with one path or one id), and passes every file in `workflows/`. |
 | `tests/workflows.test.js` | Every workflow file is what the generator writes; each starter is the previous stage's solution with only its id, name and path changed; each broken file differs from its repaired file only where its exercise says; every answer is valid JSON and repeats no free text; no node name holds a quote mark; every CRM call carries the badge header but the one repair D breaks. |
 | `tests/pictures.test.js` | Every workflow file has its picture, drawn the same way every time, current, naming every node and drawing every connection; error branches dashed and labelled. |
-| `tests/docs.test.js` | Plain ASCII and LF line ends in every file; no absolute path; every e-mail address at example.com; no package files; the "not taught", "planned", screen-steps and "stand-in that is not a model" lines where they belong; the planned minutes agree between the README, the run sheet and the instructor guide, and add up to 180, and each variant's sessions to 90; the debrief questions agree; links and pictures resolve; every quoted answer is marked for replay; the author line; the licence line on every teaching page; the test counts pasted on this page are current. |
+| `tests/docs.test.js` | Plain ASCII and LF line ends in every file; no absolute path; every e-mail address at example.com; no package files; the "not taught", "planned", screen-steps and "stand-in that is not a model" lines where they belong; the planned minutes agree between the README, the run sheet and the instructor guide, and add up to 180, and each variant's sessions to 90; the debrief questions agree; links and pictures resolve; every quoted answer is marked for replay; every node name,
+expression, answer body and the code that the lab guide gives for a stage are those of the stage's solution file; the author line; the licence line on every teaching page; the test counts pasted on this page are current. |
 | `tests/scenarios.test.js` | In CI only: see the next section. |
 
 **The last lines of the last local run**, as printed, on Windows with Node 24:
 
 <!-- pasted (local) from: node --test --test-reporter=tap "practice/tests/*.test.js" "tests/*.test.js" (the last lines) -->
 ```text
-1..138
-# tests 138
+1..142
+# tests 142
 # suites 0
-# pass 90
+# pass 94
 # fail 0
 # cancelled 0
 # skipped 48
 # todo 0
-# duration_ms 9064.8761
+# duration_ms 9122.773
 ```
 
 The 48 skipped are the scenario tests, which need n8n.
@@ -76,8 +77,21 @@ written and its output compared.
 
 <!-- pasted (ci) from: the CI run's scenario step, LAB_LIVE=1 node --test --test-reporter=tap tests/scenarios.test.js (the last lines) -->
 ```text
-PENDING
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76104.248718
 ```
+
+This is CI run 45322953853, at commit 08f8b03, on 24 November 2026. The tests are one scenario for each workflow file, one
+replay for each answer quoted in the guides, and the checks that every file has a scenario, that the setup check page
+answers, that the lead form reaches a flow, and that the README's command prints what the README shows. The CI step after
+the scenarios compares this block with what each later run prints, so a later run that printed anything else would fail.
 
 ### How each n8n behaviour the guides rely on was proven
 
@@ -90,13 +104,13 @@ PENDING
 | `$('Enquiry arrives').item.json...` reads an earlier node's data, also after a Wait | Stages 3 and 5 |
 | The Code node runs JavaScript and reads another node with `$('...').first()` | Stage 4, and the practical check |
 | The Wait node, on webhook call: `{{ $execution.resumeUrl }}` (an address with a signature) handed to the inbox; the inbox's call resumes the run with the decision; a Respond to Webhook after the Wait answers the person who decided | Stage 5 (Reject, then Approve), repair C |
-| Until a run reaches its Wait node, n8n refuses a decision with 409 "The execution ... is running already" | Seen in CI before the office learned to try again; the office's own tests cover the retry |
+| Until a run reaches its Wait node, n8n refuses a decision with 409 "The execution ... is running already" | Seen in CI run 45320046704, before the office learned to try again; the office's own tests cover the retry |
 | On Error `Continue (using error output)` sends a 500 and a timeout to the error output | Stage 6 (fail, slow) and repair D's repaired file |
 | On Error `Continue` passes a failure on to the next node as if it were a result | Repair D's broken file |
 | `$prevNode.name` names the node whose error output led here | Stage 6 and repair D's repaired file (the alert's step) |
 | A failing node with no error output makes the webhook answer 500 `{"message":"Error in workflow"}` | Repair B's broken file |
-| An error message with quote marks, put inside a JSON answer, breaks the answer | Seen in CI in the first experiment run; the flows avoid it, and `tests/workflows.test.js` keeps them from doing it again |
-| A publish is applied by a running n8n shortly, not at once | Seen in CI; the load script waits until every webhook is live |
+| An error message with quote marks, put inside a JSON answer, breaks the answer | Seen in CI run 45318193799, the run of the first experiment flows (removed since); the flows avoid it, and `tests/workflows.test.js` keeps them from doing it again |
+| A publish is applied by a running n8n shortly, not at once | Seen in CI run 45320046704; the load script waits until every webhook is live |
 
 **What rests on n8n's documentation only**, and was not proven by a run: every label and step in n8n's own screen; that
 an edit in the editor stays a draft until it is published again; the owner account's password rule; importing a file from

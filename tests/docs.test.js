@@ -222,6 +222,54 @@ test('every output block on a page is either replayed in CI or marked as pasted,
   }
 });
 
+// ---------- the lab guide against the solution files ----------
+
+function guideStages() {
+  const text = read('participant/guide.md');
+  return text.split(/\n## Stage /).slice(1).map((s) => ({ n: Number(s[0]), text: s.split(/\n## /)[0] }));
+}
+
+test('each stage of the lab guide names only nodes that its solution file has, and every node of the solution is built', () => {
+  for (const { n, text } of guideStages()) {
+    const solution = JSON.parse(read('workflows/stage-' + n + '-solution.json'));
+    const names = new Set(solution.nodes.map((x) => x.name));
+    const named = [...text.matchAll(/\| Name \| `([^`]+)` \|/g)].map((m) => m[1]);
+    for (const name of named) assert.ok(names.has(name), 'stage ' + n + ' names "' + name + '", which its solution does not have');
+    const previous = n > 1 ? new Set(JSON.parse(read('workflows/stage-' + n + '-starter.json')).nodes.map((x) => x.name)) : new Set(['Enquiry arrives']);
+    for (const name of names) assert.ok(previous.has(name) || named.includes(name), 'stage ' + n + ' never builds "' + name + '"');
+  }
+});
+
+test('every expression the lab guide gives for a stage is in that stage\'s solution file', () => {
+  for (const { n, text } of guideStages()) {
+    const solution = read('workflows/stage-' + n + '-solution.json');
+    for (const m of text.matchAll(/\{\{ [^`]*? \}\}/g)) {
+      assert.ok(solution.includes(JSON.stringify(m[0]).slice(1, -1)), 'stage ' + n + ': ' + m[0]);
+    }
+  }
+});
+
+test('every answer body the lab guide gives is the one in the solution file, as JSON', () => {
+  const asJson = (body) => JSON.parse(body.replace(/^=/, '').replace(/\{\{[^}]*\}\}/g, (e) => e.replace(/"/g, "'")));
+  for (const { n, text } of guideStages()) {
+    const bodies = JSON.parse(read('workflows/stage-' + n + '-solution.json')).nodes
+      .filter((x) => x.type === 'n8n-nodes-base.respondToWebhook')
+      .map((x) => JSON.stringify(asJson(x.parameters.responseBody)));
+    for (const m of text.matchAll(/\| Response Body(?: \(Expression\))? \| `([^`]+)` \|/g)) {
+      assert.ok(bodies.includes(JSON.stringify(asJson(m[1]))), 'stage ' + n + ': ' + m[1]);
+    }
+  }
+});
+
+test('the code the lab guide gives for stage 4 is exactly the Code node of the solution files', () => {
+  const m = read('participant/guide.md').match(/```javascript\n([\s\S]*?)```/);
+  assert.ok(m);
+  for (const f of ['stage-4-solution', 'stage-5-solution', 'stage-6-solution', 'check-g-fixed']) {
+    const node = JSON.parse(read('workflows/' + f + '.json')).nodes.find((x) => x.name === 'Check the AI figures');
+    assert.equal(node.parameters.jsCode + '\n', m[1], f);
+  }
+});
+
 // ---------- licence and author ----------
 
 test('every teaching page carries the licence line', () => {
