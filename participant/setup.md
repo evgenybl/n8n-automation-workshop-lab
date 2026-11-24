@@ -24,7 +24,9 @@ If your room has no internet, your instructor gives you printed copies.
     businesses (fewer than 250 employees and less than 10 million US dollars in annual revenue). If you work for a larger
     organisation and use your work laptop, your employer needs a paid Docker subscription that covers you: ask your IT
     department before you install it.
-  - **On a Mac**, choose the Docker Desktop download for your Mac's chip (Apple silicon, or Intel).
+  - **On a Mac**, choose the Docker Desktop download for your Mac's chip (Apple silicon, or Intel). The pinned n8n
+    image is published for Apple silicon too (linux/arm64; `docs/HOW-THIS-WAS-TESTED.md` shows what CI read); the lab
+    has not been tried on a Mac.
 - **A web browser: Chrome, Edge or Firefox.** Safari is reported, in a community report the lab has not verified, to
   refuse n8n's sign-in at `http://localhost:5678`; use one of the other three.
 - **The lab's folder.** Your instructor gives it to you, or you download it from the lab's page on GitHub: the green
@@ -48,7 +50,15 @@ the lab, Docker downloads n8n's own image from n8n's registry, `docker.n8n.io`, 
    ```
 
    It prints a long report. When Docker Desktop runs, the report has a part headed `Server:` with a `Server Version:`
-   line. If, instead, the report ends with an error about connecting to the Docker daemon
+   line. On the GitHub runner that tested this lab, those lines were:
+
+   <!-- pasted from: the step "The n8n image this run used" of CI run 45339281817, at commit b229a23 -->
+   ```text
+   Server:
+    Server Version: 29.4.2
+   ```
+
+   Your version number may differ. If, instead, the report ends with an error about connecting to the Docker daemon
    (Docker's background service), Docker Desktop is not running: start it, wait until it says it is running, and try
    again.
 3. **Start the lab.** Type:
@@ -57,8 +67,8 @@ the lab, Docker downloads n8n's own image from n8n's registry, `docker.n8n.io`, 
    docker compose up -d
    ```
 
-   The first time, this downloads n8n: several hundred megabytes. Do it on a fast connection, before the session, not in
-   the room. When it ends, two containers run: **n8n**, and the **practice office** (a lead form, a practice CRM, a
+   The first time, this downloads n8n: several hundred megabytes (the size CI measured is on the testing page,
+   `docs/HOW-THIS-WAS-TESTED.md`). Do it on a fast connection, before the session, not in the room. When it ends, two containers run: **n8n**, and the **practice office** (a lead form, a practice CRM, a
    practice AI step, an approval inbox and an office window, all on your laptop).
 
    **Behind a company proxy?** If your laptop reaches the internet through a proxy, the download may fail or hang. Docker

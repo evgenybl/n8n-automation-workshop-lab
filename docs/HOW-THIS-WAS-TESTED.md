@@ -92,18 +92,38 @@ written and its output compared.
 
 <!-- pasted (ci) from: the CI run's scenario step, LAB_LIVE=1 node --test --test-reporter=tap tests/scenarios.test.js (the last lines) -->
 ```text
-1..49
-# tests 49
+1..54
+# tests 54
 # suites 0
-# pass 49
+# pass 54
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 76104.248718
+# duration_ms 89877.62498
 ```
 
-This summary was printed by CI run 45322953853, at commit 08f8b03, on 24 November 2026.
+This summary was printed by CI run 45339281817, at commit b229a23, on 24 November 2026. The tests are one scenario
+for each workflow file, one replay for each answer quoted in the guides, and the checks that every file has a scenario,
+that the setup check page answers, that the lead form reaches a flow, and that the README's command prints what the
+README shows.
+
+### The n8n image
+
+`compose.yaml` pins the image by its tag, `docker.n8n.io/n8nio/n8n:2.48.8`, not by its digest. The tag names the version;
+the registry could, in principle, serve a different image under the same tag, and the lab would not notice. The CI run
+above printed the image it used: its digest, its size, the platforms it is published for (so it also runs on a Mac with
+Apple silicon, as linux/arm64), and the size of its download for each platform:
+
+<!-- pasted from: the step "The n8n image this run used" of CI run 45339281817, at commit b229a23 -->
+```text
+digest docker.n8n.io/n8nio/n8n@sha256:e0df076a41076127d5f765e05acb8ba746bddff86442a92269c0f5a7219a7e4b
+size on disk 377894246 bytes
+  Platform:  linux/amd64
+  Platform:  linux/arm64
+download for linux/amd64: 377879245 bytes in 20 layers
+download for linux/arm64: 377577771 bytes in 20 layers
+```
 
 ### How each n8n behaviour the guides rely on was proven
 
