@@ -1,8 +1,17 @@
-# The practical check: a seventh flow, unseen
+# The practical check: a seventh flow, unseen if you keep it so
 
 **This check has not been given to anyone yet.** It shows objective O7 (and O4) on a flow the participant has not seen.
 Give only the file and the task below; keep the answer. It is handed out by the instructor only: no participant page
-mentions it. **Planned minutes:** 15. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D, and the part *Repairs C and D* takes 30 planned minutes instead of 20: repair C in 15, then the practical check in 15, so session 2 takes 130 (`instructor/variants.md`).
+mentions it.
+
+**The file and its answer are in the lab's folder**, which every participant has: `workflows/check-g-broken.json`, the
+repaired `workflows/check-g-fixed.json`, their pictures in `docs/pictures/`, and this page. So the check is unseen only
+if you make it so, in one of two ways. Either hand out the lab's folder yourself, without `workflows/check-g-fixed.json`,
+`docs/pictures/check-g-fixed.svg` and this page (a participant who downloaded the lab from its page on GitHub has them
+all). Or change the fault in your own copy of the broken file, so that this page's answer no longer fits it; then do the
+check yourself first, because the lab's tests run only the file in this repository.
+
+**Planned minutes:** 15. When you assess, the practical check (`instructor/practical-check.md`) takes the place of repair D, and the part *Repairs C and D* takes 30 planned minutes instead of 20: repair C in 15, then the practical check in 15, so session 2 takes 130 (`instructor/variants.md`).
 
 ## What you give
 

@@ -3,7 +3,7 @@
 **This lab has not been taught to a class of people;** the rubric has not been used to mark anyone yet. Each level
 describes what you can see a participant do, in their flow, in the office window or in what they say, within the parts of
 the run sheet. When you assess, the practical check (`instructor/practical-check.md`, scheduled as `instructor/variants.md`
-says) shows O7 and O4 on a flow the participant has not seen.
+says) shows O7 and O4 on a flow the participant has not seen, if you keep it unseen as that page says.
 
 | Objective | 1: Not yet | 2: With help | 3: On their own | 4: Can explain and transfer |
 |---|---|---|---|---|

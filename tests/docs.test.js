@@ -229,6 +229,7 @@ test('the practical check has one plan, the same on the run sheet, the README, t
   assert.match(read('README.md'), /\| Repairs C and D \|[^\n]*when assessing, the practical check in place of repair D/);
   assert.match(flat('instructor/variants.md'), new RegExp('The practical check takes ' + own + ' planned minutes\\.'));
   assert.ok(flat('instructor/practical-check.md').includes('It is handed out by the instructor only: no participant page mentions it.'));
+  assert.ok(flat('instructor/practical-check.md').includes("**The file and its answer are in the lab's folder**, which every participant has"), 'the check says it is unseen only if the instructor makes it so');
   for (const f of PAGES.filter((x) => x.startsWith('participant/'))) assert.doesNotMatch(read(f), /practical check|check-g/i, f);
 });
 
