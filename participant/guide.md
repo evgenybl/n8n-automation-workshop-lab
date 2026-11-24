@@ -13,17 +13,21 @@ folded hints display properly; in a plain text editor they do not.
 
 > **How these steps were written.** The steps for n8n's own screen were written from n8n's documentation and from the
 > workflow files in this lab, using the labels in n8n 2.48.8's documentation and its own English text. They were not
-> walked through on a screen by a person. Every flow they build was run by the lab's automated tests on n8n 2.48.8, and
-> every answer quoted below is what those flows answered there. If a label on your screen differs, look for the nearest
-> match, and tell your instructor.
+> walked through on a screen by a person. Where this guide says where something sits on the screen, it says so only as
+> n8n's documentation does, and names the page (the list is at the end of *How every stage works*). Two labels it uses
+> come from n8n's own English text and are not in its documentation: *Convert types where required*, and the If node's
+> empty boxes, shown as value1 and value2. Every flow these steps build was run by the lab's automated tests on n8n
+> 2.48.8, and every answer quoted below is what those flows answered there. If a label on your screen differs, look for
+> the nearest match, and tell your instructor.
 
 **Two rules for every stage.**
 
 1. **Every stage starts by importing its starter file into a new workflow.** Do not carry on in the flow you built in
    the stage before: each stage's flow listens at its own address (`stage-1`, `stage-2`, ...), and the old one would
    answer the new stage's form with 404.
-2. **Paste every value shown in a grey block; do not type it.** Each block has a copy button at its top right on GitHub.
-   A typing slip in an expression fails only when the flow runs, with n8n's own message.
+2. **Paste every value shown in a grey block; do not type it.** Each block has a copy button on GitHub. A typing slip in
+   an expression fails only when the flow runs, with n8n's own message. The short values written in the tables, such as
+   `@` or `approve`, you type as they are.
 
 ---
 
@@ -49,35 +53,56 @@ folded hints display properly; in a plain text editor they do not.
 
 ## How every stage works
 
-1. **Create a new, empty workflow.** n8n's documentation: select the create button in the upper-left corner of the side
-   menu (the documentation calls it the universal create resource icon), then select **Workflow**. On n8n's Overview page
-   there is also a create button in the upper-right corner.
+1. **Create a new, empty workflow.** Select the create button in the upper-left corner of the side menu (the
+   documentation calls it the universal create resource icon), then select **Workflow**. On n8n's Overview page there is
+   also a create button in the upper-right corner.
 2. **Import the stage's starter file** (rule 1). In the workflow's menu, choose **Import from File** (the label n8n's
    documentation uses), and pick the starter from the lab's `workflows` folder. *If your screen differs:* open the file in
    a text editor, copy all of it, click on n8n's empty canvas and paste.
 3. **Build** what the stage's table says. Each row is one thing to do; a row that says **P1** means "paste block P1".
-4. **Publish**: choose **Publish** at the top right, then **Publish** again in the window that opens. Do this again after
-   every change.
+4. **Publish**: select the **Publish** button in the canvas header, then **Publish** again in the window that opens. Do
+   this again after every change: your edits stay a draft until you publish.
 5. **Reset the office, then send an enquiry.** In the office window, `http://localhost:3333`, choose **Reset the office**,
    so that what you see belongs to this try. Then open the stage's form address, choose **Fill a sample enquiry**, then
    **Send**. The form shows what your flow answered.
 6. **Check yourself** in the office window: it shows the contacts, the notes, the approvals, the failures your flow
    reported, and every call the office received, newest first.
 
-**How to add a node** (n8n's documentation): select the **+** at the right of the node you want to follow, or **Add first
-step** on an empty canvas; n8n opens the nodes panel. Type the node's name, such as `If`, choose it, and n8n adds it
-connected after the node you started from. Then rename it (right-click it, **Rename node**) to exactly the name in the
-table: later expressions name earlier nodes, such as `$('Enquiry arrives')`, and a different name breaks them.
+**How to add a node.** Select **Add node** on the right side of the node you want to follow, or **Add first step** on an
+empty canvas; n8n opens the nodes panel, where you can search. Type the node's name, such as `If`, and choose it. A new
+node arrives with its type's name, such as *If*; the table's row tells you to rename it, because later expressions name
+earlier nodes, such as `$('Enquiry arrives')`, and a different name breaks them. **To rename a node**, hover over it,
+select its context menu icon, then **Rename node**.
 
-**How to connect two nodes**: drag from the small circle on the right of one node to the left of the other. An **If** node
-has two outputs, **true** and **false**; connect each to what should happen in that case. **To delete a connection**,
-hover it and choose its delete button.
+**How to connect two nodes.** Select the grey dot on the right side of a node and slide the arrow to the grey rectangle on
+the left side of the following node. An **If** node has two outputs, **true** and **false**; connect each to what should
+happen in that case. **To delete a connection**, hover over it, then select **Delete**.
 
-**How to put a pasted value in a box.** A value with `{{ }}` in it is an expression. Switch the box from **Fixed** to
-**Expression** first (the switch is above the box), then paste.
+**How to put a pasted value in a box.** A value with `{{ }}` in it is an expression: switch the box from **Fixed** to
+**Expression**, then paste. The table says *(as an Expression)* on each such row. Where a box already holds a value, the
+row says *select everything in the box, then paste*, so that the new value replaces the old one instead of joining it.
+This page was not written from a screen: if you cannot find the Fixed and Expression switch, ask your instructor.
 
-**Seeing inside a run.** Open the **Executions** tab at the top of the canvas and choose a run: every node shows what it
-received and what it sent on. This is where you look when an answer surprises you.
+**Seeing inside a run.** Select the **Executions** tab in the top menu, and choose a run: n8n shows what each node received
+and sent on. This is where you look when an answer surprises you.
+
+**Starting a stage again.** Delete your half-built workflow (or unpublish it), then import the stage's starter into a new
+workflow, so that only one flow listens at the stage's path.
+
+**Comparing with a solution.** Each stage's solution file listens at its own path, `stage-1-solution` to
+`stage-6-solution`, so you can import it beside your own flow and send to it from
+`http://localhost:3333/form?path=stage-1-solution` (and so on).
+
+**Where the places named on this page come from**, in n8n's documentation:
+
+| What | Page |
+|---|---|
+| The create button, then Workflow | *Create and run workflows* (https://docs.n8n.io/workflows/create/) |
+| The Publish button in the canvas header, and the window it opens | *Save and publish workflows* (https://docs.n8n.io/build/understand-workflows/save-and-publish-workflows.md) |
+| Add node, Add first step, the nodes panel, Rename node in the node's context menu, the Settings tab | *Nodes* (https://docs.n8n.io/workflows/components/nodes/) |
+| The grey dot, the grey rectangle, and Delete on a connection | *Connections* (https://docs.n8n.io/workflows/components/connections/) |
+| The Executions tab in the top menu | *View executions for a single workflow* (https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow.md) |
+| The Wait node's Respond parameter for On Webhook Call | *Wait* (https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/) |
 
 **Live or test address.** The form can send to the *live* address (`/webhook/...`), which answers once the flow is
 published, or to the *test* address (`/webhook-test/...`), which answers one call after you press **Execute workflow** on
@@ -101,7 +126,9 @@ Status:    200
 Answer:    {"message":"Workflow was started"}
 ```
 
-That tells the sender only that something started. Your flow will now answer properly.
+That tells the sender only that something started. Your flow will now answer properly. A Webhook node can answer at once
+by itself, or leave the answer to a later **Respond to Webhook** node, which answers with what you choose; step 4
+chooses the second, and step 5 adds that node.
 
 | # | Do this | Node | Setting | Value |
 |---|---|---|---|---|
@@ -109,12 +136,12 @@ That tells the sender only that something started. Your flow will now answer pro
 | 2 | Look at | `Enquiry arrives` | Path | `stage-1` |
 | 3 | Look at | `Enquiry arrives` | HTTP Method | `POST` |
 | 4 | Set | `Enquiry arrives` | Respond | `Using 'Respond to Webhook' Node` |
-| 5 | Add a **Respond to Webhook** node | `Answer with the name` | after | `Enquiry arrives` |
+| 5 | Add a **Respond to Webhook** node, and rename it to `Answer with the name` | `Answer with the name` | after | `Enquiry arrives` |
 | 6 | Set | `Answer with the name` | Respond With | `JSON` |
-| 7 | Paste | `Answer with the name` | Response Body | **P1** |
+| 7 | Select everything in the box, then paste (as an Expression) | `Answer with the name` | Response Body | **P1** |
 | 8 | Publish; reset the office; send the sample | | | |
 
-**P1** (step 7, the Response Body, as an Expression):
+**P1** (step 7: the box already holds a sample body, so select everything in it first):
 
 ```paste
 {
@@ -166,21 +193,21 @@ consent*, each set to answer 400 with its reason and already connected to the **
 three checks and connect their **true** outputs.
 
 An If node's condition has three parts on the screen: a **left box** for the value to test, an **operator** menu (choose
-the type first, such as String, then the comparison), and a **right box** for what to compare with. (n8n's own English
-text shows the empty boxes as value1 and value2; this was read in n8n's source, not seen on a screen.)
+the type first, such as String, then the comparison), and a **right box** for what to compare with. n8n's documentation
+calls the menu the data type dropdown, and the boxes the condition's fields and values.
 
 | # | Do this | Node | Setting | Value |
 |---|---|---|---|---|
 | 1 | **Import into a new workflow** | | starter | `workflows/stage-2-starter.json` |
 | 2 | Delete the connection | `Enquiry arrives` | | to `Answer with the name` |
 | 3 | Connect | `Enquiry arrives` | its output | to `Has an e-mail?` |
-| 4 | Paste | `Has an e-mail?` | left box | **P1** |
+| 4 | Paste (as an Expression) | `Has an e-mail?` | left box | **P1** |
 | 5 | Set | `Has an e-mail?` | operator | String, then `contains`; right box `@` |
 | 6 | Connect | `Has an e-mail?` | its **true** output | to `Honeypot empty?` |
-| 7 | Paste | `Honeypot empty?` | left box | **P2** |
+| 7 | Paste (as an Expression) | `Honeypot empty?` | left box | **P2** |
 | 8 | Set | `Honeypot empty?` | operator | String, then `is empty` |
 | 9 | Connect | `Honeypot empty?` | its **true** output | to `Consent given?` |
-| 10 | Paste | `Consent given?` | left box | **P3** |
+| 10 | Paste (as an Expression) | `Consent given?` | left box | **P3** |
 | 11 | Set | `Consent given?` | operator | String, then `is equal to`; right box `true` |
 | 12 | Set | `Consent given?` | Convert types where required | `on` |
 | 13 | Connect | `Consent given?` | its **true** output | to `Answer with the name` |
@@ -203,6 +230,11 @@ text shows the empty boxes as value1 and value2; this was read in n8n's source, 
 ```paste
 {{ $json.body.consent }}
 ```
+
+*Convert types where required* is a switch of the If node; the label comes from n8n's own English text, and the If
+node's documentation does not name it. This page was not written from a screen: if you cannot find it, ask your
+instructor. Without it, an enquiry with a consent of `true` stops at *Consent given?* with n8n's own error (read in
+n8n's source; not run in the lab's tests).
 
 **Why consent is compared as text with types converted.** The lab's form sends consent as the value `true`. A plain HTML
 checkbox on a real website sends `on` instead. With *Convert types where required* on, the check turns whatever arrives
@@ -274,9 +306,9 @@ parameter* is a name and a value added to an address after a `?`, such as `?emai
 | 2 | Delete the node | `Answer with the name` | | |
 | 3 | Connect | `Consent given?` | its **true** output | to `Look up the contact` |
 | 4 | Set | `Look up the contact` | Query Parameters: Name | `email` |
-| 5 | Paste | `Look up the contact` | Query Parameters: Value | **P1** |
-| 6 | Add an **If** node | `Known contact?` | after | `Look up the contact` |
-| 7 | Paste | `Known contact?` | left box | **P2** |
+| 5 | Paste (as an Expression) | `Look up the contact` | Query Parameters: Value | **P1** |
+| 6 | Add an **If** node, and rename it to `Known contact?` | `Known contact?` | after | `Look up the contact` |
+| 7 | Paste (as an Expression) | `Known contact?` | left box | **P2** |
 | 8 | Set | `Known contact?` | operator | Boolean, then `is true` |
 | 9 | Connect | `Known contact?` | its **true** output | to `Add a note` |
 | 10 | Connect | `Known contact?` | its **false** output | to `Create the contact` |
@@ -339,17 +371,17 @@ budget, is the kind of mistake that does harm when it reaches a CRM unseen.
   *On Error* setting is already *Continue (using error output)*, and both its outputs lead to the next node, so that the
   flow carries on, and says so in the note, when the AI step fails. (Only the CRM wants the badge header; the AI step
   does not.)
-- **Check the AI figures**, a **Code** node, empty except for a line that asks for the code below.
+- **Check the AI figures**, a **Code** node, empty except for two lines that ask for the code below.
 
 | # | Do this | Node | Setting | Value |
 |---|---|---|---|---|
 | 1 | **Import into a new workflow** | | starter | `workflows/stage-4-starter.json` |
 | 2 | Delete the connection | `Consent given?` | its **true** output | to `Look up the contact` |
 | 3 | Connect | `Consent given?` | its **true** output | to `Ask the AI step` |
-| 4 | Paste | `Check the AI figures` | Code | **P1** |
+| 4 | Select everything in the box, then paste | `Check the AI figures` | Code | **P1** |
 | 5 | Connect | `Check the AI figures` | its output | to `Look up the contact` |
-| 6 | Paste | `Add a note` | Body Parameters: text | **P2** |
-| 7 | Paste | `Create the contact` | Body Parameters: note | **P2** |
+| 6 | Select everything in the box, then paste (as an Expression) | `Add a note` | Body Parameters: text | **P2** |
+| 7 | Select everything in the box, then paste (as an Expression) | `Create the contact` | Body Parameters: note | **P2** |
 | 8 | Publish; reset the office; send the sample; then try the two faults (below) | | | |
 
 **P1** (step 4: select everything in the code box, then paste; leave *Mode* and *Language* as they are). You do not
@@ -377,7 +409,7 @@ else note += 'AI summary not used: it gives figures that are not in the enquiry 
 return [{ json: { summaryUsed, notInEnquiry, note } }];
 ```
 
-**P2** (steps 6 and 7):
+**P2** (steps 6 and 7: each box already holds stage 3's value, so select everything in it first):
 
 ```paste
 {{ $('Check the AI figures').item.json.note }}
@@ -398,6 +430,9 @@ AI summary (checked): Maya Rivers asks for a price. The message begins: Hello, h
 
 Now choose **Reset the office**, set **Practice AI step** to `invents a figure` under *Faults on request* (reset switches
 faults off, so set it after), choose **Apply**, and send the sample again:
+
+If the call list does not say "Answered, with an invented figure (fault on).", the fault is not on: set it again, after
+the reset.
 
 <!-- run: reset; fault ai=invent; send stage-4-solution maya; note -->
 ```text
@@ -440,13 +475,12 @@ that one run: its **resume address**, written `{{ $execution.resumeUrl }}` in an
 inbox together with the enquiry. When a person presses Approve or Reject, the inbox calls the address with the decision,
 and the paused run carries on from the Wait node, with the decision as its data.
 
-**Two requests, two answers. Read this before you build.** The form's enquiry is one HTTP request. The flow answers it
-with the first Respond to Webhook node it reaches, *Answer: waiting for approval*, status **202** ("accepted, not
-finished yet"), and then goes on to the Wait node. The person's click in the inbox is a second, separate HTTP request, to
-the resume address. Because the Wait node is set to respond *Using 'Respond to Webhook' Node*, that second request is
-answered by the next Respond to Webhook node the run reaches after the Wait: *Answer: recorded*, or *Tell the approver:
-nothing written*. The inbox shows that answer under the decision. (n8n's documentation says that a second Respond to
-Webhook node on the same request is ignored; here each Respond node answers a different request.)
+**Two requests, two answers. Read this before you build.**
+
+1. The form sends the enquiry: the first request.
+2. *Answer: waiting for approval* answers it at once, status **202** ("accepted, not finished yet"); the run then waits.
+3. The person's click in the inbox calls the resume address: the second request.
+4. The run goes on from the Wait node, and the next Respond to Webhook node it reaches answers that click.
 
 **What the starter brings:** your stage-4 flow, and four nodes:
 
@@ -461,13 +495,13 @@ Webhook node on the same request is ignored; here each Respond node answers a di
 | 1 | **Import into a new workflow** | | starter | `workflows/stage-5-starter.json` |
 | 2 | Delete the connection | `Check the AI figures` | | to `Look up the contact` |
 | 3 | Connect | `Check the AI figures` | its output | to `Ask a person` |
-| 4 | Paste | `Ask a person` | Body Parameters: resumeUrl | **P1** |
-| 5 | Add a **Wait** node | `Wait for the decision` | after | `Answer: waiting for approval` |
+| 4 | Paste (as an Expression) | `Ask a person` | Body Parameters: resumeUrl | **P1** |
+| 5 | Add a **Wait** node, and rename it to `Wait for the decision` | `Wait for the decision` | after | `Answer: waiting for approval` |
 | 6 | Set | `Wait for the decision` | Resume | `On Webhook Call` |
 | 7 | Set | `Wait for the decision` | HTTP Method | `POST` |
 | 8 | Set | `Wait for the decision` | Respond | `Using 'Respond to Webhook' Node` |
-| 9 | Add an **If** node | `Approved?` | after | `Wait for the decision` |
-| 10 | Paste | `Approved?` | left box | **P2** |
+| 9 | Add an **If** node, and rename it to `Approved?` | `Approved?` | after | `Wait for the decision` |
+| 10 | Paste (as an Expression) | `Approved?` | left box | **P2** |
 | 11 | Set | `Approved?` | operator | String, then `is equal to`; right box `approve` |
 | 12 | Connect | `Approved?` | its **true** output | to `Look up the contact` |
 | 13 | Connect | `Approved?` | its **false** output | to `Tell the approver: nothing written` |
@@ -485,8 +519,9 @@ Webhook node on the same request is ignored; here each Respond node answers a di
 {{ $json.body.decision }}
 ```
 
-If the Wait node's *HTTP Method* is left at its default, the inbox's call (a `POST`) does not reach it, and the decision
-seems to do nothing; set it to `POST`.
+*HTTP Method* and *Respond* are among the parameters n8n's documentation lists for the Wait node when it resumes *On
+Webhook Call* (the *Wait* page). If *HTTP Method* is left at its default, the inbox's call (a `POST`) does not reach the
+Wait node, and the decision seems to do nothing; set it to `POST`.
 
 **Look at it afterwards.** Send the sample. The form shows:
 
@@ -536,7 +571,7 @@ run that waits for a person shows as waiting until the decision comes.
 **Goal:** when the CRM fails, the flow records what failed and answers honestly about what was written.
 **Planned minutes:** 25. **Starter:** `workflows/stage-6-starter.json`. **Your form address:** `http://localhost:3333/form?path=stage-6`.
 
-> **First, if you like, watch it fail the old way** (an optional try, not a step). Set the practice CRM to `fails (answers
+> **First, if you like, watch it fail the old way** (an optional try, not a step; skip it when short of time). Set the practice CRM to `fails (answers
 > 500)`, send the sample and approve it. Without this stage, n8n stops the run at the failing node: the inbox shows only
 > n8n's own error, and nothing tells the office what happened. Set the CRM back to `works normally`.
 
@@ -557,8 +592,9 @@ timeout since stage 3; with this stage, a call that runs out of time becomes a f
 - **CRM confirmed?**, an If node that asks whether the CRM's answer names the contact it wrote, already connected to
   *Answer: recorded* (true) and to **Tell the office: not confirmed** (false), which leads to *Answer: check the CRM*.
 
-**On Error** is a setting on a node's **Settings** tab (beside **Parameters**). Set to *Continue (using error output)*,
-the node gets two outputs: the top one for success and the bottom one, **error**, for a failure.
+**On Error** is a setting on a node's **Settings** tab. Set to *Continue (using error output)*, the node gets an
+**error** output beside its normal one, for a failure. This page was not written from a screen: if you cannot tell the
+two outputs apart, ask your instructor.
 
 | # | Do this | Node | Setting | Value |
 |---|---|---|---|---|
@@ -582,6 +618,10 @@ there because an answer of 200 is not proof: a system can say "fine" and write n
 **Why the answer does not repeat the error text.** The error text can hold quote marks, and quote marks inside a JSON
 answer break it: n8n then answers with its own error instead of yours. The lab's own first test run met exactly this. So
 the full reason goes to the office, and the answer names the step and the alert.
+
+**Each fault must end with Status 502 under your decision in the inbox.** A 500 with n8n's own error means a CRM call
+failed with no branch to catch it: check that its *On Error* is set and its error output is connected. **Short of time?**
+Do *fails* and *writes, but answers too late*; *is slow* and *answers wrongly* can wait.
 
 **Look at it afterwards.** Choose **Reset the office**, set the practice CRM to `fails (answers 500)`, send the sample and
 approve it. The inbox shows what your flow answered, and the office window, under *Failures your flow reported*, why:
