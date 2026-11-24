@@ -72,7 +72,8 @@ the six stage solutions; the third sends one enquiry to the finished flow. It an
 
 Then open the approval inbox at `http://localhost:3333/inbox` and choose Approve or Reject, and see what was written in
 the office window at `http://localhost:3333`. The lab's CI runs the third command after loading every file, and compares
-its output with the block above. Maya Rivers, like every person and company in the lab, is invented.
+its output with the block above. Maya Rivers, like every person and company in the lab, is invented; any resemblance of
+an invented name to a real person or business is a coincidence.
 
 A participant does not run these commands: they follow `participant/setup.md`, and build the flow themselves in n8n's
 editor at `http://localhost:5678`.
