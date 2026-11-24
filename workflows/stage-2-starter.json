@@ -23,7 +23,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": \"{{ $json.body.name }}\"\n}",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": {{ JSON.stringify($json.body.name) }}\n}",
         "options": {}
       },
       "id": "8a94ee70-250d-477b-ba8c-e45e09e000b4",
@@ -31,8 +31,161 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "44b79c78-f8af-4582-ace9-702a34527430",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "f58acda0-b86a-4532-a042-2a33aa3321d0",
+      "name": "Has an e-mail?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
         260,
         0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "53509c13-4e00-497d-acb8-291b81c3dc3b",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "ee27a6fa-cadf-41af-a1fb-be56955d6b7d",
+      "name": "Honeypot empty?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "16888f18-f055-4097-b7d1-0a406efed2ca",
+      "name": "Consent given?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry has no e-mail address.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "7a33277c-e271-4648-bbd5-2bc2377c07ad",
+      "name": "Refuse: no e-mail",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The hidden website field is filled in, so this looks like a robot.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "6d0a37ed-cc56-4561-a0e7-bda81a226a3a",
+      "name": "Refuse: looks like a robot",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "a36c068d-f32a-452f-af29-bdaea5a6af73",
+      "name": "Refuse: no consent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        180
       ]
     }
   ],
@@ -42,6 +195,42 @@
         [
           {
             "node": "Answer with the name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has an e-mail?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Refuse: no e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Honeypot empty?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Refuse: looks like a robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consent given?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Refuse: no consent",
             "type": "main",
             "index": 0
           }

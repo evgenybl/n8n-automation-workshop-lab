@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "33bc45c5-1c8b-4062-8d46-499fc4ef1bfa",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -197,15 +196,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "fe4480ee-0cac-4747-9f4b-d8ac4d3fe25c",
       "name": "Look up the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
-        360
+        260,
+        720
       ]
     },
     {
@@ -239,8 +240,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        260,
-        360
+        520,
+        720
       ]
     },
     {
@@ -265,15 +266,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "dd3d909f-92df-4248-a566-8388662071f0",
       "name": "Add a note",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        360
+        780,
+        720
       ]
     },
     {
@@ -310,15 +313,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "3dbfe55f-fe42-48c6-801f-ee9531ed95dd",
       "name": "Create the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        540
+        780,
+        900
       ]
     },
     {
@@ -332,7 +337,49 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
+        1300,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/ai/read",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.body.name }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9783e46d-302d-45d7-982d-aa972997e73f",
+      "name": "Ask the AI step",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        360
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Paste the code from the lab guide here, replacing these two lines.\nreturn $input.all();"
+      },
+      "id": "1977aac0-b231-4d66-8c23-90515350701d",
+      "name": "Check the AI figures",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
         360
       ]
     }
@@ -448,6 +495,24 @@
         [
           {
             "node": "Answer: recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask the AI step": {
+      "main": [
+        [
+          {
+            "node": "Check the AI figures",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check the AI figures",
             "type": "main",
             "index": 0
           }

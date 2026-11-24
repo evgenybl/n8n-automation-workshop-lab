@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "26485182-3d76-45e5-b0a6-2a05452a3278",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -197,15 +196,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "e329d150-98d7-4634-906c-9214abbf0148",
       "name": "Look up the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
-        360
+        260,
+        720
       ]
     },
     {
@@ -239,8 +240,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        260,
-        360
+        520,
+        720
       ]
     },
     {
@@ -265,15 +266,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "950f3a77-0371-42cb-ba24-b138b9e23de2",
       "name": "Add a note",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        360
+        780,
+        720
       ]
     },
     {
@@ -310,15 +313,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "32759e1d-25fb-4207-b1ba-260368e47b27",
       "name": "Create the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        540
+        780,
+        900
       ]
     },
     {
@@ -332,8 +337,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
-        360
+        1300,
+        720
       ]
     }
   ],

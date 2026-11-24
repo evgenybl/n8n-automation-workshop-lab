@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "e0a46161-6311-4a61-81df-eda087e492bd",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -199,20 +198,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1040,
-        0
-      ]
+        0,
+        360
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Use the AI summary only if every figure in it is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst summary = $input.first().json.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst summaryUsed = notInEnquiry.length === 0;\n\nconst note = summaryUsed\n  ? 'Message: ' + enquiry.message + '\\nAI summary (checked): ' + summary\n  : 'Message: ' + enquiry.message + '\\nAI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
+        "jsCode": "// Use the AI summary only if the AI step answered and every figure in its summary is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst answer = $input.first().json;\nconst summary = answer.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst aiFailed = Boolean(answer.error);\nconst summaryUsed = !aiFailed && notInEnquiry.length === 0;\n\nlet note = 'Message: ' + enquiry.message + '\\n';\nif (aiFailed) note += 'AI summary not used: the AI step did not answer.';\nelse if (summaryUsed) note += 'AI summary (checked): ' + summary;\nelse note += 'AI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
       },
       "id": "bfd20444-134f-4cba-8d40-76b6598b1100",
       "name": "Check the AI figures",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
+        260,
         360
       ]
     },
@@ -252,9 +252,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        260,
+        520,
         360
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -269,8 +270,25 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        520,
+        780,
         360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"not queued\",\n  \"reason\": \"The approval inbox did not answer, so nothing was written. Please send the enquiry again later.\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "id": "93f83da0-7660-4344-a7b3-314fe2e35831",
+      "name": "Answer: not queued",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        540
       ]
     },
     {
@@ -285,7 +303,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        780,
+        1040,
         360
       ],
       "webhookId": "f8b46666-f82e-40f0-abb0-7277003f96bd"
@@ -320,8 +338,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        1040,
-        360
+        0,
+        720
       ]
     },
     {
@@ -335,8 +353,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1040,
-        540
+        0,
+        900
       ]
     },
     {
@@ -361,14 +379,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "2438e083-f305-48ec-b17f-7e4c50847a74",
       "name": "Look up the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
+        260,
         720
       ]
     },
@@ -403,7 +423,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        260,
+        520,
         720
       ]
     },
@@ -429,14 +449,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "54a1de3e-cfb0-41c0-92ee-5f5b75a1b4ce",
       "name": "Add a note",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
+        780,
         720
       ]
     },
@@ -474,14 +496,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "7133016c-70e6-45cb-807e-4cb90ff68511",
       "name": "Create the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
+        780,
         900
       ]
     },
@@ -496,7 +520,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
+        1300,
         720
       ]
     }
@@ -575,6 +599,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Check the AI figures",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -594,6 +625,13 @@
         [
           {
             "node": "Answer: waiting for approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer: not queued",
             "type": "main",
             "index": 0
           }

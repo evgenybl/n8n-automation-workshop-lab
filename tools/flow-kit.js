@@ -8,6 +8,38 @@ const crypto = require('node:crypto');
 const OFFICE = 'http://office:3333';
 const BADGE = { name: 'X-Office-Badge', value: 'practice-badge' };
 
+// One layout for the finished flow, [column, row]; every stage uses the same places, so the nodes a starter brings never
+// sit on the nodes the participant already has.
+const POSITIONS = {
+  'Enquiry arrives': [0, 0],
+  'Has an e-mail?': [1, 0],
+  'Honeypot empty?': [2, 0],
+  'Consent given?': [3, 0],
+  'Answer with the name': [4, 0],
+  'Refuse: no e-mail': [2, 1],
+  'Refuse: looks like a robot': [3, 1],
+  'Refuse: no consent': [4, 1],
+  'Ask the AI step': [0, 2],
+  'Check the AI figures': [1, 2],
+  'Ask a person': [2, 2],
+  'Answer: waiting for approval': [3, 2],
+  'Wait for the decision': [4, 2],
+  'Answer: not queued': [3, 3],
+  'Approved?': [0, 4],
+  'Look up the contact': [1, 4],
+  'Known contact?': [2, 4],
+  'Add a note': [3, 4],
+  'CRM confirmed?': [4, 4],
+  'Answer: recorded': [5, 4],
+  'Tell the approver: nothing written': [0, 5],
+  'Create the contact': [3, 5],
+  'Tell the office: not confirmed': [5, 5],
+  'Tell the office: lookup failed': [1, 6],
+  'Answer: nothing written': [2, 6],
+  'Tell the office: write failed': [4, 6],
+  'Answer: check the CRM': [5, 6],
+};
+
 const TYPES = {
   webhook: { type: 'n8n-nodes-base.webhook', typeVersion: 2.2 },
   respond: { type: 'n8n-nodes-base.respondToWebhook', typeVersion: 1.5 },
@@ -38,9 +70,12 @@ class Flow {
     this.connections = {};
   }
 
-  add(node, column, row) {
+  // A node goes where the lab's one layout puts it (POSITIONS), so that it stays in the same place in every stage.
+  add(node) {
     if (this.nodes.some((n) => n.name === node.name)) throw new Error('Two nodes named ' + node.name);
-    node.position = [column * 260, row * 180];
+    const at = POSITIONS[node.name];
+    if (!at) throw new Error('No position for ' + node.name);
+    node.position = [at[0] * 260, at[1] * 180];
     this.nodes.push(node);
     return this;
   }
@@ -152,15 +187,16 @@ function condition(seed, left, kind, right) {
   return { id: uuidFrom(seed), leftValue: left, rightValue: right === undefined ? '' : right, operator: clone(ops[kind]) };
 }
 
-function ifNode(name, conditions, combinator) {
+// loose: the If node's "Convert types where required" switched on.
+function ifNode(name, conditions, loose) {
   return Object.assign({ name }, TYPES.if, {
     parameters: {
       conditions: {
-        options: { caseSensitive: true, leftValue: '', typeValidation: 'strict', version: 4 },
+        options: { caseSensitive: true, leftValue: '', typeValidation: loose ? 'loose' : 'strict', version: 4 },
         conditions: conditions.map((c, i) => condition(name + '/' + i, c[0], c[1], c[2])),
-        combinator: combinator || 'and',
+        combinator: 'and',
       },
-      looseTypeValidation: false,
+      looseTypeValidation: Boolean(loose),
       options: {},
     },
   });
@@ -202,4 +238,4 @@ function wait(name, responseMode) {
   });
 }
 
-module.exports = { Flow, webhook, respond, ifNode, http, code, wait, OFFICE, BADGE, TYPES, uuidFrom };
+module.exports = { Flow, webhook, respond, ifNode, http, code, wait, OFFICE, BADGE, TYPES, POSITIONS, uuidFrom };

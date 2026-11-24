@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1334" height="752" viewBox="0 0 1334 752" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1594" height="932" viewBox="0 0 1594 932" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
 <title id="t">Stage 4 starter: Ask the AI step, and check it</title>
-<desc id="d">Drawn by tools/draw-workflow.js from workflows/stage-4-starter.json. Nodes: Enquiry arrives; Has an e-mail?; Honeypot empty?; Consent given?; Refuse: no e-mail; Refuse: looks like a robot; Refuse: no consent; Look up the contact; Known contact?; Add a note; Create the contact; Answer: recorded.</desc>
+<desc id="d">Drawn by tools/draw-workflow.js from workflows/stage-4-starter.json. Nodes: Enquiry arrives; Has an e-mail?; Honeypot empty?; Consent given?; Refuse: no e-mail; Refuse: looks like a robot; Refuse: no consent; Look up the contact; Known contact?; Add a note; Create the contact; Answer: recorded; Ask the AI step; Check the AI figures.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6570"/></marker></defs>
-<rect x="0" y="0" width="1334" height="752" fill="#ffffff"/>
+<rect x="0" y="0" width="1594" height="932" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="bold" fill="#1b1f24">Stage 4 starter: Ask the AI step, and check it</text>
 <text x="40" y="48" font-size="11" fill="#4a5561">Drawn from workflows/stage-4-starter.json by tools/draw-workflow.js</text>
 <path d="M 254 106 C 294 106, 260 114, 300 114" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
@@ -14,17 +14,20 @@
 <text x="780" y="101" font-size="11" fill="#5b6570">true</text>
 <path d="M 774 122 C 814 122, 780 294, 820 294" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
 <text x="780" y="135" font-size="11" fill="#5b6570">false</text>
-<path d="M 1034 106 L 1046 106 L 1046 404 L 16 404 L 16 474 L 40 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 1034 106 L 1046 106 L 1046 584 L 276 584 L 276 654 L 300 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
 <text x="1040" y="101" font-size="11" fill="#5b6570">true</text>
 <path d="M 1034 122 C 1074 122, 1040 294, 1080 294" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
 <text x="1040" y="135" font-size="11" fill="#5b6570">false</text>
+<path d="M 514 646 C 554 646, 520 654, 560 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 774 646 C 814 646, 780 654, 820 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="780" y="641" font-size="11" fill="#5b6570">true</text>
+<path d="M 774 662 C 814 662, 780 834, 820 834" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="780" y="675" font-size="11" fill="#5b6570">false</text>
+<path d="M 1034 646 C 1187 646, 1187 654, 1340 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 1034 826 C 1187 826, 1187 654, 1340 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
 <path d="M 254 466 C 294 466, 260 474, 300 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 514 466 C 554 466, 520 474, 560 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="520" y="461" font-size="11" fill="#5b6570">true</text>
-<path d="M 514 482 C 554 482, 520 654, 560 654" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="520" y="495" font-size="11" fill="#5b6570">false</text>
-<path d="M 774 466 C 814 466, 780 474, 820 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 774 646 C 814 646, 780 474, 820 474" fill="none" stroke="#5b6570" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 254 482 C 294 482, 260 474, 300 474" fill="none" stroke="#a12121" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+<text x="260" y="495" font-size="11" fill="#a12121">error</text>
 <g>
 <rect x="40" y="76" width="214" height="76" rx="8" fill="#e3f4e6" stroke="#2e7d3c" stroke-width="1.6"/>
 <text x="50" y="91" font-size="10" fill="#2e7d3c">Trigger: webhook</text>
@@ -69,33 +72,45 @@
 <text x="1090" y="325" font-size="10" fill="#4a5561">answers 400</text>
 </g>
 <g>
+<rect x="300" y="616" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="310" y="631" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="310" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Look up the contact</text>
+<text x="310" y="685" font-size="10" fill="#4a5561">GET /crm/contacts</text>
+</g>
+<g>
+<rect x="560" y="616" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
+<text x="570" y="631" font-size="10" fill="#9a7400">If</text>
+<text x="570" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Known contact?</text>
+<text x="570" y="685" font-size="10" fill="#4a5561">true / false</text>
+</g>
+<g>
+<rect x="820" y="616" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="830" y="631" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="830" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Add a note</text>
+<text x="830" y="685" font-size="10" fill="#4a5561">POST /crm/contacts/{id}/notes</text>
+</g>
+<g>
+<rect x="820" y="796" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
+<text x="830" y="811" font-size="10" fill="#2a5ea8">HTTP Request</text>
+<text x="830" y="830" font-size="14" font-weight="bold" fill="#1b1f24">Create the contact</text>
+<text x="830" y="865" font-size="10" fill="#4a5561">POST /crm/contacts</text>
+</g>
+<g>
+<rect x="1340" y="616" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
+<text x="1350" y="631" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
+<text x="1350" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Answer: recorded</text>
+<text x="1350" y="685" font-size="10" fill="#4a5561">answers 200</text>
+</g>
+<g>
 <rect x="40" y="436" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
 <text x="50" y="451" font-size="10" fill="#2a5ea8">HTTP Request</text>
-<text x="50" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Look up the contact</text>
-<text x="50" y="505" font-size="10" fill="#4a5561">GET /crm/contacts</text>
+<text x="50" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Ask the AI step</text>
+<text x="50" y="505" font-size="10" fill="#4a5561">POST /ai/read</text>
 </g>
 <g>
-<rect x="300" y="436" width="214" height="76" rx="8" fill="#fff5d6" stroke="#9a7400" stroke-width="1.6"/>
-<text x="310" y="451" font-size="10" fill="#9a7400">If</text>
-<text x="310" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Known contact?</text>
-<text x="310" y="505" font-size="10" fill="#4a5561">true / false</text>
-</g>
-<g>
-<rect x="560" y="436" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
-<text x="570" y="451" font-size="10" fill="#2a5ea8">HTTP Request</text>
-<text x="570" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Add a note</text>
-<text x="570" y="505" font-size="10" fill="#4a5561">POST /crm/contacts/{id}/notes</text>
-</g>
-<g>
-<rect x="560" y="616" width="214" height="76" rx="8" fill="#e2edfb" stroke="#2a5ea8" stroke-width="1.6"/>
-<text x="570" y="631" font-size="10" fill="#2a5ea8">HTTP Request</text>
-<text x="570" y="650" font-size="14" font-weight="bold" fill="#1b1f24">Create the contact</text>
-<text x="570" y="685" font-size="10" fill="#4a5561">POST /crm/contacts</text>
-</g>
-<g>
-<rect x="820" y="436" width="214" height="76" rx="8" fill="#f1e6f7" stroke="#7b3fa0" stroke-width="1.6"/>
-<text x="830" y="451" font-size="10" fill="#7b3fa0">Respond to Webhook</text>
-<text x="830" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Answer: recorded</text>
-<text x="830" y="505" font-size="10" fill="#4a5561">answers 200</text>
+<rect x="300" y="436" width="214" height="76" rx="8" fill="#ececec" stroke="#555555" stroke-width="1.6"/>
+<text x="310" y="451" font-size="10" fill="#555555">Code</text>
+<text x="310" y="470" font-size="14" font-weight="bold" fill="#1b1f24">Check the AI figures</text>
+<text x="310" y="505" font-size="10" fill="#4a5561">JavaScript</text>
 </g>
 </svg>

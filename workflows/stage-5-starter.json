@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "9719b0f0-7db1-435f-ad73-b84565ef7101",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -199,20 +198,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1040,
-        0
-      ]
+        0,
+        360
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Use the AI summary only if every figure in it is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst summary = $input.first().json.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst summaryUsed = notInEnquiry.length === 0;\n\nconst note = summaryUsed\n  ? 'Message: ' + enquiry.message + '\\nAI summary (checked): ' + summary\n  : 'Message: ' + enquiry.message + '\\nAI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
+        "jsCode": "// Use the AI summary only if the AI step answered and every figure in its summary is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst answer = $input.first().json;\nconst summary = answer.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst aiFailed = Boolean(answer.error);\nconst summaryUsed = !aiFailed && notInEnquiry.length === 0;\n\nlet note = 'Message: ' + enquiry.message + '\\n';\nif (aiFailed) note += 'AI summary not used: the AI step did not answer.';\nelse if (summaryUsed) note += 'AI summary (checked): ' + summary;\nelse note += 'AI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
       },
       "id": "8c6e1d00-951d-46ae-a3f9-9bf140f70b96",
       "name": "Check the AI figures",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
+        260,
         360
       ]
     },
@@ -238,7 +238,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "fb4225b9-c1fd-4be8-b86d-1503a26baf90",
       "name": "Look up the contact",
@@ -246,7 +248,7 @@
       "typeVersion": 4.5,
       "position": [
         260,
-        360
+        720
       ]
     },
     {
@@ -281,7 +283,7 @@
       "typeVersion": 2.4,
       "position": [
         520,
-        360
+        720
       ]
     },
     {
@@ -306,7 +308,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "730529e9-89ca-4201-aea2-cae2218bb37d",
       "name": "Add a note",
@@ -314,7 +318,7 @@
       "typeVersion": 4.5,
       "position": [
         780,
-        360
+        720
       ]
     },
     {
@@ -351,7 +355,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "b09c423f-58ea-48a8-82f6-900b29437db5",
       "name": "Create the contact",
@@ -359,7 +365,7 @@
       "typeVersion": 4.5,
       "position": [
         780,
-        540
+        900
       ]
     },
     {
@@ -373,8 +379,98 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1040,
+        1300,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/inbox",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Enquiry arrives').item.json.body.name }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Enquiry arrives').item.json.body.message }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $json.note }}"
+            },
+            {
+              "name": "resumeUrl",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2ced285a-9c97-4329-b3a1-3d5ab7888fa6",
+      "name": "Ask a person",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
         360
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"waiting for approval\",\n  \"approval\": \"{{ $json.id }}\"\n}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "79da0048-65fb-4f1e-b9fa-d8de31398bf6",
+      "name": "Answer: waiting for approval",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"not queued\",\n  \"reason\": \"The approval inbox did not answer, so nothing was written. Please send the enquiry again later.\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "id": "b3bc4845-4cd3-406c-bc9a-c3c134938fd9",
+      "name": "Answer: not queued",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"rejected\",\n  \"written\": \"nothing\"\n}",
+        "options": {}
+      },
+      "id": "61d15fc3-70f8-4e80-aef3-8e77ff1f978f",
+      "name": "Tell the approver: nothing written",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        900
       ]
     }
   ],
@@ -452,6 +548,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Check the AI figures",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -511,6 +614,24 @@
         [
           {
             "node": "Look up the contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask a person": {
+      "main": [
+        [
+          {
+            "node": "Answer: waiting for approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer: not queued",
             "type": "main",
             "index": 0
           }

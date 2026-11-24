@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "4ed7ac4d-2464-4fd1-9265-7d7674a86283",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -199,20 +198,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1040,
-        0
-      ]
+        0,
+        360
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Use the AI summary only if every figure in it is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst summary = $input.first().json.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst summaryUsed = notInEnquiry.length === 0;\n\nconst note = summaryUsed\n  ? 'Message: ' + enquiry.message + '\\nAI summary (checked): ' + summary\n  : 'Message: ' + enquiry.message + '\\nAI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
+        "jsCode": "// Use the AI summary only if the AI step answered and every figure in its summary is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst answer = $input.first().json;\nconst summary = answer.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst aiFailed = Boolean(answer.error);\nconst summaryUsed = !aiFailed && notInEnquiry.length === 0;\n\nlet note = 'Message: ' + enquiry.message + '\\n';\nif (aiFailed) note += 'AI summary not used: the AI step did not answer.';\nelse if (summaryUsed) note += 'AI summary (checked): ' + summary;\nelse note += 'AI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
       },
       "id": "6224a1b3-3f57-4df7-8d9f-9d4466db4b7d",
       "name": "Check the AI figures",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
+        260,
         360
       ]
     },
@@ -238,7 +238,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "8db7659f-66a0-4cb3-9ee8-1256491a47dc",
       "name": "Look up the contact",
@@ -246,7 +248,7 @@
       "typeVersion": 4.5,
       "position": [
         260,
-        360
+        720
       ]
     },
     {
@@ -281,7 +283,7 @@
       "typeVersion": 2.4,
       "position": [
         520,
-        360
+        720
       ]
     },
     {
@@ -306,7 +308,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "f6085573-7dd8-422e-90b0-1f3ec52d3973",
       "name": "Add a note",
@@ -314,7 +318,7 @@
       "typeVersion": 4.5,
       "position": [
         780,
-        360
+        720
       ]
     },
     {
@@ -351,7 +355,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "e75c8509-2617-47f9-8b9c-eadaccc7b5f6",
       "name": "Create the contact",
@@ -359,7 +365,7 @@
       "typeVersion": 4.5,
       "position": [
         780,
-        540
+        900
       ]
     },
     {
@@ -373,8 +379,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1040,
-        360
+        1300,
+        720
       ]
     }
   ],
@@ -446,6 +452,13 @@
     },
     "Ask the AI step": {
       "main": [
+        [
+          {
+            "node": "Check the AI figures",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Check the AI figures",

@@ -106,12 +106,22 @@ async function checkStarter1(t, p) {
   assert.doesNotMatch(r.text, /Maya/, 'the starter does not yet answer with the name');
 }
 
+// Names that would break, or forge, an answer whose JSON text took the name in unescaped.
+const QUOTED = 'Maya "MJ" Rivers';
+const FORGING = 'x", "status": "refused';
+
 async function checkName(t, p) {
   await reset();
   const r = await post(p, MAYA);
   t.diagnostic('answered ' + r.status + ' ' + r.text);
   assert.equal(r.status, 200);
   assert.deepEqual(r.json, { status: 'received', name: 'Maya Rivers' });
+  for (const name of [QUOTED, FORGING, 'Back\\slash and a\nline break']) {
+    const odd = await post(p, Object.assign({}, MAYA, { name }));
+    t.diagnostic('with the name ' + JSON.stringify(name) + ': ' + odd.status + ' ' + odd.text);
+    assert.equal(odd.status, 200, 'a name with quote marks, a backslash or a line break is answered, not broken');
+    assert.deepEqual(odd.json, { status: 'received', name }, 'the answer carries the name exactly, and no field is forged');
+  }
 }
 
 async function checkRefusals(t, p) {
@@ -122,6 +132,8 @@ async function checkRefusals(t, p) {
     [Object.assign({}, MAYA, { website: 'http://robot.example.com' }), /robot/],
     [Object.assign({}, MAYA, { consent: false }), /agree to be contacted/],
     [Object.assign({}, MAYA, { consent: undefined }), /agree to be contacted/],
+    // What a plain HTML checkbox sends when it is ticked. The flow asks for true, so this is refused with the reason.
+    [Object.assign({}, MAYA, { consent: 'on' }), /consent must be true/],
   ];
   for (const [enquiry, reason] of cases) {
     const r = await post(p, enquiry);
@@ -162,6 +174,13 @@ async function checkAi(t, p, approval) {
   t.diagnostic('note with the AI step inventing a figure: ' + JSON.stringify(notes(s)[0]));
   assert.match(notes(s)[0], /AI summary not used: it gives figures that are not in the enquiry \(4800\)/);
   assert.doesNotMatch(notes(s)[0], /The budget is/, 'the invented sentence is not in the note');
+  await reset();
+  await fault({ ai: 'fail' });
+  const r = await submit(p, MAYA, approval);
+  s = await state();
+  t.diagnostic('with the AI step failing: answer ' + r.status + '; note ' + JSON.stringify(notes(s)[0]));
+  assert.equal(r.status, 200, 'the enquiry is still recorded');
+  assert.match(notes(s)[0], /AI summary not used: the AI step did not answer\.$/);
 }
 
 async function checkApproval(t, p) {
@@ -186,29 +205,49 @@ async function checkApproval(t, p) {
   assert.equal(second.status, 200);
   assert.equal(s.contacts.length, 1, 'after Approve the contact exists');
   assert.equal(s.contacts[0].email, TOM.email);
+  await reset();
+  await fault({ inbox: 'fail' });
+  const notQueued = await post(p, MAYA);
+  s = await state();
+  t.diagnostic('with the inbox failing: ' + notQueued.status + ' ' + notQueued.text);
+  assert.equal(notQueued.status, 503, 'the form learns that the enquiry could not be queued');
+  assert.equal(notQueued.json.status, 'not queued');
+  assert.equal(s.approvals.length, 0);
+  assert.equal(s.contacts.length, 0);
 }
 
 async function checkFailures(t, p) {
+  // A failed lookup wrote nothing; a failed or unconfirmed write may have written, so its answer says "unknown".
   const cases = [
-    ['fail', 'Look up the contact', /500/],
-    ['slow', 'Look up the contact', /timeout/],
-    ['wrong', 'Write to the CRM', /did not confirm/],
+    ['fail', 'Look up the contact', /500/, 'nothing', 0],
+    ['slow', 'Look up the contact', /timeout/, 'nothing', 0],
+    ['wrong', 'Write to the CRM', /did not confirm/, 'unknown: check the CRM', 0],
+    ['late-writes', 'Create the contact', /timeout/, 'unknown: check the CRM', 1],
   ];
-  for (const [mode, step, reason] of cases) {
+  for (const [mode, step, reason, written, contacts] of cases) {
     await reset();
     await fault({ crm: mode });
     const r = await submit(p, MAYA, true);
     const s = await state();
-    t.diagnostic('CRM ' + mode + ': answer ' + r.status + ' ' + r.text + '; alert ' + JSON.stringify(s.alerts[0] && { step: s.alerts[0].step, reason: s.alerts[0].reason }));
+    t.diagnostic('CRM ' + mode + ': answer ' + r.status + ' ' + r.text + '; alert ' + JSON.stringify(s.alerts[0] && { step: s.alerts[0].step, reason: s.alerts[0].reason }) + '; contacts ' + s.contacts.length);
     assert.equal(r.status, 502, 'the answer says it failed');
     assert.equal(r.json.status, 'failed');
     assert.equal(r.json.step, step);
-    assert.equal(r.json.written, 'nothing');
+    assert.equal(r.json.written, written);
     assert.equal(s.alerts.length, 1, 'the office window shows the failure');
     assert.equal(s.alerts[0].step, step);
     assert.match(s.alerts[0].reason, reason);
-    assert.equal(s.contacts.length, 0, 'nothing is half-written');
+    assert.equal(s.contacts.length, contacts, mode === 'late-writes' ? 'the write timed out, and yet it was made' : 'nothing was written');
   }
+  // The same person again, with writes still late: the lookup finds the contact the timed-out write made, and the note
+  // that times out is written too.
+  const again = await submit(p, MAYA, true);
+  const s = await state();
+  t.diagnostic('CRM late-writes, second enquiry: answer ' + again.status + ' ' + again.text + '; notes ' + s.contacts[0].notes.length);
+  assert.equal(again.json.step, 'Add a note');
+  assert.equal(again.json.written, 'unknown: check the CRM');
+  assert.equal(s.contacts.length, 1);
+  assert.equal(s.contacts[0].notes.length, 2);
   await reset();
   const ok = await submit(p, MAYA, true);
   assert.equal(ok.status, 200, 'with the CRM working again, the same flow records the enquiry');
@@ -431,6 +470,9 @@ const WHO = {
   'no-email': Object.assign({}, MAYA, { email: '' }),
   robot: Object.assign({}, MAYA, { website: 'http://robot.example.com' }),
   'no-consent': Object.assign({}, MAYA, { consent: false }),
+  'consent-on': Object.assign({}, MAYA, { consent: 'on' }),
+  quoted: Object.assign({}, MAYA, { name: QUOTED }),
+  forging: Object.assign({}, MAYA, { name: FORGING }),
 };
 const shown = (status, text) => 'Status:    ' + (status || 'no answer') + '\nAnswer:    ' + text;
 const idOf = (file) => JSON.parse(fs.readFileSync(path.join(ROOT, 'workflows', file + '.json'), 'utf8')).id;

@@ -76,14 +76,17 @@ function outputLabel(node, index) {
   return '';
 }
 
+const STEP_X = 260;
+const STEP_Y = 180;
+
 function draw(wf, sourceName) {
-  const xs = wf.nodes.map((n) => n.position[0]);
-  const ys = wf.nodes.map((n) => n.position[1]);
-  const minX = Math.min(...xs);
-  const minY = Math.min(...ys);
-  const at = (n) => ({ x: n.position[0] - minX + PAD, y: n.position[1] - minY + TOP + PAD / 2 });
-  const width = Math.max(...xs) - minX + W + PAD * 2;
-  const height = Math.max(...ys) - minY + H + TOP + PAD * 2;
+  // The nodes keep their order on the canvas, but columns and rows that hold no node in this file are left out, so a
+  // small stage is drawn small.
+  const columns = [...new Set(wf.nodes.map((n) => n.position[0]))].sort((a, b) => a - b);
+  const rows = [...new Set(wf.nodes.map((n) => n.position[1]))].sort((a, b) => a - b);
+  const at = (n) => ({ x: columns.indexOf(n.position[0]) * STEP_X + PAD, y: rows.indexOf(n.position[1]) * STEP_Y + TOP + PAD / 2 });
+  const width = (columns.length - 1) * STEP_X + W + PAD * 2;
+  const height = (rows.length - 1) * STEP_Y + H + TOP + PAD * 2;
   const byName = new Map(wf.nodes.map((n) => [n.name, n]));
 
   const out = [];
@@ -113,7 +116,13 @@ function draw(wf, sourceName) {
         const label = outputLabel(a, index);
         const colour = label === 'error' ? '#a12121' : '#5b6570';
         let d;
-        if (x2 > x1) {
+        let labelAt = [x1 + 6, y1 + (index === 0 ? -5 : 13)];
+        if (pb.x === pa.x && pb.y > pa.y) {
+          // Straight down to a node in the same column: from the bottom of one box to the top of the other.
+          const xd = pa.x + W / 2 + (index === 0 ? -12 : 12);
+          d = 'M ' + xd + ' ' + (pa.y + H) + ' L ' + xd + ' ' + pb.y;
+          labelAt = [xd + 6, pa.y + H + 14];
+        } else if (x2 > x1) {
           d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + bend) + ' ' + y1 + ', ' + (x2 - bend) + ' ' + y2 + ', ' + x2 + ' ' + y2;
         } else {
           // A connection that runs backwards: out to the right, along the gap above the target's row (or below
@@ -126,7 +135,7 @@ function draw(wf, sourceName) {
         }
         out.push('<path d="' + d + '" fill="none" stroke="' + colour + '" stroke-width="1.6"' + (label === 'error' ? ' stroke-dasharray="5 3"' : '') + ' marker-end="url(#arrow)"/>');
         if (label) {
-          out.push('<text x="' + (x1 + 6) + '" y="' + (y1 + (index === 0 ? -5 : 13)) + '" font-size="11" fill="' + colour + '">' + esc(label) + '</text>');
+          out.push('<text x="' + labelAt[0] + '" y="' + labelAt[1] + '" font-size="11" fill="' + colour + '">' + esc(label) + '</text>');
         }
       }
     });

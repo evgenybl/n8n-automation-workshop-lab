@@ -1,9 +1,13 @@
 'use strict';
-// Writes every workflow file in workflows/ from the definitions below, so that each starter is exactly the previous
-// stage's solution and each broken file differs from its repaired file in the one place its exercise describes.
+// Writes every workflow file in workflows/ from the definitions below.
 //
 //   node tools/build-workflows.js           writes the files
 //   node tools/build-workflows.js --check   fails if a file in workflows/ differs from what this script writes
+//
+// A stage's solution is the finished flow of that stage. A stage's starter is the previous stage's solution, plus the
+// stage's "parts": nodes already placed and mostly set up, not yet connected to the flow, so that the participant sets
+// only what carries the stage's idea (PARTS below names what is left for them). Each broken file differs from its
+// repaired file in the one place its exercise describes.
 //
 // Webhook paths: a stage's starter listens at stage-N (the participant's own flow), its solution at stage-N-solution;
 // a repair's broken file at repair-x (repair A: at a misspelt path), its repaired file at repair-x-fixed (repair A:
@@ -18,223 +22,256 @@ const DIR = path.join(ROOT, 'workflows');
 
 const E = 'Enquiry arrives';
 const enquiry = (field) => "={{ $('" + E + "').item.json.body." + field + ' }}';
+const CRM_TIMEOUT = 5000;
 
 // The Code node of stage 4, as the participant pastes it.
 const CHECK_FIGURES = [
-  '// Use the AI summary only if every figure in it is also in the enquiry.',
+  '// Use the AI summary only if the AI step answered and every figure in its summary is also in the enquiry.',
   "const enquiry = $('" + E + "').first().json.body;",
-  "const summary = $input.first().json.summary || '';",
+  'const answer = $input.first().json;',
+  "const summary = answer.summary || '';",
   '',
   '// Every figure in a text, such as 12 or 1,200 (written 1200 here).',
   "const figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));",
   '',
   'const inEnquiry = figures(enquiry.message);',
   'const notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));',
-  'const summaryUsed = notInEnquiry.length === 0;',
+  'const aiFailed = Boolean(answer.error);',
+  'const summaryUsed = !aiFailed && notInEnquiry.length === 0;',
   '',
-  'const note = summaryUsed',
-  "  ? 'Message: ' + enquiry.message + '\\nAI summary (checked): ' + summary",
-  "  : 'Message: ' + enquiry.message + '\\nAI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';",
+  "let note = 'Message: ' + enquiry.message + '\\n';",
+  "if (aiFailed) note += 'AI summary not used: the AI step did not answer.';",
+  "else if (summaryUsed) note += 'AI summary (checked): ' + summary;",
+  "else note += 'AI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';",
   '',
   'return [{ json: { summaryUsed, notInEnquiry, note } }];',
 ].join('\n');
 
-// ---------- the six stages ----------
+const CODE_PLACEHOLDER = ['// Paste the code from the lab guide here, replacing these two lines.', 'return $input.all();'].join('\n');
+const CHECKED_NOTE = "={{ $('Check the AI figures').item.json.note }}";
 
-function stage1(id, name, p) {
-  return new Flow(id, name)
-    .add(webhook(E, p), 0, 0)
-    .add(respond('Answer with the name', 200, '{\n  "status": "received",\n  "name": "{{ $json.body.name }}"\n}'), 1, 0)
-    .connect(E, 'Answer with the name');
-}
+// ---------- the nodes, finished ----------
 
-function stage1Starter(id, name, p) {
-  return new Flow(id, name).add(webhook(E, p, 'onReceived'), 0, 0);
-}
+const N = {
+  answerName: () => respond('Answer with the name', 200, '{\n  "status": "received",\n  "name": {{ JSON.stringify($json.body.name) }}\n}'),
+  hasEmail: () => ifNode('Has an e-mail?', [['={{ $json.body.email }}', 'contains', '@']]),
+  honeypot: () => ifNode('Honeypot empty?', [['={{ $json.body.website }}', 'empty']]),
+  // Compared as text with "Convert types where required" on: true passes; false, "on" or nothing is refused, never an error.
+  consent: () => ifNode('Consent given?', [['={{ $json.body.consent }}', 'equals', 'true']], true),
+  refuseEmail: () => respond('Refuse: no e-mail', 400, '{\n  "status": "refused",\n  "reason": "The enquiry has no e-mail address."\n}'),
+  refuseRobot: () => respond('Refuse: looks like a robot', 400, '{\n  "status": "refused",\n  "reason": "The hidden website field is filled in, so this looks like a robot."\n}'),
+  refuseConsent: () => respond('Refuse: no consent', 400, '{\n  "status": "refused",\n  "reason": "The enquiry does not agree to be contacted: consent must be true."\n}'),
+  lookup: (field) => http('Look up the contact', { url: OFFICE + '/crm/contacts', query: [[field || 'email', enquiry(field || 'email')]], badge: true, timeout: CRM_TIMEOUT }),
+  known: () => ifNode('Known contact?', [['={{ $json.found }}', 'true']]),
+  addNote: (noteText) => http('Add a note', { method: 'POST', url: '=' + OFFICE + '/crm/contacts/{{ $json.contact.id }}/notes', badge: true, body: [['text', noteText]], timeout: CRM_TIMEOUT }),
+  create: (noteText) => http('Create the contact', {
+    method: 'POST',
+    url: OFFICE + '/crm/contacts',
+    badge: true,
+    body: [['name', enquiry('name')], ['email', enquiry('email')], ['company', enquiry('company')], ['note', noteText]],
+    timeout: CRM_TIMEOUT,
+  }),
+  answerRecorded: () => respond('Answer: recorded', 200, '{\n  "status": "recorded",\n  "contact": "{{ $json.contact }}"\n}'),
+  askAi: () => http('Ask the AI step', { method: 'POST', url: OFFICE + '/ai/read', body: [['name', '={{ $json.body.name }}'], ['message', '={{ $json.body.message }}']], onError: 'continueErrorOutput' }),
+  checkFigures: (jsCode) => code('Check the AI figures', jsCode || CHECK_FIGURES),
+  askPerson: (resumeUrl) => http('Ask a person', {
+    method: 'POST',
+    url: OFFICE + '/inbox',
+    body: [['name', enquiry('name')], ['email', enquiry('email')], ['message', enquiry('message')], ['summary', '={{ $json.note }}'], ['resumeUrl', resumeUrl === undefined ? '={{ $execution.resumeUrl }}' : resumeUrl]],
+    onError: 'continueErrorOutput',
+  }),
+  answerWaiting: () => respond('Answer: waiting for approval', 202, '{\n  "status": "waiting for approval",\n  "approval": "{{ $json.id }}"\n}'),
+  answerNotQueued: () => respond('Answer: not queued', 503, '{\n  "status": "not queued",\n  "reason": "The approval inbox did not answer, so nothing was written. Please send the enquiry again later."\n}'),
+  wait: () => wait('Wait for the decision'),
+  approved: (condition) => ifNode('Approved?', [condition || ['={{ $json.body.decision }}', 'equals', 'approve']]),
+  nothingWritten: () => respond('Tell the approver: nothing written', 200, '{\n  "status": "rejected",\n  "written": "nothing"\n}'),
+  crmConfirmed: () => ifNode('CRM confirmed?', [['={{ $json.contact }}', 'notEmpty']]),
+  tellLookupFailed: () => http('Tell the office: lookup failed', { method: 'POST', url: OFFICE + '/alerts', body: [['step', '={{ $prevNode.name }}'], ['reason', '={{ $json.error.message }}'], ['email', enquiry('email')]] }),
+  answerNothingWritten: () => respond('Answer: nothing written', 502, '{\n  "status": "failed",\n  "step": "{{ $json.step }}",\n  "written": "nothing",\n  "alert": "{{ $json.id }}"\n}'),
+  tellWriteFailed: () => http('Tell the office: write failed', { method: 'POST', url: OFFICE + '/alerts', body: [['step', '={{ $prevNode.name }}'], ['reason', '={{ $json.error.message }}'], ['email', enquiry('email')]] }),
+  tellNotConfirmed: () => http('Tell the office: not confirmed', { method: 'POST', url: OFFICE + '/alerts', body: [['step', 'Write to the CRM'], ['reason', 'The CRM answered, but its answer did not confirm the write.'], ['email', enquiry('email')]] }),
+  answerCheckCrm: () => respond('Answer: check the CRM', 502, '{\n  "status": "failed",\n  "step": "{{ $json.step }}",\n  "written": "unknown: check the CRM",\n  "alert": "{{ $json.id }}"\n}'),
+};
 
-function addChecks(f) {
-  f.add(ifNode('Has an e-mail?', [['={{ $json.body.email }}', 'contains', '@']]), 1, 0)
-    .add(ifNode('Honeypot empty?', [['={{ $json.body.website }}', 'empty']]), 2, 0)
-    .add(ifNode('Consent given?', [['={{ $json.body.consent }}', 'true']]), 3, 0)
-    .add(respond('Refuse: no e-mail', 400, '{\n  "status": "refused",\n  "reason": "The enquiry has no e-mail address."\n}'), 2, 1)
-    .add(respond('Refuse: looks like a robot', 400, '{\n  "status": "refused",\n  "reason": "The hidden website field is filled in, so this looks like a robot."\n}'), 3, 1)
-    .add(respond('Refuse: no consent', 400, '{\n  "status": "refused",\n  "reason": "The enquiry does not agree to be contacted."\n}'), 4, 1)
+// ---------- the six solutions ----------
+
+function intake(f) {
+  f.add(N.hasEmail()).add(N.honeypot()).add(N.consent()).add(N.refuseEmail()).add(N.refuseRobot()).add(N.refuseConsent())
     .connect(E, 'Has an e-mail?')
     .connect('Has an e-mail?', 'Honeypot empty?', 0)
     .connect('Has an e-mail?', 'Refuse: no e-mail', 1)
     .connect('Honeypot empty?', 'Consent given?', 0)
     .connect('Honeypot empty?', 'Refuse: looks like a robot', 1)
     .connect('Consent given?', 'Refuse: no consent', 1);
-  return f;
 }
 
-function stage2(id, name, p) {
-  const f = new Flow(id, name).add(webhook(E, p), 0, 0);
-  addChecks(f);
-  f.add(respond('Answer with the name', 200, '{\n  "status": "received",\n  "name": "{{ $json.body.name }}"\n}'), 4, 0)
-    .connect('Consent given?', 'Answer with the name', 0);
-  return f;
-}
-
-// The CRM part: look the contact up by e-mail, then add a note or create it (with its first note).
-// noteText: the expression for the note. at: [column, row] of the lookup.
-function addCrm(f, noteText, at, lookupField) {
-  const [c, r] = at;
-  f.add(http('Look up the contact', { url: OFFICE + '/crm/contacts', query: [[lookupField || 'email', enquiry(lookupField || 'email')]], badge: true }), c, r)
-    .add(ifNode('Known contact?', [['={{ $json.found }}', 'true']]), c + 1, r)
-    .add(http('Add a note', { method: 'POST', url: '=' + OFFICE + '/crm/contacts/{{ $json.contact.id }}/notes', badge: true, body: [['text', noteText]] }), c + 2, r)
-    .add(http('Create the contact', {
-      method: 'POST',
-      url: OFFICE + '/crm/contacts',
-      badge: true,
-      body: [['name', enquiry('name')], ['email', enquiry('email')], ['company', enquiry('company')], ['note', noteText]],
-    }), c + 2, r + 1)
-    .add(respond('Answer: recorded', 200, '{\n  "status": "recorded",\n  "contact": "{{ $json.contact }}"\n}'), c + 3, r)
+function crm(f, noteText, lookupField) {
+  f.add(N.lookup(lookupField)).add(N.known()).add(N.addNote(noteText)).add(N.create(noteText)).add(N.answerRecorded())
     .connect('Look up the contact', 'Known contact?')
     .connect('Known contact?', 'Add a note', 0)
     .connect('Known contact?', 'Create the contact', 1)
     .connect('Add a note', 'Answer: recorded')
     .connect('Create the contact', 'Answer: recorded');
-  return f;
 }
 
-function stage3(id, name, p, lookupField) {
-  const f = new Flow(id, name).add(webhook(E, p), 0, 0);
-  addChecks(f);
-  addCrm(f, enquiry('message'), [0, 2], lookupField);
-  f.connect('Consent given?', 'Look up the contact', 0);
-  return f;
-}
-
-function addAi(f, at, checkAt) {
-  const [c, r] = at;
-  f.add(http('Ask the AI step', { method: 'POST', url: OFFICE + '/ai/read', body: [['name', '={{ $json.body.name }}'], ['message', '={{ $json.body.message }}']] }), c, r)
-    .add(code('Check the AI figures', CHECK_FIGURES), checkAt[0], checkAt[1])
+function ai(f) {
+  f.add(N.askAi()).add(N.checkFigures())
     .connect('Consent given?', 'Ask the AI step', 0)
-    .connect('Ask the AI step', 'Check the AI figures');
-  return f;
+    .connect('Ask the AI step', 'Check the AI figures', 0)
+    .connect('Ask the AI step', 'Check the AI figures', 1);
 }
 
-const CHECKED_NOTE = "={{ $('Check the AI figures').item.json.note }}";
+const solution = {
+  1: (id, name, p) => new Flow(id, name).add(webhook(E, p)).add(N.answerName()).connect(E, 'Answer with the name'),
+  2: (id, name, p) => {
+    const f = new Flow(id, name).add(webhook(E, p));
+    intake(f);
+    return f.add(N.answerName()).connect('Consent given?', 'Answer with the name', 0);
+  },
+  3: (id, name, p, opts) => {
+    const f = new Flow(id, name).add(webhook(E, p));
+    intake(f);
+    crm(f, enquiry('message'), opts && opts.lookupField);
+    return f.connect('Consent given?', 'Look up the contact', 0);
+  },
+  4: (id, name, p, opts) => {
+    const f = new Flow(id, name).add(webhook(E, p));
+    intake(f);
+    ai(f);
+    crm(f, (opts && opts.noteText) || CHECKED_NOTE);
+    return f.connect('Check the AI figures', 'Look up the contact');
+  },
+  5: (id, name, p, opts) => {
+    const f = new Flow(id, name).add(webhook(E, p));
+    intake(f);
+    ai(f);
+    f.add(N.askPerson()).add(N.answerWaiting()).add(N.answerNotQueued()).add(N.wait()).add(N.approved(opts && opts.approvedCondition)).add(N.nothingWritten())
+      .connect('Check the AI figures', 'Ask a person')
+      .connect('Ask a person', 'Answer: waiting for approval', 0)
+      .connect('Ask a person', 'Answer: not queued', 1)
+      .connect('Answer: waiting for approval', 'Wait for the decision')
+      .connect('Wait for the decision', 'Approved?')
+      .connect('Approved?', 'Tell the approver: nothing written', 1);
+    crm(f, CHECKED_NOTE);
+    return f.connect('Approved?', 'Look up the contact', 0);
+  },
+  6: (id, name, p) => {
+    const f = solution[5](id, name, p);
+    hardenCrm(f, true);
+    return f;
+  },
+};
 
-function stage4(id, name, p, noteText) {
-  const f = new Flow(id, name).add(webhook(E, p), 0, 0);
-  addChecks(f);
-  addAi(f, [4, 0], [0, 2]);
-  addCrm(f, noteText || CHECKED_NOTE, [1, 2]);
-  f.connect('Check the AI figures', 'Look up the contact');
-  return f;
-}
-
-// Stage 5 lays the flow out in two bands: the intake on top, what happens after the decision below.
-function addApproval(f, approvedCondition) {
-  f.add(http('Ask a person', {
-    method: 'POST',
-    url: OFFICE + '/inbox',
-    body: [['name', enquiry('name')], ['email', enquiry('email')], ['message', enquiry('message')], ['summary', '={{ $json.note }}'], ['resumeUrl', '={{ $execution.resumeUrl }}']],
-  }), 1, 2)
-    .add(respond('Answer: waiting for approval', 202, '{\n  "status": "waiting for approval",\n  "approval": "{{ $json.id }}"\n}'), 2, 2)
-    .add(wait('Wait for the decision'), 3, 2)
-    .add(ifNode('Approved?', [approvedCondition || ['={{ $json.body.decision }}', 'equals', 'approve']]), 4, 2)
-    .add(respond('Tell the approver: nothing written', 200, '{\n  "status": "rejected",\n  "written": "nothing"\n}'), 4, 3)
-    .connect('Check the AI figures', 'Ask a person')
-    .connect('Ask a person', 'Answer: waiting for approval')
-    .connect('Answer: waiting for approval', 'Wait for the decision')
-    .connect('Wait for the decision', 'Approved?')
-    .connect('Approved?', 'Tell the approver: nothing written', 1);
-  return f;
-}
-
-function stage5(id, name, p, approvedCondition) {
-  const f = new Flow(id, name).add(webhook(E, p), 0, 0);
-  addChecks(f);
-  addAi(f, [4, 0], [0, 2]);
-  addApproval(f, approvedCondition);
-  addCrm(f, CHECKED_NOTE, [0, 4]);
-  f.connect('Approved?', 'Look up the contact', 0);
-  return f;
-}
-
-const CRM_TIMEOUT = 5000;
-
-function stage6(id, name, p) {
-  const f = stage5(id, name, p);
-  for (const n of ['Look up the contact', 'Add a note', 'Create the contact']) {
-    const node = f.node(n);
-    node.onError = 'continueErrorOutput';
-    node.parameters.options.timeout = CRM_TIMEOUT;
+// Stage 6's changes to the CRM part; repair D's repaired file uses them without the confirmation check.
+function hardenCrm(f, confirm) {
+  for (const n of ['Look up the contact', 'Add a note', 'Create the contact']) f.node(n).onError = 'continueErrorOutput';
+  f.add(N.tellLookupFailed()).add(N.answerNothingWritten()).add(N.tellWriteFailed()).add(N.answerCheckCrm())
+    .connect('Look up the contact', 'Tell the office: lookup failed', 1)
+    .connect('Tell the office: lookup failed', 'Answer: nothing written')
+    .connect('Add a note', 'Tell the office: write failed', 1)
+    .connect('Create the contact', 'Tell the office: write failed', 1)
+    .connect('Tell the office: write failed', 'Answer: check the CRM');
+  if (confirm) {
+    f.disconnect('Add a note', 'Answer: recorded').disconnect('Create the contact', 'Answer: recorded');
+    f.add(N.crmConfirmed()).add(N.tellNotConfirmed())
+      .connect('Add a note', 'CRM confirmed?', 0)
+      .connect('Create the contact', 'CRM confirmed?', 0)
+      .connect('CRM confirmed?', 'Answer: recorded', 0)
+      .connect('CRM confirmed?', 'Tell the office: not confirmed', 1)
+      .connect('Tell the office: not confirmed', 'Answer: check the CRM');
   }
-  f.node('Answer: recorded').position = [4 * 260, 4 * 180];
-  f.disconnect('Add a note', 'Answer: recorded').disconnect('Create the contact', 'Answer: recorded');
-  f.add(ifNode('CRM confirmed?', [['={{ $json.contact }}', 'notEmpty']]), 3, 4)
-    .add(http('Tell the office', { method: 'POST', url: OFFICE + '/alerts', body: [['step', '={{ $prevNode.name }}'], ['reason', '={{ $json.error.message }}'], ['email', enquiry('email')]] }), 1, 6)
-    .add(http('Tell the office: not confirmed', { method: 'POST', url: OFFICE + '/alerts', body: [['step', 'Write to the CRM'], ['reason', 'The CRM answered, but its answer did not confirm the write.'], ['email', enquiry('email')]] }), 4, 5)
-    .add(respond('Answer: failed', 502, '{\n  "status": "failed",\n  "step": "{{ $json.step }}",\n  "written": "nothing",\n  "alert": "{{ $json.id }}"\n}'), 4, 6)
-    .connect('Add a note', 'CRM confirmed?', 0)
-    .connect('Create the contact', 'CRM confirmed?', 0)
-    .connect('CRM confirmed?', 'Answer: recorded', 0)
-    .connect('CRM confirmed?', 'Tell the office: not confirmed', 1)
-    .connect('Look up the contact', 'Tell the office', 1)
-    .connect('Add a note', 'Tell the office', 1)
-    .connect('Create the contact', 'Tell the office', 1)
-    .connect('Tell the office', 'Answer: failed')
-    .connect('Tell the office: not confirmed', 'Answer: failed');
+}
+
+// ---------- the parts each starter brings ----------
+// Each part is a node of the stage's solution. "left" names what the participant sets in it; everything else is set.
+
+// An If node as n8n's editor adds it: one empty condition.
+const emptyIf = (name) => () => ifNode(name, [['', 'equals', '']]);
+
+const PARTS = {
+  2: {
+    nodes: [emptyIf('Has an e-mail?'), emptyIf('Honeypot empty?'), emptyIf('Consent given?'), N.refuseEmail, N.refuseRobot, N.refuseConsent],
+    left: { 'Has an e-mail?': 'the condition', 'Honeypot empty?': 'the condition', 'Consent given?': 'the condition and the type conversion' },
+    connections: [['Has an e-mail?', 'Refuse: no e-mail', 1], ['Honeypot empty?', 'Refuse: looks like a robot', 1], ['Consent given?', 'Refuse: no consent', 1]],
+  },
+  3: {
+    nodes: [
+      () => Object.assign(N.lookup(), { parameters: Object.assign(N.lookup().parameters, { queryParameters: { parameters: [{ name: '', value: '' }] } }) }),
+      () => N.addNote(enquiry('message')),
+      () => N.create(enquiry('message')),
+      N.answerRecorded,
+    ],
+    left: { 'Look up the contact': 'the query parameter: which field is looked up' },
+    connections: [['Add a note', 'Answer: recorded', 0], ['Create the contact', 'Answer: recorded', 0]],
+  },
+  4: {
+    nodes: [N.askAi, () => N.checkFigures(CODE_PLACEHOLDER)],
+    left: { 'Check the AI figures': 'the code' },
+    connections: [['Ask the AI step', 'Check the AI figures', 0], ['Ask the AI step', 'Check the AI figures', 1]],
+  },
+  5: {
+    nodes: [() => N.askPerson(''), N.answerWaiting, N.answerNotQueued, N.nothingWritten],
+    left: { 'Ask a person': 'the value of resumeUrl' },
+    connections: [['Ask a person', 'Answer: waiting for approval', 0], ['Ask a person', 'Answer: not queued', 1]],
+  },
+  6: {
+    nodes: [N.crmConfirmed, N.tellLookupFailed, N.answerNothingWritten, N.tellWriteFailed, N.tellNotConfirmed, N.answerCheckCrm],
+    connections: [
+      ['CRM confirmed?', 'Answer: recorded', 0],
+      ['CRM confirmed?', 'Tell the office: not confirmed', 1],
+      ['Tell the office: not confirmed', 'Answer: check the CRM', 0],
+      ['Tell the office: lookup failed', 'Answer: nothing written', 0],
+      ['Tell the office: write failed', 'Answer: check the CRM', 0],
+    ],
+  },
+};
+
+function starter(n, id, name, p) {
+  if (n === 1) return new Flow(id, name).add(webhook(E, p, 'onReceived'));
+  const f = solution[n - 1](id, name, p);
+  for (const make of PARTS[n].nodes) f.add(make());
+  for (const [from, to, out] of PARTS[n].connections) f.connect(from, to, out);
   return f;
 }
 
 // ---------- the files ----------
 
+const TITLES = ['Catch an enquiry', 'Refuse a bad one', 'No duplicates', 'Ask the AI step, and check it', 'A person approves', 'When it fails'];
+
 function buildAll() {
   const files = {};
-  const put = (file, flow) => {
-    files[file] = flow;
-  };
-
-  const solutions = [stage1, stage2, stage3, stage4, stage5, stage6];
-  const titles = ['Catch an enquiry', 'Refuse a bad one', 'No duplicates', 'Ask the AI step, and check it', 'A person approves', 'When it fails'];
   for (let n = 1; n <= 6; n++) {
-    const sol = solutions[n - 1]('labStage' + n + 'Solution', 'Stage ' + n + ' solution: ' + titles[n - 1], 'stage-' + n + '-solution');
-    put('stage-' + n + '-solution.json', sol);
-    const starterId = 'labStage' + n + 'Starter00';
-    const starterName = 'Stage ' + n + ' starter: ' + titles[n - 1];
-    const starter = n === 1 ? stage1Starter(starterId, starterName, 'stage-1') : solutions[n - 2](starterId, starterName, 'stage-' + n);
-    put('stage-' + n + '-starter.json', starter);
+    files['stage-' + n + '-solution.json'] = solution[n]('labStage' + n + 'Solution', 'Stage ' + n + ' solution: ' + TITLES[n - 1], 'stage-' + n + '-solution');
+    files['stage-' + n + '-starter.json'] = starter(n, 'labStage' + n + 'Starter00', 'Stage ' + n + ' starter: ' + TITLES[n - 1], 'stage-' + n);
   }
 
   // Repair A: the webhook listens at a misspelt path; the form sends to repair-a.
-  put('repair-a-broken.json', stage3('labRepairABroken0', 'Repair A, broken: nothing happens', 'repiar-a'));
-  put('repair-a-fixed.json', stage3('labRepairAFixed00', 'Repair A, repaired', 'repair-a'));
+  files['repair-a-broken.json'] = solution[3]('labRepairABroken0', 'Repair A, broken: nothing happens', 'repiar-a');
+  files['repair-a-fixed.json'] = solution[3]('labRepairAFixed00', 'Repair A, repaired', 'repair-a');
 
   // Repair B: the duplicate check looks the contact up by name instead of e-mail.
-  put('repair-b-broken.json', stage3('labRepairBBroken0', 'Repair B, broken: the second enquiry crashes', 'repair-b', 'name'));
-  put('repair-b-fixed.json', stage3('labRepairBFixed00', 'Repair B, repaired', 'repair-b-fixed'));
+  files['repair-b-broken.json'] = solution[3]('labRepairBBroken0', 'Repair B, broken: the second enquiry crashes', 'repair-b', { lookupField: 'name' });
+  files['repair-b-fixed.json'] = solution[3]('labRepairBFixed00', 'Repair B, repaired', 'repair-b-fixed');
 
   // Repair C: the approval check reads the wrong field, so a rejected enquiry is written anyway.
-  put('repair-c-broken.json', stage5('labRepairCBroken0', 'Repair C, broken: a rejected enquiry is written', 'repair-c', ['={{ $json.body.approval }}', 'notEmpty']));
-  put('repair-c-fixed.json', stage5('labRepairCFixed00', 'Repair C, repaired', 'repair-c-fixed'));
+  files['repair-c-broken.json'] = solution[5]('labRepairCBroken0', 'Repair C, broken: a rejected enquiry is written', 'repair-c', { approvedCondition: ['={{ $json.body.approval }}', 'notEmpty'] });
+  files['repair-c-fixed.json'] = solution[5]('labRepairCFixed00', 'Repair C, repaired', 'repair-c-fixed');
 
   // Repair D: the note call lacks its header, and its failure is passed on as if it were a result.
-  const dBroken = stage3('labRepairDBroken0', 'Repair D, broken: says done, no note', 'repair-d');
+  const dBroken = solution[3]('labRepairDBroken0', 'Repair D, broken: says done, no note', 'repair-d');
   const note = dBroken.node('Add a note');
   delete note.parameters.sendHeaders;
   delete note.parameters.headerParameters;
   note.onError = 'continueRegularOutput';
-  put('repair-d-broken.json', dBroken);
-  // The repair: the header back on the note call, and every CRM call set to use its error output.
-  const dFixed = stage3('labRepairDFixed00', 'Repair D, repaired', 'repair-d-fixed');
-  for (const n of ['Look up the contact', 'Add a note', 'Create the contact']) dFixed.node(n).onError = 'continueErrorOutput';
-  dFixed
-    .add(http('Tell the office', { method: 'POST', url: OFFICE + '/alerts', body: [['step', '={{ $prevNode.name }}'], ['reason', '={{ $json.error.message }}'], ['email', enquiry('email')]] }), 1, 4)
-    .add(respond('Answer: failed', 502, '{\n  "status": "failed",\n  "step": "{{ $json.step }}",\n  "written": "nothing",\n  "alert": "{{ $json.id }}"\n}'), 3, 4)
-    .connect('Look up the contact', 'Tell the office', 1)
-    .connect('Add a note', 'Tell the office', 1)
-    .connect('Create the contact', 'Tell the office', 1)
-    .connect('Tell the office', 'Answer: failed');
-  put('repair-d-fixed.json', dFixed);
+  files['repair-d-broken.json'] = dBroken;
+  // The full repair: the header back, and every CRM call with an error branch, as in stage 6 (without its confirmation).
+  const dFixed = solution[3]('labRepairDFixed00', 'Repair D, repaired', 'repair-d-fixed');
+  hardenCrm(dFixed, false);
+  files['repair-d-fixed.json'] = dFixed;
 
   // The practical check (instructor only): the note uses the AI summary as it came, not the checked note.
-  put('check-g-broken.json', stage4('labCheckGBroken00', 'Check G, broken: a figure nobody wrote', 'check-g', "={{ $('Ask the AI step').item.json.summary }}"));
-  put('check-g-fixed.json', stage4('labCheckGFixed000', 'Check G, repaired', 'check-g-fixed'));
+  files['check-g-broken.json'] = solution[4]('labCheckGBroken00', 'Check G, broken: a figure nobody wrote', 'check-g', { noteText: "={{ $('Ask the AI step').item.json.summary }}" });
+  files['check-g-fixed.json'] = solution[4]('labCheckGFixed000', 'Check G, repaired', 'check-g-fixed');
 
   return files;
 }
@@ -272,4 +309,4 @@ function main(argv) {
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));
 
-module.exports = { buildAll, CHECK_FIGURES };
+module.exports = { buildAll, CHECK_FIGURES, CODE_PLACEHOLDER, PARTS };

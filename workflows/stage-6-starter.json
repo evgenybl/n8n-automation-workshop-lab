@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "6c1a0b21-7b3a-4a75-afdc-db995de640b1",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -199,20 +198,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1040,
-        0
-      ]
+        0,
+        360
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Use the AI summary only if every figure in it is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst summary = $input.first().json.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst summaryUsed = notInEnquiry.length === 0;\n\nconst note = summaryUsed\n  ? 'Message: ' + enquiry.message + '\\nAI summary (checked): ' + summary\n  : 'Message: ' + enquiry.message + '\\nAI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
+        "jsCode": "// Use the AI summary only if the AI step answered and every figure in its summary is also in the enquiry.\nconst enquiry = $('Enquiry arrives').first().json.body;\nconst answer = $input.first().json;\nconst summary = answer.summary || '';\n\n// Every figure in a text, such as 12 or 1,200 (written 1200 here).\nconst figures = (text) => (String(text || '').match(/\\d+(?:[.,]\\d+)*/g) || []).map((f) => f.replace(/,/g, ''));\n\nconst inEnquiry = figures(enquiry.message);\nconst notInEnquiry = figures(summary).filter((f) => !inEnquiry.includes(f));\nconst aiFailed = Boolean(answer.error);\nconst summaryUsed = !aiFailed && notInEnquiry.length === 0;\n\nlet note = 'Message: ' + enquiry.message + '\\n';\nif (aiFailed) note += 'AI summary not used: the AI step did not answer.';\nelse if (summaryUsed) note += 'AI summary (checked): ' + summary;\nelse note += 'AI summary not used: it gives figures that are not in the enquiry (' + notInEnquiry.join(', ') + ').';\n\nreturn [{ json: { summaryUsed, notInEnquiry, note } }];"
       },
       "id": "464ba651-f2be-4769-a8b1-80f65e73ba5d",
       "name": "Check the AI figures",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
+        260,
         360
       ]
     },
@@ -252,9 +252,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        260,
+        520,
         360
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -269,8 +270,25 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        520,
+        780,
         360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"not queued\",\n  \"reason\": \"The approval inbox did not answer, so nothing was written. Please send the enquiry again later.\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "id": "dedae90a-d001-42cc-91fc-5cc4c850207c",
+      "name": "Answer: not queued",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        540
       ]
     },
     {
@@ -285,7 +303,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        780,
+        1040,
         360
       ],
       "webhookId": "99607f4e-b357-450f-9f1f-742e3b70326c"
@@ -320,8 +338,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        1040,
-        360
+        0,
+        720
       ]
     },
     {
@@ -335,8 +353,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1040,
-        540
+        0,
+        900
       ]
     },
     {
@@ -361,14 +379,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "243e0e57-fbb1-427f-a825-fdf069355acf",
       "name": "Look up the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
+        260,
         720
       ]
     },
@@ -403,7 +423,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        260,
+        520,
         720
       ]
     },
@@ -429,14 +449,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "5bd78768-1e51-4fd4-b296-32059b005960",
       "name": "Add a note",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
+        780,
         720
       ]
     },
@@ -474,14 +496,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "d6a83f0a-6c90-4d00-89a4-86fff7e5e0f0",
       "name": "Create the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
+        780,
         900
       ]
     },
@@ -496,8 +520,173 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
+        1300,
         720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "73a5bb38-011c-4018-a810-31838d625be4",
+              "leftValue": "={{ $json.contact }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "15a82db5-c00b-4eef-946e-02ed4383e322",
+      "name": "CRM confirmed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1040,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/alerts",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "step",
+              "value": "={{ $prevNode.name }}"
+            },
+            {
+              "name": "reason",
+              "value": "={{ $json.error.message }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8c012404-1f30-46f7-8b67-900e6b01583a",
+      "name": "Tell the office: lookup failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"failed\",\n  \"step\": \"{{ $json.step }}\",\n  \"written\": \"nothing\",\n  \"alert\": \"{{ $json.id }}\"\n}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "23663d5b-bc18-4855-96d4-0e8c370e94b8",
+      "name": "Answer: nothing written",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        520,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/alerts",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "step",
+              "value": "={{ $prevNode.name }}"
+            },
+            {
+              "name": "reason",
+              "value": "={{ $json.error.message }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "035e251b-d331-4108-931a-efb0eedef23a",
+      "name": "Tell the office: write failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/alerts",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "step",
+              "value": "Write to the CRM"
+            },
+            {
+              "name": "reason",
+              "value": "The CRM answered, but its answer did not confirm the write."
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "74a223e4-62c4-45ba-8356-4e6b6e8ece39",
+      "name": "Tell the office: not confirmed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1300,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"failed\",\n  \"step\": \"{{ $json.step }}\",\n  \"written\": \"unknown: check the CRM\",\n  \"alert\": \"{{ $json.id }}\"\n}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "fadf9b7e-0ff2-45d6-adbc-c5fd1fd80204",
+      "name": "Answer: check the CRM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1300,
+        1080
       ]
     }
   ],
@@ -575,6 +764,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Check the AI figures",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -594,6 +790,13 @@
         [
           {
             "node": "Answer: waiting for approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer: not queued",
             "type": "main",
             "index": 0
           }
@@ -685,6 +888,57 @@
         [
           {
             "node": "Answer: recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM confirmed?": {
+      "main": [
+        [
+          {
+            "node": "Answer: recorded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tell the office: not confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell the office: not confirmed": {
+      "main": [
+        [
+          {
+            "node": "Answer: check the CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell the office: lookup failed": {
+      "main": [
+        [
+          {
+            "node": "Answer: nothing written",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell the office: write failed": {
+      "main": [
+        [
+          {
+            "node": "Answer: check the CRM",
             "type": "main",
             "index": 0
           }

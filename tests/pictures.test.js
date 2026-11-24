@@ -41,8 +41,12 @@ test('a picture names every node, its workflow and its source file, and draws on
 });
 
 test('error branches are drawn dashed and labelled "error"; the If outputs are labelled true and false', () => {
-  const svg = draw(load('stage-6-solution.json'), 'workflows/stage-6-solution.json');
-  assert.equal((svg.match(/stroke-dasharray/g) || []).length, 3, 'three error branches in the finished flow');
-  assert.ok((svg.match(/>error</g) || []).length >= 3);
+  const wf = load('stage-6-solution.json');
+  const svg = draw(wf, 'workflows/stage-6-solution.json');
+  let errorLinks = 0;
+  for (const n of wf.nodes.filter((x) => x.onError === 'continueErrorOutput')) errorLinks += (wf.connections[n.name].main[1] || []).length;
+  assert.equal(errorLinks, 5, 'the finished flow has five error branches: the AI step, the inbox and the three CRM calls');
+  assert.equal((svg.match(/stroke-dasharray/g) || []).length, errorLinks);
+  assert.equal((svg.match(/>error</g) || []).length, errorLinks);
   assert.ok(svg.includes('>true<') && svg.includes('>false<'));
 });

@@ -23,7 +23,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": \"{{ $json.body.name }}\"\n}",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"name\": {{ JSON.stringify($json.body.name) }}\n}",
         "options": {}
       },
       "id": "4bf72453-5c9a-4339-86e1-35c93b0a4f12",
@@ -31,7 +31,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        260,
+        1040,
         0
       ]
     }

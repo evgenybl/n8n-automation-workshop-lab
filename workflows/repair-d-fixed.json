@@ -95,24 +95,23 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 4
           },
           "conditions": [
             {
               "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
               "leftValue": "={{ $json.body.consent }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": false,
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "bfdd67e4-6f4f-4221-9249-04b30ed79c4d",
@@ -161,7 +160,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted.\"\n}",
+        "responseBody": "={\n  \"status\": \"refused\",\n  \"reason\": \"The enquiry does not agree to be contacted: consent must be true.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -197,15 +196,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "13e0b67c-725a-426b-b453-fa56445a44bc",
       "name": "Look up the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
-        360
+        260,
+        720
       ],
       "onError": "continueErrorOutput"
     },
@@ -240,8 +241,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        260,
-        360
+        520,
+        720
       ]
     },
     {
@@ -266,15 +267,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "f62988bd-ca6d-43f0-9c30-310d45a09f6f",
       "name": "Add a note",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        360
+        780,
+        720
       ],
       "onError": "continueErrorOutput"
     },
@@ -312,15 +315,17 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "3c0db211-492f-4031-b10d-a799c0d14cc8",
       "name": "Create the contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        520,
-        540
+        780,
+        900
       ],
       "onError": "continueErrorOutput"
     },
@@ -335,8 +340,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
-        360
+        1300,
+        720
       ]
     },
     {
@@ -362,13 +367,13 @@
         },
         "options": {}
       },
-      "id": "2010dd1c-d9fe-4f71-a94e-66327424aebf",
-      "name": "Tell the office",
+      "id": "15897c83-d7a4-4ed0-ab27-4d469dacf338",
+      "name": "Tell the office: lookup failed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
         260,
-        720
+        1080
       ]
     },
     {
@@ -379,13 +384,62 @@
           "responseCode": 502
         }
       },
-      "id": "0ef19484-f478-4fcb-9978-a1a1e4e0ab28",
-      "name": "Answer: failed",
+      "id": "67b65e48-02f8-411d-9be9-12bd649fb774",
+      "name": "Answer: nothing written",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        780,
-        720
+        520,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/alerts",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "step",
+              "value": "={{ $prevNode.name }}"
+            },
+            {
+              "name": "reason",
+              "value": "={{ $json.error.message }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8117074-5493-40aa-a990-b775f432af02",
+      "name": "Tell the office: write failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"failed\",\n  \"step\": \"{{ $json.step }}\",\n  \"written\": \"unknown: check the CRM\",\n  \"alert\": \"{{ $json.id }}\"\n}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "40db3fca-cefb-426d-b2af-da90139d4ad9",
+      "name": "Answer: check the CRM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1300,
+        1080
       ]
     }
   ],
@@ -466,7 +520,7 @@
         ],
         [
           {
-            "node": "Tell the office",
+            "node": "Tell the office: lookup failed",
             "type": "main",
             "index": 0
           }
@@ -502,7 +556,7 @@
         ],
         [
           {
-            "node": "Tell the office",
+            "node": "Tell the office: write failed",
             "type": "main",
             "index": 0
           }
@@ -520,18 +574,29 @@
         ],
         [
           {
-            "node": "Tell the office",
+            "node": "Tell the office: write failed",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Tell the office": {
+    "Tell the office: lookup failed": {
       "main": [
         [
           {
-            "node": "Answer: failed",
+            "node": "Answer: nothing written",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell the office: write failed": {
+      "main": [
+        [
+          {
+            "node": "Answer: check the CRM",
             "type": "main",
             "index": 0
           }
