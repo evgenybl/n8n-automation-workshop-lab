@@ -75,7 +75,7 @@ laptop.
    docker compose up -d
    ```
 
-   The first time, this downloads n8n: several hundred megabytes (the size CI measured is on the testing page,
+   The first time, this downloads n8n: several hundred megabytes (the sizes CI printed are on the testing page,
    `docs/HOW-THIS-WAS-TESTED.md`). Do it on a fast connection, before the session, not in the room. When it ends, two
    containers run: **n8n**, and the **practice office** (a lead form, a practice CRM, a practice AI step, an approval
    inbox and an office window, all on your laptop). On the GitHub runner that tested this lab, where the output is plain

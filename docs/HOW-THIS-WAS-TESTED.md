@@ -116,8 +116,10 @@ README shows.
 
 `compose.yaml` pins the image by its tag, `docker.n8n.io/n8nio/n8n:2.48.8`, not by its digest. The tag names the version;
 the registry could, in principle, serve a different image under the same tag, and the lab would not notice. CI run 45339281817, at commit b229a23,
-printed the image it used: its digest, its size, the platforms it is published for (so it also runs on a Mac with
-Apple silicon, as linux/arm64), and the size of its download for each platform:
+printed the image it used: its digest; the size `docker image inspect` printed for it, on the line CI's step labels "size
+on disk" (it is 15,001 bytes more than the download for linux/amd64, so it may be the size of the downloaded content
+rather than of the unpacked image: not verified); the platforms it is published for (so it also runs on a Mac with Apple
+silicon, as linux/arm64); and the size of its download for each platform, added up from its manifest's layers:
 
 <!-- pasted from: the step "The n8n image this run used" of CI run 45339281817, at commit b229a23 -->
 ```text
