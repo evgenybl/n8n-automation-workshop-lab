@@ -1,0 +1,92 @@
+{
+  "id": "xContinue000001",
+  "name": "X6 continue",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "x-continue",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b5bf4768-c4d5-4aec-af78-8cea2955d94a",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "279d8bb6-0f3a-4e34-ae7a-d8ad9128aa62"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/crm/contacts/C1/notes",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "hello"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "82c2a595-b53f-4340-a159-68d22c9c3ae0",
+      "name": "Add a note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"done\",\n  \"saw\": \"{{ $json.error.message }}\"\n}",
+        "options": {}
+      },
+      "id": "46720665-470c-4276-ba5a-8bba74e4db6d",
+      "name": "Answer: done",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        520,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Add a note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a note": {
+      "main": [
+        [
+          {
+            "node": "Answer: done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

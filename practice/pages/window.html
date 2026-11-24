@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office window - practice office</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1b1f24; }
+  header { background: #22303c; color: #fff; padding: 12px 20px; }
+  header a { color: #cfe3ff; margin-right: 16px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px 20px 40px; }
+  section { background: #fff; border: 1px solid #c4cbd3; border-radius: 6px; padding: 12px 16px; margin: 0 0 16px; }
+  h2 { margin: 0 0 8px; font-size: 1.15em; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+  th, td { text-align: left; border-bottom: 1px solid #e1e5ea; padding: 5px 6px; vertical-align: top; }
+  .meta { color: #4a5561; font-size: 0.92em; }
+  .bad { color: #a12121; font-weight: 600; }
+  .good { color: #1d6b2f; }
+  button, select { font: inherit; padding: 6px 12px; border-radius: 4px; border: 1px solid #22303c; }
+  button { background: #22303c; color: #fff; cursor: pointer; }
+  button.danger { background: #fff; color: #a12121; border-color: #a12121; }
+  button:focus, select:focus { outline: 3px solid #f0a500; outline-offset: 1px; }
+  label { margin-right: 6px; }
+  ul.notes { margin: 4px 0 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Practice office</strong> &nbsp;
+  <a href="/">Office window</a><a href="/form">Lead form</a><a href="/inbox">Approval inbox</a>
+</header>
+<main>
+  <h1>Office window</h1>
+  <p class="meta">What your flow really did: the contacts and notes in the practice CRM, the approvals, the failures your
+  flow reported, and every call the office received, newest first. It refreshes itself every two seconds. The CRM is
+  practice software, not a CRM product; the AI step is a stand-in that is not a model.</p>
+
+  <section>
+    <h2>Faults on request</h2>
+    <label for="crm-fault">Practice CRM:</label>
+    <select id="crm-fault">
+      <option value="off">works normally</option>
+      <option value="fail">fails (answers 500)</option>
+      <option value="slow">is slow (waits 15 seconds)</option>
+      <option value="wrong">answers wrongly (says 200, does nothing)</option>
+    </select>
+    &nbsp;
+    <label for="ai-fault">Practice AI step:</label>
+    <select id="ai-fault">
+      <option value="off">works normally</option>
+      <option value="invent">invents a figure</option>
+    </select>
+    &nbsp;
+    <button type="button" id="apply">Apply</button>
+    <p class="meta" id="faults-now"></p>
+  </section>
+
+  <section>
+    <h2>Contacts in the practice CRM</h2>
+    <div id="contacts"></div>
+  </section>
+
+  <section>
+    <h2>Approvals</h2>
+    <div id="approvals"></div>
+  </section>
+
+  <section>
+    <h2>Failures your flow reported</h2>
+    <div id="alerts"></div>
+  </section>
+
+  <section>
+    <h2>Every call the office received, newest first</h2>
+    <div id="calls"></div>
+  </section>
+
+  <section>
+    <h2>Start again</h2>
+    <p class="meta">Empties the contacts, approvals, failures and calls, and switches every fault off. Your flows in n8n are not touched.</p>
+    <button type="button" class="danger" id="reset">Reset the office</button>
+  </section>
+</main>
+<script>
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function table(head, rows) {
+    const t = el('table');
+    const tr = el('tr');
+    for (const h of head) tr.appendChild(el('th', '', h));
+    t.appendChild(tr);
+    for (const r of rows) {
+      const row = el('tr');
+      for (const cell of r) {
+        const td = el('td');
+        if (cell instanceof Node) td.appendChild(cell); else td.textContent = cell;
+        row.appendChild(td);
+      }
+      t.appendChild(row);
+    }
+    return t;
+  }
+  function notesList(c) {
+    const box = el('div');
+    if (!c.notes.length) { box.appendChild(el('span', 'meta', 'no notes')); return box; }
+    const ul = el('ul', 'notes');
+    for (const n of c.notes) ul.appendChild(el('li', '', n.id + ': ' + n.text));
+    box.appendChild(ul);
+    return box;
+  }
+  function statusCell(status) {
+    return el('span', status >= 200 && status < 300 ? 'good' : 'bad', String(status || 'no answer'));
+  }
+  let lastFaults = null;
+  async function refresh() {
+    try {
+      const s = await (await fetch('/api/state')).json();
+      $('contacts').replaceChildren(s.contacts.length
+        ? table(['Id', 'Name', 'E-mail', 'Company', 'Notes'], s.contacts.map((c) => [c.id, c.name, c.email, c.company, notesList(c)]))
+        : el('p', 'meta', 'No contacts.'));
+      $('approvals').replaceChildren(s.approvals.length
+        ? table(['Id', 'Who', 'Status', 'n8n answered'], s.approvals.map((a) => [a.id, a.name + ' <' + a.email + '>', a.status, a.answer ? String(a.answer.status) : '']))
+        : el('p', 'meta', 'No approvals.'));
+      $('alerts').replaceChildren(s.alerts.length
+        ? table(['Id', 'When', 'Step', 'Reason'], s.alerts.map((f) => [f.id, f.at, f.step, el('span', 'bad', f.reason)]))
+        : el('p', 'meta', 'No failures reported.'));
+      $('calls').replaceChildren(s.calls.length
+        ? table(['When', 'Service', 'Call', 'Status', 'What happened'], s.calls.map((c) => [c.at.slice(11, 19), c.service || '', c.method + ' ' + c.path, statusCell(c.status), c.detail || '']))
+        : el('p', 'meta', 'No calls yet.'));
+      const f = JSON.stringify(s.faults);
+      if (f !== lastFaults) {
+        $('crm-fault').value = s.faults.crm;
+        $('ai-fault').value = s.faults.ai;
+        lastFaults = f;
+      }
+      $('faults-now').textContent = 'Now: the CRM ' + (s.faults.crm === 'off' ? 'works normally' : 'fault "' + s.faults.crm + '"') +
+        '; the AI step ' + (s.faults.ai === 'off' ? 'works normally' : 'fault "' + s.faults.ai + '"') + '.';
+    } catch (e) {
+      $('faults-now').textContent = 'The office did not answer: ' + e.message;
+    }
+  }
+  $('apply').addEventListener('click', async () => {
+    await fetch('/faults', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ crm: $('crm-fault').value, ai: $('ai-fault').value }) });
+    lastFaults = null;
+    refresh();
+  });
+  $('reset').addEventListener('click', async () => {
+    if (!confirm('Empty the whole office and switch every fault off?')) return;
+    await fetch('/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    lastFaults = null;
+    refresh();
+  });
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>

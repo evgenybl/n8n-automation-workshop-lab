@@ -1,0 +1,264 @@
+{
+  "id": "xCrm00000000001",
+  "name": "X2 crm",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "x-crm",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "981c3176-4b75-4bdb-acac-950b8f91b6c5",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "efa13979-cb76-44b3-a027-acb15d8587db"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://office:3333/crm/contacts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Office-Badge",
+              "value": "practice-badge"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "32b5859b-8600-4025-8819-a3ab8a846f64",
+      "name": "Look up the contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "8c6273df-97f0-48f2-8a80-fa05fec30426",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "0cfe4b9d-3e09-466b-9432-2546201b87bd",
+      "name": "Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://office:3333/crm/contacts/{{ $json.contact.id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Office-Badge",
+              "value": "practice-badge"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $('Enquiry arrives').item.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7b113a1b-2bd6-4fcb-88ef-e43daebec9d0",
+      "name": "Add a note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://office:3333/crm/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Office-Badge",
+              "value": "practice-badge"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Enquiry arrives').item.json.body.name }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Enquiry arrives').item.json.body.email }}"
+            },
+            {
+              "name": "note",
+              "value": "={{ $('Enquiry arrives').item.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "69e645cf-418c-42c9-98f1-d4cac6de9e4c",
+      "name": "Create the contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"done\": \"note\",\n  \"notes\": \"{{ $json.notes }}\"\n}",
+        "options": {}
+      },
+      "id": "57dfbf80-4b9d-43e6-b5a6-d57c4c7b9e70",
+      "name": "Answer: note",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"done\": \"created\",\n  \"id\": \"{{ $json.id }}\"\n}",
+        "options": {}
+      },
+      "id": "447969ac-941e-4559-ab00-9678a58fa46c",
+      "name": "Answer: created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Look up the contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look up the contact": {
+      "main": [
+        [
+          {
+            "node": "Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Found?": {
+      "main": [
+        [
+          {
+            "node": "Add a note",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create the contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a note": {
+      "main": [
+        [
+          {
+            "node": "Answer: note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create the contact": {
+      "main": [
+        [
+          {
+            "node": "Answer: created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

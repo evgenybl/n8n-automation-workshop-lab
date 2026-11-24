@@ -1,0 +1,265 @@
+{
+  "id": "xValidate0000001",
+  "name": "X1 validate",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "x-validate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8d35d54a-1b01-4c8d-bd76-ef62032f7c8b",
+      "name": "Enquiry arrives",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "ecf8d7b6-7a95-481a-b2a7-a8a7f68c1b45"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "44b79c78-f8af-4582-ace9-702a34527430",
+              "leftValue": "={{ $json.body.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "7807080b-98d9-4b14-a8a2-0fda58eb9a00",
+      "name": "Has an e-mail?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "eefa3921-c40f-443b-a90e-d9d48b80d186",
+              "leftValue": "={{ $json.body.consent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "5b620c74-204e-4f1c-829d-bc18a98c555b",
+      "name": "Consent given?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "53509c13-4e00-497d-acb8-291b81c3dc3b",
+              "leftValue": "={{ $json.body.website }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "b86ca84d-2fbb-4ea2-b564-c0a5b337e5b1",
+      "name": "Honeypot empty?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"received\": \"{{ $json.body.name }}\"\n}",
+        "options": {}
+      },
+      "id": "de8c56a2-700e-4afd-b956-c2f690ccb56b",
+      "name": "Answer: received",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"refused\": \"no e-mail\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "fe93dc56-58c6-4917-b6a3-19a32fc98243",
+      "name": "Refuse: no e-mail",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"refused\": \"no consent\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "f5f3a172-cf2e-4a08-ba68-39a773893bd9",
+      "name": "Refuse: no consent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"refused\": \"robot\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "746071b3-afa6-4cae-8d9d-d1239f2359a4",
+      "name": "Refuse: robot",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Enquiry arrives": {
+      "main": [
+        [
+          {
+            "node": "Has an e-mail?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has an e-mail?": {
+      "main": [
+        [
+          {
+            "node": "Consent given?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: no e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consent given?": {
+      "main": [
+        [
+          {
+            "node": "Honeypot empty?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: no consent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Honeypot empty?": {
+      "main": [
+        [
+          {
+            "node": "Answer: received",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

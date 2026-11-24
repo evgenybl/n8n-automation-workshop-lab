@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead form - practice office</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1b1f24; }
+  header { background: #22303c; color: #fff; padding: 12px 20px; }
+  header a { color: #cfe3ff; margin-right: 16px; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px 20px 40px; }
+  fieldset { border: 1px solid #c4cbd3; border-radius: 6px; margin: 0 0 16px; padding: 12px 16px; background: #fff; }
+  legend { font-weight: 600; }
+  label { display: block; margin: 10px 0 4px; font-weight: 600; }
+  input[type=text], input[type=email], textarea { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; border: 1px solid #8a96a3; border-radius: 4px; }
+  .inline label { display: inline; font-weight: normal; margin-left: 4px; }
+  .inline { margin: 8px 0; }
+  button { font: inherit; padding: 8px 14px; border-radius: 4px; border: 1px solid #22303c; background: #22303c; color: #fff; cursor: pointer; }
+  button.secondary { background: #fff; color: #22303c; }
+  button:focus, input:focus, textarea:focus, select:focus { outline: 3px solid #f0a500; outline-offset: 1px; }
+  .hint { color: #4a5561; font-size: 0.92em; margin: 4px 0 0; }
+  pre { background: #fff; border: 1px solid #c4cbd3; padding: 10px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color: #1d6b2f; } .bad { color: #a12121; }
+  .robot-field { position: absolute; left: -10000px; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Practice office</strong> &nbsp;
+  <a href="/">Office window</a><a href="/form">Lead form</a><a href="/inbox">Approval inbox</a>
+</header>
+<main>
+  <h1>Lead form</h1>
+  <p>This page plays the website form. When you press <strong>Send</strong>, the office posts the enquiry to your flow's
+  webhook in n8n and shows you exactly what the flow answered. Every person here is invented.</p>
+
+  <fieldset>
+    <legend>Where to send it</legend>
+    <label for="path">Your flow's webhook path</label>
+    <input type="text" id="path" value="stage-1" autocomplete="off">
+    <p class="hint">The guide tells you the path for each stage, for example <code>stage-3</code>.</p>
+    <div class="inline"><input type="radio" name="mode" id="mode-live" value="live" checked><label for="mode-live">Live address (<code>/webhook/...</code>): the flow is published</label></div>
+    <div class="inline"><input type="radio" name="mode" id="mode-test" value="test"><label for="mode-test">Test address (<code>/webhook-test/...</code>): n8n is listening after you pressed Execute workflow</label></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>The enquiry</legend>
+    <label for="name">Name</label>
+    <input type="text" id="name" autocomplete="off">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" autocomplete="off">
+    <label for="company">Company (optional)</label>
+    <input type="text" id="company" autocomplete="off">
+    <label for="message">Message</label>
+    <textarea id="message" rows="4"></textarea>
+    <div class="inline"><input type="checkbox" id="consent"><label for="consent">I agree to be contacted about this enquiry</label></div>
+    <div class="robot-field" aria-hidden="true"><label for="website">Website (leave empty)</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+    <div class="inline"><input type="checkbox" id="robot"><label for="robot">Act as a robot: fill the hidden "website" field that people never see (the honeypot)</label></div>
+    <p>
+      <button type="button" class="secondary" id="sample">Fill a sample enquiry</button>
+      <button type="button" class="secondary" id="clear">Clear</button>
+    </p>
+  </fieldset>
+
+  <p><button type="button" id="send">Send</button></p>
+  <h2>What the flow answered</h2>
+  <pre id="result">Nothing sent yet.</pre>
+</main>
+<script>
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  if (params.get('path')) $('path').value = params.get('path');
+  if (params.get('mode') === 'test') $('mode-test').checked = true;
+
+  $('sample').addEventListener('click', () => {
+    $('name').value = 'Maya Rivers';
+    $('email').value = 'maya.rivers@example.com';
+    $('company').value = 'Rivers Pottery (invented)';
+    $('message').value = 'Hello, how much would 12 workshop seats cost for our team in March?';
+    $('consent').checked = true;
+    $('robot').checked = false;
+  });
+  $('clear').addEventListener('click', () => {
+    for (const id of ['name', 'email', 'company', 'message']) $(id).value = '';
+    $('consent').checked = false;
+    $('robot').checked = false;
+  });
+
+  $('send').addEventListener('click', async () => {
+    const enquiry = {
+      name: $('name').value,
+      email: $('email').value,
+      company: $('company').value,
+      message: $('message').value,
+      consent: $('consent').checked,
+      website: $('robot').checked ? 'http://robot.example.com' : $('website').value,
+    };
+    const mode = $('mode-test').checked ? 'test' : 'live';
+    $('result').textContent = 'Sending...';
+    $('result').className = '';
+    try {
+      const r = await fetch('/form/send', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ path: $('path').value.trim(), mode, enquiry }),
+      });
+      const out = await r.json();
+      if (out.error) {
+        $('result').textContent = out.error;
+        $('result').className = 'bad';
+        return;
+      }
+      const lines = [
+        'Sent to:   ' + out.sentTo,
+        'Status:    ' + (out.status || 'no answer'),
+        'Answer:    ' + (out.body === '' ? '(empty)' : out.body),
+      ];
+      if (out.status === 404) lines.push('', 'A 404 means nothing listens at this address. Check the path, and whether the flow is published (live) or listening (test).');
+      $('result').textContent = lines.join('\n');
+      $('result').className = out.status >= 200 && out.status < 300 ? 'ok' : 'bad';
+    } catch (e) {
+      $('result').textContent = 'The office did not answer: ' + e.message;
+      $('result').className = 'bad';
+    }
+  });
+</script>
+</body>
+</html>

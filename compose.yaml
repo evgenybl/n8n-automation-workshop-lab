@@ -1,0 +1,42 @@
+# The lab: n8n and the practice office, side by side.
+#   docker compose up -d      start both
+#   docker compose down       stop both (your flows stay in the n8n_data volume)
+#   docker compose down -v    stop both and delete your flows too
+#
+# Both ports are published on 127.0.0.1 only: nothing outside this computer can reach them.
+# Inside the compose network the two services reach each other by name: n8n calls http://office:3333,
+# and the office calls http://n8n:5678.
+name: n8n-lab
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.48.8
+    ports:
+      - "127.0.0.1:${LAB_N8N_PORT:-5678}:5678"
+    environment:
+      - GENERIC_TIMEZONE=UTC
+      - TZ=UTC
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/lab/workflows:ro
+
+  office:
+    # The office is a plain Node program. It runs on the Node that is already inside the n8n image,
+    # so the lab downloads one image, not two.
+    image: docker.n8n.io/n8nio/n8n:2.48.8
+    entrypoint: ["node", "/office/server.js"]
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3333
+      - N8N_URL=http://n8n:5678
+    ports:
+      - "127.0.0.1:${LAB_OFFICE_PORT:-3333}:3333"
+    volumes:
+      - ./practice:/office:ro
+
+volumes:
+  n8n_data:
