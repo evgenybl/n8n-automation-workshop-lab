@@ -89,8 +89,11 @@ duplicates rare, and only the CRM's own rule makes them impossible."
 - Setting the query parameter's Name to `e-mail` or `Email`: the CRM answers 400, "Look a contact up by ?email=".
 - Leaving *Answer with the name* in place, so the flow answers before anything is written.
 - A node renamed differently from the guide, so a later expression that names it fails.
-- Two contacts after two sends: the false output of *Known contact?* connected to *Add a note*, and the true output to
-  *Create the contact* (seen in the lab's tests as the 409 of repair B).
+- The two outputs of *Known contact?* swapped, false to *Add a note* and true to *Create the contact*: a new person's
+  enquiry reaches *Add a note* with no contact to add it to, so nothing is written and the form gets n8n's own error
+  instead of "recorded", at every send. This is read from the files and the practice CRM, which answers 404 to a note for
+  a contact it does not have; it is not tried by any test. Two contacts for one e-mail cannot appear: the practice CRM
+  refuses the second with 409 (the office's own tests).
 
 **Debrief question:** What in your own work is matched by a name today, that should be matched by something that does
 not change?
