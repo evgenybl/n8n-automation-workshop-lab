@@ -30,6 +30,9 @@ to. Before you try it, delete or unpublish your own repair A flow, if you repair
 
 > The steps for n8n's own screen were written from n8n's documentation and the workflow files, and were not walked through
 > on a screen by a person. Every symptom quoted here is what the broken file did in the lab's automated tests on n8n 2.48.8.
+> Repair A was carried out on n8n 2.48.8's screen by an AI agent driving a browser, on 25 November 2026, with n8n started
+> without Docker: its symptom, what its hints point to and its fix were as written here. The same agent wrote this
+> note, so this was not an independent test. Repairs B to D were not carried out on a screen.
 
 ---
 
@@ -186,8 +189,8 @@ such as `A1`, and it is filled in for every decision, so the answer is always "t
 {{ $json.body.decision }}
 ```
 
-then set the operator to String, then `is equal to`, and type `approve` in the right box. Publish, send, Reject: nothing
-is written. The repaired file is `workflows/repair-c-fixed.json`.
+then set the operator to String, then `is equal to`, and type `approve` in the right box (wait two seconds after typing,
+as stage 2 of the lab guide says). Publish, send, Reject: nothing is written. The repaired file is `workflows/repair-c-fixed.json`.
 
 **What to take away.** Test the "no" path, not only the "yes" path. A check that is true for every input checks nothing.
 

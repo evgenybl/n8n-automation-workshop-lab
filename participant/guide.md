@@ -13,17 +13,23 @@ folded hints display properly; in a plain text editor they do not.
 
 > **How these steps were written.** The steps for n8n's own screen were written from n8n's documentation and from the
 > workflow files in this lab, using the labels in n8n 2.48.8's documentation and its own English text. They were not
-> walked through on a screen by a person. Where this guide says where something sits on the screen, it says so only as
-> n8n's documentation does, and names the page (the list is at the end of *How every stage works*). Two labels it uses
-> come from n8n's own English text and are not in its documentation: *Convert types where required*, and the If node's
-> empty boxes, shown as value1 and value2. Every flow these steps build was run by the lab's automated tests on n8n
-> 2.48.8, and every answer quoted below is what those flows answered there. If a label on your screen differs, look for
-> the nearest match, and tell your instructor.
+> walked through on a screen by a person. On 25 November 2026 an AI agent, driving a browser, carried out the steps of
+> *How every stage works* (not the test address), stages 1 and 2 and repair A on n8n 2.48.8's own screen, with n8n
+> started without Docker, and the words of those parts were corrected to what the screen showed: where the screen and
+> n8n's documentation differ, this guide gives the screen's word and names the documentation's. The same agent made
+> the corrections, so this was not an independent test. Stages 3 to 6 have not been carried out on a screen: there the
+> guide says where something sits only as n8n's documentation does, and names the page (the list is at the end of
+> *How every stage works*). Two labels are not in the documentation and were seen on the screen: *Convert types where
+> required*, and the If node's empty boxes, shown as value1 and value2. Every flow these steps build was run by the
+> lab's automated tests on n8n 2.48.8, and every answer quoted below is what those flows answered there. If a label on
+> your screen differs, look for the nearest match, and tell your instructor.
 >
-> **The first step of every stage, the import, has two labels.** n8n's documentation calls it **Import from File**; n8n's
-> own English text has **Import**, then **From file**. Your screen may show either. n8n's documentation page
-> *Export and import* (https://docs.n8n.io/build/manage-workflows/export-and-import)
-> places it in the **Workflow** menu of the canvas header; ask your instructor if you cannot find it.
+> **The first step of every stage is the import, and this is where it is.** Beside the workflow's name, in the canvas
+> header, there is a button with three dots. Select it, then **Import**, then **From file**. n8n's documentation
+> calls the same thing **Import from File**, in a menu it calls the Workflow menu
+> (*Export and import* (https://docs.n8n.io/build/manage-workflows/export-and-import)); on n8n 2.48.8's screen no
+> menu has that name. The first time you import, n8n asks *Importing this from an AI tool?* Tick **Don't show again**
+> and choose **Skip**: it does not ask again.
 
 **Two rules for every stage.**
 
@@ -59,48 +65,67 @@ folded hints display properly; in a plain text editor they do not.
 
 ## How every stage works
 
-1. **Create a new, empty workflow.** Select the create button in the upper-left corner of the side menu (the
-   documentation calls it the universal create resource icon), then select **Workflow**. On n8n's Overview page there is
-   also a create button in the upper-right corner.
-2. **Import the stage's starter file** (rule 1). In the **Workflow** menu of the canvas header, choose **Import from File** (the label n8n's
-   documentation uses; on your screen it may read **Import**, then **From file**), and pick the starter from the lab's
-   `workflows` folder. *If your screen differs:* open the file in
-   a text editor, copy all of it, click on n8n's empty canvas and paste.
+1. **Create a new, empty workflow.** Select the create button, a plus sign in the upper-left corner of the side menu
+   (the documentation calls it the universal create resource icon), then select **New workflow** (the documentation
+   says *Workflow*). On n8n's Overview page there is also a **Create workflow** button in the upper-right corner, once
+   you have a workflow; before that, the page shows two cards, *Build an agent* and *Build a workflow*.
+2. **Import the stage's starter file** (rule 1). Select the three dots beside the workflow's name, then **Import**, then
+   **From file** (the box at the top of this guide), and pick the starter from the lab's `workflows` folder. The
+   workflow takes the starter's name. *If your screen differs:* open the file in a text editor, copy all of it, click
+   on n8n's empty canvas and paste (this second way was not tried on a screen).
 3. **Build** what the stage's table says. Each row is one thing to do; a row that says **P1** means "paste block P1".
-4. **Publish**: select the **Publish** button in the canvas header, then **Publish** again in the window that opens. Do
-   this again after every change: your edits stay a draft until you publish.
-5. **Reset the office, then send an enquiry.** In the office window, `http://localhost:3333`, choose **Reset the office**,
-   so that what you see belongs to this try. Then open the stage's form address, choose **Fill a sample enquiry**, then
-   **Send**. The form shows what your flow answered.
+4. **Publish**: select the **Publish** button in the canvas header, then **Publish** again in the window that opens
+   (its two boxes, *Version name* and *Describe changes*, can stay as they are). The first time you publish a workflow,
+   n8n then shows a note, *Workflow published*: choose **Got it**. A panel headed *Production Checklist* may then cover
+   the upper-left part of the canvas: the lab needs nothing in it, and the **X** beside its heading closes it. The
+   button now reads **Published**. Do this again after every change: your edits stay a draft until you publish, and
+   after a change the button reads **Publish** again.
+5. **Reset the office, then send an enquiry.** In the office window, `http://localhost:3333`, choose **Reset the office**
+   (the browser asks whether to empty the whole office: choose **OK**), so that what you see belongs to this try. Then
+   open the stage's form address, choose **Fill a sample enquiry**, then **Send**. The form shows what your flow
+   answered.
 6. **Check yourself** in the office window: it shows the contacts, the notes, the approvals, the failures your flow
    reported, and every call the office received, newest first.
 
-**How to add a node.** Select **Add node** on the right side of the node you want to follow, or **Add first step** on an
-empty canvas; n8n opens the nodes panel, where you can search. Type the node's name, such as `If`, and choose it. A new
-node arrives with its type's name, such as *If*; the table's row tells you to rename it, because later expressions name
-earlier nodes, such as `$('Enquiry arrives')`, and a different name breaks them. **To rename a node**, hover over it,
-select its context menu icon, then **Rename node**.
+**How to open and close a node.** Double-click a node on the canvas: its window opens, with its settings in the middle.
+The **X** in the window's upper-right corner closes it and brings you back to the canvas.
 
-**How to connect two nodes.** Select the grey dot on the right side of a node and slide the arrow to the grey rectangle on
-the left side of the following node. An **If** node has two outputs, **true** and **false**; connect each to what should
-happen in that case. **To delete a connection**, hover over it, then select **Delete**.
+**How to add a node.** Select the plus sign at the end of the short line on the right side of the node you want to
+follow (the documentation calls it **Add node**), or **Add first step** on an empty canvas; n8n opens the nodes panel,
+headed *What happens next?*, where you can search. Type the node's name, such as `If`, and choose it. The new node's
+window opens at once. A new node arrives with its type's name, such as *If*; the table's row tells you to rename it,
+because later expressions name earlier nodes, such as `$('Enquiry arrives')`, and a different name breaks them. **To
+rename a node**, close its window, hover over the node on the canvas, select the three dots that appear above it, then
+**Rename** (the documentation says *Rename node*); type the new name in the small window that opens and choose
+**Rename**.
+
+**How to connect two nodes.** Press the grey dot on the right side of a node and slide the arrow to the dot on the left
+side of the following node (the documentation calls that one a grey rectangle; on n8n 2.48.8's screen both are dots).
+An **If** node has two outputs, **true** and **false**; connect each to what should happen in that case. **To delete a
+connection**, hover over the line: two small icons appear at its middle, a plus sign and a dustbin. Move along the line
+to the dustbin, whose tip reads **Delete**, and select it. If no icons appear, click an empty part of the canvas first,
+then hover again.
 
 **How to put a pasted value in a box.** A value with `{{ }}` in it is an expression: switch the box from **Fixed** to
 **Expression**, then paste. The table says *(as an Expression)* on each such row. Where a box already holds a value, the
 row says *select everything in the box, then paste*, so that the new value replaces the old one instead of joining it.
-This page was not written from a screen: if you cannot find the Fixed and Expression switch, ask your instructor.
+The **Fixed** and **Expression** switch shows only while the pointer is over that box: on the line over the box,
+towards its right end, beside the box's label where it has one.
 
 **Seeing inside a run.** Select the **Executions** tab in the top menu, and choose a run: n8n shows what each node received
 and sent on. This is where you look when an answer surprises you.
 
-**Starting a stage again.** Delete your half-built workflow (or unpublish it), then import the stage's starter into a new
-workflow, so that only one flow listens at the stage's path.
+**Starting a stage again.** Delete your half-built workflow, or unpublish it (the small arrow beside the **Published**
+button, then **Unpublish**, and **Unpublish** again in the window that opens; deleting was not tried on a screen). Then
+import the stage's starter into a new workflow, so that only one flow listens at the stage's path.
 
 **Comparing with a solution.** Each stage's solution file listens at its own path, `stage-1-solution` to
 `stage-6-solution`, so you can import it beside your own flow and send to it from
 `http://localhost:3333/form?path=stage-1-solution` (and so on).
 
-**Where the places named on this page come from**, in n8n's documentation:
+**Where the places named on this page come from**, in n8n's documentation. The names in this table are the
+documentation's; where n8n 2.48.8's screen showed another word or shape (**New workflow**, **Rename**, a dot where the
+documentation has a rectangle), the paragraphs above give the screen's:
 
 | What | Page |
 |---|---|
@@ -148,8 +173,9 @@ chooses the second, and step 5 adds that node.
 | 7 | Select everything in the box, then paste (as an Expression) | `Answer with the name` | Response Body | **P1** |
 | 8 | Publish; reset the office; send the sample | | | |
 
-Row 1, the import: **Import from File** in n8n's documentation, perhaps **Import**, then **From file** on your screen (the
-box at the top of this guide).
+Row 1, the import: the three dots beside the workflow's name, then **Import**, then **From file** (the box at the top of
+this guide). Rows 2 to 4: double-click **Enquiry arrives** to open it. Row 5: the new node's window opens at once.
+Close it, rename the node, then double-click the node to open it again for rows 6 and 7.
 
 **P1** (step 7: the box already holds a sample body, so select everything in it first):
 
@@ -204,7 +230,9 @@ three checks and connect their **true** outputs.
 
 An If node's condition has three parts on the screen: a **left box** for the value to test, an **operator** menu (choose
 the type first, such as String, then the comparison), and a **right box** for what to compare with. n8n's documentation
-calls the menu the data type dropdown, and the boxes the condition's fields and values.
+calls the menu the data type dropdown, and the boxes the condition's fields and values. On n8n 2.48.8's screen the left
+box and the operator menu share one row, and the right box is the box under them; while they are empty, the two boxes
+show *value1* and *value2*.
 
 | # | Do this | Node | Setting | Value |
 |---|---|---|---|---|
@@ -222,6 +250,13 @@ calls the menu the data type dropdown, and the boxes the condition's fields and 
 | 12 | Set | `Consent given?` | Convert types where required | `on` |
 | 13 | Connect | `Consent given?` | its **true** output | to `Answer with the name` |
 | 14 | Publish; reset the office; send four enquiries (below) | | | |
+
+Row 2: the line from *Enquiry arrives* to *Answer with the name* runs behind the three If nodes. Click an empty part of
+the canvas, then hover over a part of the line that you can see, between *Enquiry arrives* and *Has an e-mail?*: the
+plus sign and the dustbin appear at the middle of the line, on top of *Honeypot empty?*. Move along the line to the
+dustbin and select it.
+
+Row 11: after you type `true`, wait two seconds before you go on to row 12. The reason is below the blocks.
 
 **P1** (step 4):
 
@@ -241,10 +276,20 @@ calls the menu the data type dropdown, and the boxes the condition's fields and 
 {{ $json.body.consent }}
 ```
 
-*Convert types where required* is a switch of the If node; the label comes from n8n's own English text, and the If
-node's documentation does not name it. This page was not written from a screen: if you cannot find it, ask your
-instructor. Without it, an enquiry with a consent of `true` stops at *Consent given?* with n8n's own error (read in
-n8n's source; not run in the lab's tests).
+*Convert types where required* is a switch of the If node, under its condition; the label is n8n's own, and the If
+node's documentation does not name it. Without it, an enquiry with a consent of `true` stops at *Consent given?*: the
+form shows status 500 and n8n's own answer, "Error in workflow", and the run in the **Executions** tab says "Wrong type:
+'true' is a boolean but was expecting a string" (seen on n8n 2.48.8's screen on 25 November 2026; not run in the lab's
+tests).
+
+**After you type in an If node's right box, wait two seconds before you do anything else.** On n8n 2.48.8's screen an
+If node took in the letters typed in its right box only after a pause. When the switch was pressed, or the node's
+window closed, up to a second after the last letter, letters were lost: `true` was left as `t` in each of six measured
+tries, and in other tries as `tru` once and as nothing twice. A second and a half after the last letter, and two
+seconds after, nothing was lost (each wait was tried once). The box can show `true` while n8n has kept less: to be
+sure, close the node, open it again and read the right box. It must say `true`. The same kind of node is used in every
+later stage, where this was not tried. A single letter (`@`), a block put in in one go by a script, and the webhook's
+**Path** were kept when the node was closed a third of a second later.
 
 **Why consent is compared as text with types converted.** The lab's form sends consent as the value `true`. A plain HTML
 checkbox on a real website sends `on` instead. With *Convert types where required* on, the check turns whatever arrives
@@ -541,6 +586,9 @@ and the paused run carries on from the Wait node, with the decision as its data.
 | 12 | Connect | `Approved?` | its **true** output | to `Look up the contact` |
 | 13 | Connect | `Approved?` | its **false** output | to `Tell the approver: nothing written` |
 | 14 | Publish; reset the office; send, then decide (below) | | | |
+
+Row 11: after you type `approve`, wait two seconds before you go on (stage 2 says why; this was not tried on a screen in
+this stage).
 
 **P1** (step 4):
 

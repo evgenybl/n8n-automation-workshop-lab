@@ -143,8 +143,14 @@ down.
 
 n8n's documentation says that, while you create this account, you can choose to register the Community edition for a free
 licence key, sent by e-mail. It is optional, and the lab does not need it: you can skip it. (With an invented e-mail
-address, nothing would arrive anyway.) This page was not written from a screen: if n8n shows a screen or a question that
-this page does not mention, and you cannot see how to go on, ask your instructor.
+address, nothing would arrive anyway.) On 25 November 2026 an AI agent, driving a browser, went through this screen on
+n8n 2.48.8 (started without Docker, so the steps above were not part of it): the sign-up asked for an e-mail address,
+a first name, a last name and a password, with a box *I want to receive security and product updates* that can stay
+empty, and no question about a licence key appeared. After **Next**, n8n opened a page about its Assistant, *Build and
+debug faster with the n8n Assistant*, with a **Get started** button. The lab does not use the Assistant: leave that page
+as it is. When stage 1 begins, you go on from there with the create button, the plus sign in the upper-left corner (the
+lab guide, *How every stage works*). If n8n shows a screen or a question that this page does not mention, and you
+cannot see how to go on, ask your instructor.
 
 Then open the office window at `http://localhost:3333` and the lead form at `http://localhost:3333/form`. Keep both open in
 their own tabs during the session.

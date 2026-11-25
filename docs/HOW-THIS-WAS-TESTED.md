@@ -8,8 +8,8 @@ and with the version it was done on.
 | Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: locally on macOS (arm64) with Node 24.22.3 and with Node 22.23.5, and before that on Windows with Node 24, up to commit 1f75afb; in CI on Linux and on Windows, where the last run cited on this page is at commit 2f3c4a7, and the badge at the top of the README shows the run of the current version. The last local run is pasted below. |
 | Every workflow file run in CI on n8n 2.48.8 | n8n and the practice office started as `compose.yaml` starts them; all 22 workflow files imported and published with n8n's own command line; every one driven through its webhook with no screen, and every answer quoted in the guides replayed and compared | Done in CI. The run and its summary are pasted below; the badge at the top of the README shows the latest run on `main`. |
 | A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what each was given, did and found, and what was changed. |
-| An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it. The changes after the second were checked against its points by a third agent, at commit 18f7de9; no review of the whole lab was made after that | See below: what each was given, did and found, and what was changed. |
-| The steps in n8n's own screen, walked through by a person | A person follows the participant guide on n8n's editor, stage by stage, and notes every label or step that differs | Not done. |
+| An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen. (Since then an AI agent has, for stages 1 and 2 and repair A; that was not an independent test, and it is the next row's subject, not a review.) Each was worked through in the commits after it. The changes after the second were checked against its points by a third agent, at commit 18f7de9; no review of the whole lab was made after that | See below: what each was given, did and found, and what was changed. |
+| The steps in n8n's own screen, walked through by a person | A person follows the participant guide on n8n's editor, stage by stage, and notes every label or step that differs | Not done by a person. On 25 November 2026 an AI agent, driving a browser, carried out stages 1 and 2 and repair A on n8n 2.48.8's screen, at commit e5fc486, with n8n run without Docker: see *Stages 1 and 2 and repair A on n8n's screen*, below. Stages 3 to 6 and repairs B to D were not carried out on a screen. |
 | Taught to a class of people | | Not done. |
 
 **This lab has not been taught to a class of people.** Every timing in it is planned. **The steps in n8n's own screen were
@@ -156,32 +156,17 @@ download for linux/arm64: 377577771 bytes in 20 layers
 | An error message with quote marks, put inside a JSON answer, breaks the answer | Seen in CI run 45318193799, at commit 66cf58f, the run of the first experiment flows (removed since); the flows avoid it, and `tests/workflows.test.js` keeps them from doing it again |
 | A publish is applied by a running n8n shortly, not at once | Seen in CI run 45320046704, at commit 0678574; the load script waits until every webhook is live |
 
-**What rests on n8n's documentation or source only**, and was not proven by a run or seen on a screen:
+**What rests on n8n's documentation or source only**, and was not proven by a run or seen on a screen (what the walk-through of 25 November 2026 saw on the screen is in its own section, below):
 
 | Point | Where it comes from |
 |---|---|
-| Every label and step in n8n's own screen | n8n's documentation and n8n 2.48.8's own English text |
-| *Import from File* in the **Workflow** menu of the canvas header | n8n's documentation, the page *Export and import*; n8n's English text has *Import*, then *From file*. The guide gives both labels and the documentation's place for the menu, and asks the participant to ask the instructor if they cannot find it |
-| The create button in the upper-left corner of the side menu, then *Workflow* | n8n's documentation |
-| How a node is added (*Add node* on the right side of a node, *Add first step*, the nodes panel), and *Rename node* in the node's context menu | n8n's documentation, *Work with nodes* |
-| Connecting two nodes (the grey dot, the grey rectangle) and deleting a connection (hover over it, then *Delete*) | n8n's documentation, *Connect nodes together* |
-| The *Publish* button in the canvas header, and the window it opens | n8n's documentation, *Save and publish workflows* |
-| The *Executions* tab in the top menu | n8n's documentation, *View executions for a single workflow* |
+| Every label and step in n8n's own screen in stages 3 to 6 and in repairs B to D | n8n's documentation and n8n 2.48.8's own English text |
 | *HTTP Method* and *Respond* among the Wait node's parameters for *On Webhook Call* | n8n's documentation, *Wait* |
-| That an edit stays a draft until it is published again | n8n's documentation |
 | That the test address answers one call after **Execute workflow** | n8n's documentation (that it answers 404 when nobody listens was seen in CI) |
-| The owner account and its password rule: at least eight characters, at least one number and one capital letter | n8n's documentation, *Configure user management* for self-hosted n8n |
-| The optional free licence key offered while the owner account is created | n8n's documentation on the Community edition |
-| The If node's empty boxes shown as *value1* and *value2* | n8n 2.48.8's English text only; not in the documentation |
-| The *Fixed* / *Expression* switch of a box, and where it sits | n8n's English text has the two labels; the documentation does not say where the switch sits. The guide says so, and asks the participant to ask the instructor |
-| The label *Convert types where required*, and where the switch sits on the If node | n8n's English text only: the If node's documentation does not name it. The guide says so, and asks the participant to ask the instructor |
+| The optional free licence key offered while the owner account is created | n8n's documentation on the Community edition. Not shown on the screen on 25 November 2026 |
 | Where a node's error output sits beside its normal one, once *On Error* is *Continue (using error output)* | Not in the documentation; the guide says so, and asks the participant to ask the instructor |
-| That a new Respond to Webhook node's Response Body already holds a sample body, which the guide says to select before pasting | n8n 2.48.8's source |
-| What n8n shows after the owner account is created, beyond the sign-up screen and the optional licence key | Not in the documentation the lab read; the setup page says so, and asks the participant to ask the instructor |
 | Pasting a whole workflow file onto the canvas | Not confirmed: n8n's documentation, *Export and import*, describes copying selected nodes and pasting them into the editor, and does not name pasting the text of a file |
-| That *Convert types where required* writes `looseTypeValidation` and a loose `typeValidation` into the file | n8n 2.48.8's source |
-| That the type versions in the files (Webhook 2.2, Respond to Webhook 1.5, If 2.4, HTTP Request 4.5, Code 2, Wait 1.1) are the ones n8n's editor gives a new node | Not confirmed: the files were written with these versions, and n8n 2.48.8 ran them; a node added on the screen may get another version |
-| That strict type checking stops *Consent given?* for a consent of `true` when *Convert types* is off | n8n 2.48.8's source |
+| That the type versions in the files (Webhook 2.2, Respond to Webhook 1.5, If 2.4, HTTP Request 4.5, Code 2, Wait 1.1) are the ones n8n's editor gives a new node | Confirmed for Respond to Webhook only: the node added on the screen in stage 1 was saved by n8n at 1.5. Not confirmed for the others: the files were written with these versions, and n8n 2.48.8 ran them; a node added on the screen may get another version |
 | That Safari refuses n8n's sign-in at `http://localhost` | A community report, not verified |
 
 ---
@@ -372,18 +357,72 @@ browser on n8n's screen, and GitHub.
 **Not checked after these corrections.** The commit that made them was not checked by a separate agent; the tests hold
 what a test can hold.
 
+## Stages 1 and 2 and repair A on n8n's screen, at commit e5fc486
+
+**Who and how.** On 25 November 2026 an AI agent, a Claude model, carried out on n8n 2.48.8's own editor: the first
+screen of the setup page, *How every stage works*, stages 1 and 2 of the lab guide and repair A, row by row. It drove a
+headless Chrome on macOS through scripts: it pressed, typed and slid as the rows say, put each grey block in as one
+paste from the guide's file, and looked at a picture of the screen after each step. n8n was the npm package of version
+2.48.8 on Node 26, not the Docker image; the practice office ran from this repository's files; the two names `office`
+and `n8n`, which Compose gives, were answered by a small script loaded into each process; and neither process could
+reach anything but this computer. **It is not an independent reader:** the same agent made the corrections that
+followed, and it finds a button by its name in the page, where a person must see it. Before the corrections were
+committed, a separate agent (a Claude model with no part in the walk-through) read them against the pictures and the
+scripts' printed results. It found one statement that the pictures did not carry (the status 500 had been seen in a flow
+whose switch showed on; it was then tried with the switch off, and is as the pages say), wording about the lost letters
+that said more than was measured, a panel after publishing that the guide did not mention, and places where a page did
+not say who had done the walk-through; each was corrected. It did not run n8n.
+
+**What held as written.** The flow built on the screen by stage 1's rows gave the three answers stage 1 quotes; the
+flow built by stage 2's rows gave the five that stage 2 quotes, and the office showed only **Form** rows for the refused
+ones. Read back from n8n, the stage 2 flow equals `workflows/stage-2-solution.json` in its nodes, settings and
+connections, but for the webhook's path and for a switch left at its default, which the editor does not write. The
+check page's line, the password rule on the sign-up screen, the choices of **Respond** and **Respond With**, the sample
+body of a new Respond to Webhook node, the operator menu's types and comparisons, the **Executions** tab, and the
+placeholders *value1* and *value2* were as the pages say. Repair A: the 404 with its three fields, no run in the
+**Executions** tab, a **Path** that reads `repiar-a`, and after the fix `"status":"recorded"` with contact C1.
+
+| What the screen showed | What the pages said | What was changed |
+|---|---|---|
+| The import is behind a button with three dots beside the workflow's name: **Import**, then **From file**. No menu is named Workflow | **Import from File** in the Workflow menu of the canvas header, from n8n's documentation | The box at the top of the lab guide, step 2 of *How every stage works*, stage 1's note and the instructor guide give the screen's way, and name the documentation's |
+| After a file is chosen, n8n asks *Importing this from an AI tool?*, with **Skip**, **Connect n8n** and **Don't show again**; after it was ticked once, the later imports of the day were not asked | Nothing | The lab guide and the instructor guide say to tick **Don't show again** and choose **Skip** |
+| The create button's item reads **New workflow**; the Overview page has a **Create workflow** button only once a workflow exists, and two cards before that | *Workflow*; a create button in the upper-right corner | Step 1 of *How every stage works* |
+| After the owner account is made, n8n opens a page about its Assistant; no question about a licence key appeared | The sign-up screen, and the documentation's optional licence key | The setup page says so, and that the lab does not use the Assistant |
+| A node is added with a plus sign that has no label, in a panel headed *What happens next?*; the new node's window opens at once; a node opens by a double click and closes by the **X** | **Add node**; nothing on opening or closing a node | *How to open and close a node*, *How to add a node* |
+| A node is renamed through three dots above it, the item **Rename**, and a small window | Its context menu icon, then **Rename node** | *How to add a node* |
+| Both sides of a node carry dots | A grey dot on the right, a grey rectangle on the left | *How to connect two nodes* |
+| A connection under the pointer shows a plus sign and a dustbin at its middle; the dustbin's tip reads **Delete**. In stage 2's starter the line to delete runs behind three nodes, and the icons show on top of *Honeypot empty?* | Hover over it, then select **Delete** | *How to connect two nodes*, and a note under stage 2's table |
+| The *Fixed* / *Expression* switch of a box, and where it sits | Ask your instructor | It shows only while the pointer is over the box: on the line over the box, towards its right end, beside the box's label where it has one. The lab guide says so |
+| **Publish** opens a window with two boxes that can stay as they are. At a workflow's first publish a note follows, *Workflow published*, with **Got it**, and then a panel headed *Production Checklist* over the upper-left part of the canvas, which its **X** closes; a later publish of the same workflow showed neither. The button reads **Published**, and **Publish** again after a change; **Unpublish** is under the small arrow beside it | Publish, then Publish again; unpublish, with no place given | Step 4 of *How every stage works*, and *Starting a stage again* |
+| **Reset the office** makes the browser ask whether to empty the whole office | Nothing | Step 5 of *How every stage works* |
+| The label *Convert types where required*, and where the switch sits on the If node | Ask your instructor | It sits under the condition: the lab guide says so |
+| Letters typed in an If node's right box are taken in only after a pause. When *Convert types where required* was pressed, or the node's window closed, a third of a second, six tenths of a second or one second after the last letter, `true` was left as `t` (six tries, one for each wait and action), and n8n saved that. At a second and a half and at two seconds nothing was lost (four tries). In tries that were not timed, `tru` was kept once and nothing twice; in one of those n8n saved the switch as on, the check still strict and the box empty, and a good enquiry got status 500. The box showed `true` just before a close that lost it. A single letter (`@`), an Expression put in in one go by the script, and the Webhook's **Path** were kept when the node was closed a third of a second later | Nothing | Stage 2 says to wait two seconds after typing in an If node's right box and how to make sure; the instructor guide lists the mistake. The rows keep their order: setting the switch first was tried, and the letters were lost in the same way when the node was closed at once |
+| With the switch off and the right box holding `true`, published, the sample enquiry got status 500, "Error in workflow", and the run in the **Executions** tab says "Wrong type: 'true' is a boolean but was expecting a string" | The same, read in n8n's source | The lab guide and the instructor guide say it was seen |
+| An If node's right box is the box under the left box and the operator menu | A left box, an operator menu and a right box | A sentence in stage 2 |
+
+**What this walk-through does not show.** Docker Desktop and `docker compose` on a newcomer's own laptop: n8n did not
+run in the image, and the setup page's steps before n8n's first screen were not part of it. In the image n8n runs in
+production mode; the first half of the walk-through ran without that setting, and one difference was found when it was
+set: before, n8n's 404 answer carried one more field, a stack trace. The first-run screens were then gone through again
+on a new, empty n8n in production mode, and were the same but for one label on the Assistant page. A person's hand,
+eyes and pace: the pauses after typing were a script's, and whether a person goes on within a second of the last letter
+was not seen. The corrected pages were not carried out again from the start. Windows, and browsers other than Chrome.
+Stages 3 to 6 and repairs B to D. Pasting a whole file onto the canvas, deleting a workflow, and the test address.
+
 ## What a reading test without n8n's screen cannot show
 
 The two reading tests, the two reviews and the check of the changes read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
 labels in the guide are the ones on the screen; how n8n's editor behaves when a node is added, a block is pasted, or a
 setting is switched; whether dragging and connecting nodes is as easy as the steps suggest; whether Docker Desktop
-installs and runs on a newcomer's own laptop; and how long a room of people takes for each stage.
+installs and runs on a newcomer's own laptop; and how long a room of people takes for each stage. The walk-through of
+25 November 2026, above, did run the editor, for stages 1 and 2 and repair A only.
 
 ## The steps in n8n's own screen, walked through by a person
 
-**State: not done.** The steps were written from n8n's documentation and the workflow files, with the labels in n8n
-2.48.8's own English text. A person follows `participant/guide.md` and `participant/repairs.md` on n8n 2.48.8 and notes
-every difference.
+**State: not done by a person.** The steps were written from n8n's documentation and the workflow files, with the labels
+in n8n 2.48.8's own English text; stages 1 and 2 and repair A were then carried out on the screen by an AI agent (the
+section before the last). A person follows `participant/guide.md` and `participant/repairs.md` on n8n 2.48.8, in the
+lab as Docker starts it, and notes every difference.
 
 ## Taught to a class of people
 

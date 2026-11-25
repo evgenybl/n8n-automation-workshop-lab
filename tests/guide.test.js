@@ -258,9 +258,10 @@ test('the fault runs stage 6 lets a participant skip are the ones the run sheet 
   for (const f of guide.slice(1)) assert.ok(window.includes('>' + f), 'the office window offers "' + f + '"');
 });
 
-test('the guide places things on n8n\'s screen only as n8n\'s documentation does, and says so where it cannot', () => {
+test('the guide places things on n8n\'s screen as the screen showed or as n8n\'s documentation does, and says so where it cannot', () => {
   const pages = ['participant/guide.md', 'participant/repairs.md', 'participant/setup.md'];
-  // Places the first versions of these pages invented; none is in n8n's documentation.
+  // Places the first versions of these pages invented; none is in n8n's documentation. The places the guide gives for
+  // stages 1 and 2 were seen on n8n 2.48.8's screen, and are held by the sentences further down.
   for (const f of pages) assert.doesNotMatch(read(f), /top right|above the box|right-click it|the top one|the bottom one|at the top of the canvas|beside \*\*Parameters\*\*/, f);
   const text = read('participant/guide.md');
   const pagesNamed = {
@@ -272,18 +273,27 @@ test('the guide places things on n8n\'s screen only as n8n\'s documentation does
     Wait: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/',
     'Export and import': 'https://docs.n8n.io/build/manage-workflows/export-and-import',
   };
+  // Stage 2 says to wait after typing in an If node's right box, where n8n 2.48.8's screen lost letters.
+  const stage2 = text.slice(text.indexOf('## Stage 2:'), text.indexOf('## Stage 3:'));
+  assert.ok(stage2.includes("**After you type in an If node's right box, wait two seconds before you do anything else.**"), 'stage 2: the wait after typing');
+  assert.ok(stage2.includes('Row 11: after you type `true`, wait two seconds before you go on to row 12.'), 'stage 2: the wait is said beside the rows');
   for (const [title, url] of Object.entries(pagesNamed)) {
     assert.ok(text.includes('*' + title + '* (' + url + ')'), 'the guide names its documentation page ' + title + ', ' + url);
   }
-  // The import, the first step of every stage: both labels, and where to ask.
+  // The import, the first step of every stage: where it is on n8n 2.48.8's screen, the documentation's name for it, and
+  // the question n8n asks the first time.
   const flatText = text.replace(/^>\s?/gm, '').replace(/\s+/g, ' ');
-  assert.ok(flatText.includes("n8n's documentation calls it **Import from File**; n8n's own English text has **Import**, then **From file**."));
-  assert.ok(flatText.includes('places it in the **Workflow** menu of the canvas header; ask your instructor if you cannot find it.'));
-  assert.ok(flatText.includes('In the **Workflow** menu of the canvas header, choose **Import from File**'));
-  assert.ok(read('instructor/guide.md').replace(/\s+/g, ' ').includes("n8n's documentation places the import in the **Workflow** menu of the canvas header"));
-  assert.ok(flatText.includes('on your screen it may read **Import**, then **From file**'));
+  assert.ok(flatText.includes("Beside the workflow's name, in the canvas header, there is a button with three dots. Select it, then **Import**, then **From file**."));
+  assert.ok(flatText.includes("n8n's documentation calls the same thing **Import from File**, in a menu it calls the Workflow menu"));
+  assert.ok(flatText.includes("Tick **Don't show again** and choose **Skip**"));
+  assert.ok(flatText.includes("Select the three dots beside the workflow's name, then **Import**, then **From file**"));
+  assert.ok(read('instructor/guide.md').replace(/\s+/g, ' ').includes("the import is behind the three dots beside the workflow's name: **Import**, then **From file**"));
+  // The guide says who carried out which parts on a screen.
+  assert.ok(flatText.includes("carried out the steps of *How every stage works* (not the test address), stages 1 and 2 and repair A on n8n 2.48.8's own screen, with n8n started without Docker"));
+  assert.ok(flatText.includes('The same agent made the corrections, so this was not an independent test.'));
+  assert.ok(flatText.includes('Stages 3 to 6 have not been carried out on a screen'));
   const unsure = 'This page was not written from a screen: if you cannot';
-  assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 3, 'the guide says so where the documentation does not place a thing');
+  assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 1, 'the guide says so where the documentation does not place a thing and no screen was seen');
   const tested = read('docs/HOW-THIS-WAS-TESTED.md');
   for (const row of ['| The *Fixed* / *Expression* switch of a box, and where it sits |', '| The label *Convert types where required*, and where the switch sits on the If node |', "| Where a node's error output sits beside its normal one,"]) {
     assert.ok(tested.includes(row), 'the testing page lists ' + row);

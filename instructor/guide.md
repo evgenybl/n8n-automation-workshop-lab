@@ -5,13 +5,18 @@ the ones the design expects, not ones observed in a room.** Where a mistake's sy
 tests, the line says so; the other symptoms are what n8n's documentation leads one to expect. The steps for n8n's own
 screen were written from n8n's documentation and the workflow files, and were not walked through on a screen by a person:
 do the whole lab yourself on your own laptop before you teach it, and note anything on your screen that differs from the
-participant guide.
+participant guide. On 25 November 2026 an AI agent, driving a browser, carried out stages 1 and 2 and repair A on n8n
+2.48.8's screen, with n8n started without Docker, and those parts of the participant guide were corrected to it; where
+a line below says "seen on the screen", it was seen then. The same agent made the corrections, so this was not an
+independent test. Stages 3 to 6 and repairs B to D were not carried out on a screen.
 
 Keep the office window on the projector whenever you can. It is the lab's best teacher: it shows what a flow really did,
 not what it says it did. Two habits to say at the start and repeat: **every stage starts by importing its starter into a
-new workflow**, and **every value in a grey block is pasted, not typed**. n8n's documentation places the import in the
-**Workflow** menu of the canvas header (the page *Export and import*); nobody has looked for it on a screen for this
-lab, so find it on your own n8n before the session.
+new workflow**, and **every value in a grey block is pasted, not typed**. On n8n 2.48.8's screen the import is behind
+the three dots beside the workflow's name: **Import**, then **From file** (n8n's documentation calls it *Import from
+File*, in the Workflow menu). The first import asks *Importing this from an AI tool?*: have everyone tick **Don't show
+again** and choose **Skip**. After the owner account is made, n8n opens a page about its Assistant, which the lab does
+not use: people go on with the create button, the plus sign in the upper-left corner.
 
 The parts follow the run sheet's two sessions (`instructor/run-sheet.md`).
 
@@ -70,8 +75,17 @@ checkbox sends `on`, not `true`; this flow refuses it cleanly instead of guessin
 - Choosing the operator under the wrong type: `is true` is under **Boolean**, `contains`, `is empty` and `is equal to`
   under **String**.
 - Leaving *Convert types where required* off on *Consent given?*: for a consent of `true`, n8n then stops at that node
-  with "Wrong type: 'true' is a boolean but was expecting a string", and the form gets n8n's own error instead of an answer
-  (read in n8n 2.48.8's source; not run in the lab's tests).
+  with "Wrong type: 'true' is a boolean but was expecting a string", and the form gets status 500 and n8n's own answer,
+  "Error in workflow" (seen on the screen; not run in the lab's tests).
+- Going on too fast after typing `true` in the right box of *Consent given?*: on n8n 2.48.8's screen an If node lost
+  letters when the switch was pressed or the node closed up to a second after the last letter (`t` was kept in six
+  measured tries; in others `tru` once, nothing twice); a second and a half after it, the node kept every letter. A good
+  enquiry is then no longer answered as in stage 1; once it got status 500, when n8n had saved the switch as on, the
+  check still strict and the box empty. The box can show `true` while n8n has kept less, so the guide says to wait two
+  seconds, and to open the node again to read the box. Every later stage uses the same kind of node (stage 5 types
+  `approve` into one), where this was not tried.
+- Not finding the dustbin for the connection of row 2: the line runs behind the three If nodes, and its two icons appear
+  at its middle, on top of *Honeypot empty?*, only while the pointer is over the line (seen on the screen).
 
 **Debrief question:** Which of the three refusals would you most want to know about in your own work, and why?
 
