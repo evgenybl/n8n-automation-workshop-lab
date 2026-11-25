@@ -31,8 +31,8 @@ If your room has no internet, your instructor gives you printed copies.
     department before you install it.
   - **On a Mac**, choose the Docker Desktop download for your Mac's chip (Apple silicon, or Intel). The pinned n8n
     image is published for Apple silicon too (linux/arm64; `docs/HOW-THIS-WAS-TESTED.md` shows what CI read, CI being
-    the lab's automated tests, which GitHub runs whenever a change to the lab is pushed); the lab has not been tried on
-    a Mac.
+    the lab's automated tests, which GitHub runs whenever a change to the lab is pushed); n8n and Docker have not been tried
+    on a Mac for this lab; only its tests that need no container were run on one.
 - **A web browser: Chrome, Edge or Firefox.** Safari is reported, in a community report the lab has not verified, to
   refuse n8n's sign-in at `http://localhost:5678`; use one of the other three.
 - **The lab's folder.** Your instructor gives it to you, or you download it from the lab's page on GitHub: the green

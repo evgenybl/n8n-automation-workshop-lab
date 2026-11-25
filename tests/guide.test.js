@@ -270,6 +270,7 @@ test('the guide places things on n8n\'s screen only as n8n\'s documentation does
     'Connect nodes together': 'https://docs.n8n.io/build/understand-workflows/workflow-components/connect-nodes-together',
     'View executions for a single workflow': 'https://docs.n8n.io/build/understand-workflows/understand-executions/view-executions-for-a-single-workflow',
     Wait: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/',
+    'Export and import': 'https://docs.n8n.io/build/manage-workflows/export-and-import',
   };
   for (const [title, url] of Object.entries(pagesNamed)) {
     assert.ok(text.includes('*' + title + '* (' + url + ')'), 'the guide names its documentation page ' + title + ', ' + url);
@@ -277,7 +278,9 @@ test('the guide places things on n8n\'s screen only as n8n\'s documentation does
   // The import, the first step of every stage: both labels, and where to ask.
   const flatText = text.replace(/^>\s?/gm, '').replace(/\s+/g, ' ');
   assert.ok(flatText.includes("n8n's documentation calls it **Import from File**; n8n's own English text has **Import**, then **From file**."));
-  assert.ok(flatText.includes('It is in the workflow\'s menu; ask your instructor if you cannot find it.'));
+  assert.ok(flatText.includes('places it in the **Workflow** menu of the canvas header; ask your instructor if you cannot find it.'));
+  assert.ok(flatText.includes('In the **Workflow** menu of the canvas header, choose **Import from File**'));
+  assert.ok(read('instructor/guide.md').replace(/\s+/g, ' ').includes("n8n's documentation places the import in the **Workflow** menu of the canvas header"));
   assert.ok(flatText.includes('on your screen it may read **Import**, then **From file**'));
   const unsure = 'This page was not written from a screen: if you cannot';
   assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 3, 'the guide says so where the documentation does not place a thing');

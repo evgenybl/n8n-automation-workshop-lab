@@ -21,8 +21,9 @@ folded hints display properly; in a plain text editor they do not.
 > the nearest match, and tell your instructor.
 >
 > **The first step of every stage, the import, has two labels.** n8n's documentation calls it **Import from File**; n8n's
-> own English text has **Import**, then **From file**. Your screen may show either. It is in the workflow's menu; ask your
-> instructor if you cannot find it.
+> own English text has **Import**, then **From file**. Your screen may show either. n8n's documentation page
+> *Export and import* (https://docs.n8n.io/build/manage-workflows/export-and-import)
+> places it in the **Workflow** menu of the canvas header; ask your instructor if you cannot find it.
 
 **Two rules for every stage.**
 
@@ -61,7 +62,7 @@ folded hints display properly; in a plain text editor they do not.
 1. **Create a new, empty workflow.** Select the create button in the upper-left corner of the side menu (the
    documentation calls it the universal create resource icon), then select **Workflow**. On n8n's Overview page there is
    also a create button in the upper-right corner.
-2. **Import the stage's starter file** (rule 1). In the workflow's menu, choose **Import from File** (the label n8n's
+2. **Import the stage's starter file** (rule 1). In the **Workflow** menu of the canvas header, choose **Import from File** (the label n8n's
    documentation uses; on your screen it may read **Import**, then **From file**), and pick the starter from the lab's
    `workflows` folder. *If your screen differs:* open the file in
    a text editor, copy all of it, click on n8n's empty canvas and paste.
@@ -479,7 +480,7 @@ exactly what it checks.
 It also reads only the message, and takes whatever the AI step sent as its summary. One of the lab's tests runs the code
 above in plain Node, not in n8n, and shows four more limits of it:
 
-- A figure in the person's name is reported as invented, because the summary starts with the name: the name `Agent 47`
+- A figure in the person's name is reported as invented, because the summary starts with the name: the name `Team 47`
   with the message `What is the price of 3 seats?` gives "AI summary not used: it gives figures that are not in the
   enquiry (47)."
 - An answer with no summary is labelled checked: the note says "AI summary (checked):" and no summary follows.

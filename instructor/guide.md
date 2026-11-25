@@ -9,7 +9,9 @@ participant guide.
 
 Keep the office window on the projector whenever you can. It is the lab's best teacher: it shows what a flow really did,
 not what it says it did. Two habits to say at the start and repeat: **every stage starts by importing its starter into a
-new workflow**, and **every value in a grey block is pasted, not typed**.
+new workflow**, and **every value in a grey block is pasted, not typed**. n8n's documentation places the import in the
+**Workflow** menu of the canvas header (the page *Export and import*); nobody has looked for it on a screen for this
+lab, so find it on your own n8n before the session.
 
 The parts follow the run sheet's two sessions (`instructor/run-sheet.md`).
 
@@ -147,8 +149,8 @@ gone: it imports the stage-4 starter like everyone else, and loses nothing.
 time, so that we all see the same thing. The lesson is about any AI step. A real model can return a confident figure the
 person never wrote. Here we check one narrow thing, figures; the habit is what matters: decide what must be true of an AI
 answer before you use it, and check exactly that." Walk through the code's comments on the projector; nobody needs to
-write code. Then the two things the check lets through: a figure written in words, and a right figure with the wrong
-meaning. Read out the box *What changes with a real model*.
+write code. Then two things the check lets through: a figure written in words, and a right figure with the wrong
+meaning; the participant guide's stage 4 box lists four more limits of the code. Read out the box *What changes with a real model*.
 
 **Mistakes to expect.**
 - Pasting the code below the starter's two lines instead of replacing them.
@@ -168,7 +170,7 @@ meaning. Read out the box *What changes with a real model*.
 "Two requests, two answers. The form's request is answered at once by the first Respond node it reaches: 202, waiting.
 The run then waits. The person's click in the inbox is a second request, to the resume address; it is answered by the
 Respond node the run reaches after the Wait." Make everyone press **Reject** first, and look at the office window:
-nothing written. Then Approve. Then the two limits: "The resume address approves for anyone who holds it; that is fine
+nothing written. Then Approve. Then two of the limits in the participant guide's box *The limits of this design*: "The resume address approves for anyone who holds it; that is fine
 here, on your own laptop, and not anywhere else. And an enquiry nobody decides waits for ever."
 
 **Mistakes to expect.**

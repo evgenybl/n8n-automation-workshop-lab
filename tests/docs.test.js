@@ -331,7 +331,7 @@ test('the README and the testing page agree on what was done, at which commit, a
   for (const f of ['README.md', 'docs/HOW-THIS-WAS-TESTED.md']) {
     const text = read(f);
     assert.match(text, /\| A new-user test \|[^\n]*Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent[^\n]*not repeated on the current version/, f);
-    assert.match(text, /\| An independent review \|[^\n]*Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent[^\n]*not repeated after that/, f);
+    assert.match(text, /\| An independent review \|[^\n]*Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent[^\n]*checked against its points by a third agent, at commit 18f7de9; no review of the whole lab was made after that/, f);
     assert.match(text, /\| The steps in n8n's own screen,? walked through by a person \|[^\n]*Not done/, f);
     assert.match(text, /\| Taught to a class of people \|[^\n]*Not done/, f);
     assert.ok(flat(f).includes('all ' + WORKFLOWS.length + ' '), f + ' gives the number of workflow files, ' + WORKFLOWS.length);

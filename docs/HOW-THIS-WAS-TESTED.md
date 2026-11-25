@@ -5,10 +5,10 @@ and with the version it was done on.
 
 | Kind of evidence | What it is here | State |
 |---|---|---|
-| Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: in CI on Linux and on Windows; locally on macOS (arm64) with Node 24.22.3 and with Node 22.23.5, and before that on Windows with Node 24, up to commit 1f75afb. The last local run is pasted below. |
+| Automated tests, with no container | The practice office's own tests; the static checker against every kind of bad file; the workflow files against their generator and against each other; the lab guide, the repairs, the answer key and the practical check against the workflow files; the pictures; these pages | Done: locally on macOS (arm64) with Node 24.22.3 and with Node 22.23.5, and before that on Windows with Node 24, up to commit 1f75afb; in CI on Linux and on Windows, where the last run cited on this page is at commit 2f3c4a7, and the badge at the top of the README shows the run of the current version. The last local run is pasted below. |
 | Every workflow file run in CI on n8n 2.48.8 | n8n and the practice office started as `compose.yaml` starts them; all 22 workflow files imported and published with n8n's own command line; every one driven through its webhook with no screen, and every answer quoted in the guides replayed and compared | Done in CI. The run and its summary are pasted below; the badge at the top of the README shows the latest run on `main`. |
 | A new-user test | Done twice, at commit 9785e5b and at commit 25e7f76, each by a separate AI agent (a Claude model with no part in the build), reading the pages without n8n's screen; not repeated on the current version | See below: what each was given, did and found, and what was changed. |
-| An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it; not repeated after that | See below: what each was given, did and found, and what was changed. |
+| An independent review | Done twice, at commit 9785e5b and at commit 1f75afb, each by a separate AI agent (a Claude model with no part in the build). The second found no blocker; its two main points were where the CI runs cited on these pages can be found, answered on the testing page, and that nobody has carried out the guide on n8n's screen, which is still so. Each was worked through in the commits after it. The changes after the second were checked against its points by a third agent, at commit 18f7de9; no review of the whole lab was made after that | See below: what each was given, did and found, and what was changed. |
 | The steps in n8n's own screen, walked through by a person | A person follows the participant guide on n8n's editor, stage by stage, and notes every label or step that differs | Not done. |
 | Taught to a class of people | | Not done. |
 
@@ -161,7 +161,7 @@ download for linux/arm64: 377577771 bytes in 20 layers
 | Point | Where it comes from |
 |---|---|
 | Every label and step in n8n's own screen | n8n's documentation and n8n 2.48.8's own English text |
-| *Import from File* in the workflow's menu | n8n's documentation; n8n's English text has *Import*, then *From file*. The guide gives both labels; it does not say where the workflow's menu sits, and asks the participant to ask the instructor if they cannot find it |
+| *Import from File* in the **Workflow** menu of the canvas header | n8n's documentation, the page *Export and import*; n8n's English text has *Import*, then *From file*. The guide gives both labels and the documentation's place for the menu, and asks the participant to ask the instructor if they cannot find it |
 | The create button in the upper-left corner of the side menu, then *Workflow* | n8n's documentation |
 | How a node is added (*Add node* on the right side of a node, *Add first step*, the nodes panel), and *Rename node* in the node's context menu | n8n's documentation, *Work with nodes* |
 | Connecting two nodes (the grey dot, the grey rectangle) and deleting a connection (hover over it, then *Delete*) | n8n's documentation, *Connect nodes together* |
@@ -178,7 +178,7 @@ download for linux/arm64: 377577771 bytes in 20 layers
 | Where a node's error output sits beside its normal one, once *On Error* is *Continue (using error output)* | Not in the documentation; the guide says so, and asks the participant to ask the instructor |
 | That a new Respond to Webhook node's Response Body already holds a sample body, which the guide says to select before pasting | n8n 2.48.8's source |
 | What n8n shows after the owner account is created, beyond the sign-up screen and the optional licence key | Not in the documentation the lab read; the setup page says so, and asks the participant to ask the instructor |
-| Pasting a whole workflow file onto the canvas | Not confirmed in the documentation |
+| Pasting a whole workflow file onto the canvas | Not confirmed: n8n's documentation, *Export and import*, describes copying selected nodes and pasting them into the editor, and does not name pasting the text of a file |
 | That *Convert types where required* writes `looseTypeValidation` and a loose `typeValidation` into the file | n8n 2.48.8's source |
 | That the type versions in the files (Webhook 2.2, Respond to Webhook 1.5, If 2.4, HTTP Request 4.5, Code 2, Wait 1.1) are the ones n8n's editor gives a new node | Not confirmed: the files were written with these versions, and n8n 2.48.8 ran them; a node added on the screen may get another version |
 | That strict type checking stops *Consent given?* for a consent of `true` when *Convert types* is off | n8n 2.48.8's source |
@@ -315,7 +315,8 @@ and the code in copies, one edit at a time, to see whether a test noticed; probe
 ran the stage 4 code in plain Node; and traced the finished flow's paths by reading its file. It ran no workflow and saw
 no page rendered. **Its verdict:** publish after named fixes; no blocker. Its two main points: where the CI runs cited on
 these pages can be found, and that nobody has carried out the guide on n8n's screen. Its own notes are not in this
-repository: the findings here are a summary of its report. Not repeated after the changes below.
+repository: the findings here are a summary of its report. The changes below were checked once, at commit 18f7de9: the next
+section.
 
 | Finding | What was changed |
 |---|---|
@@ -329,7 +330,7 @@ repository: the findings here are a summary of its report. Not repeated after th
 | When assessing, repair C had 5 planned minutes | Repair C 15 and the check 15, so the assessed session 2 is 130 planned minutes, in its own table on the variants page; the main plan is unchanged; a test holds the numbers |
 | A printed page cannot be pasted from | The guide's rule and the run sheet say every block is also in `participant/guide.md` in the lab's folder |
 | No participant page said that the flow's own webhook takes an enquiry from anyone who can reach it | Stage 5's box of limits and *Going further* say so, with the honeypot, the kept run data, and that the lab is a place to learn; a test holds the box |
-| The static checker let six shapes of a secret through, and the README read as if it were complete | All six refused, each with a test, all 22 files still passing; the README says the checker is a set of patterns |
+| The static checker let six shapes of a secret through, and the README read as if it were complete | All six refused, each with a test (the sixth, a shorter run of letters and digits, in a header), all 22 files still passing; the README says the checker is a set of patterns |
 | Two sentences on the practice AI step held only for the inputs tried | This page says what is tried and what happens beyond it; the office's test holds both limits |
 | The instructor guide's "two contacts after two sends" cannot happen with the practice CRM | Corrected to what the files and the CRM allow, marked as not tried; the rubric's first level for O3 too |
 | The practical check is unseen by convention only | Its page says the file and the answer are in the lab's folder, and two ways to keep the check unseen |
@@ -341,9 +342,39 @@ and how long n8n waits for the AI step and the inbox are not tried by any test; 
 patterns. And, as before, CI runs the run sheet's `--clear` and the README's `--solutions` only after `--all` has
 imported every file, never on a fresh n8n.
 
+## The check of the changes, at commit 18f7de9
+
+**Who:** a third separate AI agent, a Claude model with no part in the build or in the changes. **What it was given:** the
+repository at commit 18f7de9 as a clone, the second review's report, and the rule that a major point must be fixed and a
+minor one fixed or stated as a limit; on macOS arm64, with no n8n, no Docker, no browser and no network. **What it did:**
+it ran the local tests and the four tools on Node 24.22.3 and Node 22.23.5 (224 tests, 167 passed and 57 skipped with
+each); went through the second review's 26 points one by one; sent 68 requests to the practice office as it was at commit
+1f75afb and as it is at commit 18f7de9, and compared the answers (63 the same; the other 5 are addresses that start
+with `//`, which now get the office's own 404); made 37 single edits to things the new tests guard, each of which failed
+a test, and 6 to sentences no test holds; probed the static checker with altered files; and read each stage's table
+against its starter and solution files. It ran no workflow and saw no page rendered. **Its verdict:** no blocker and no
+new major point. Of the second review's two main points, what is left of each lies outside these files: a person or a
+browser on n8n's screen, and GitHub.
+
+| What it found | What was changed, or what is left |
+|---|---|
+| The guide gave the import's two labels, but not where the menu is | The participant guide and the instructor guide give the place n8n's documentation gives: the **Workflow** menu of the canvas header (*Export and import*). Not seen on a screen |
+| Nobody has carried out stages 1 and 2 on n8n's screen | Still so: only a person, or a browser on n8n, can do it |
+| That the CI runs cited by number are runs of this repository rests on GitHub, which it could not reach | A reader can look them up on this repository's Actions page |
+| This version had not run in CI when it was checked, and the first row at the top of this page read as if it had | The row says at which commit the last cited run was, and that the badge shows the run of the current version |
+| The setup page said the lab has not been tried on a Mac, beside pages that say the tests ran on macOS | The setup page says which part ran on a Mac and which did not |
+| The static checker still passes shapes of a secret outside its patterns: a fixed value written inside an expression in a body field named like a secret, a body or a query given as JSON, a second `?` in an address, a run of 23 letters and digits in a query or body value | Left as they are: the README says the checker is a set of patterns and proves nothing beyond them. The row on the six shapes, above, now says where the sixth is refused |
+| A name in the stage 4 box was also the name of a character in a video game | Another invented name |
+| The instructor guide spoke of two things the stage 4 check lets through and of two limits in stage 5, where the participant guide now lists more | The instructor guide points to both boxes |
+| A timer in one of the office's new tests was left running after the test | It is cleared when the office stops |
+| In the commits between 1f75afb and 03d5931, the local summary pasted on this page was not what those commits print | True of those commits. CI compares the pasted summary on the commit that is pushed, not on each commit before it |
+
+**Not checked after these corrections.** The commit that made them was not checked by a separate agent; the tests hold
+what a test can hold.
+
 ## What a reading test without n8n's screen cannot show
 
-The two reading tests and the two reviews read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
+The two reading tests, the two reviews and the check of the changes read the pages and ran the practice office; none ran n8n's editor. So they could not show: whether the
 labels in the guide are the ones on the screen; how n8n's editor behaves when a node is added, a block is pasted, or a
 setting is switched; whether dragging and connecting nodes is as easy as the steps suggest; whether Docker Desktop
 installs and runs on a newcomer's own laptop; and how long a room of people takes for each stage.

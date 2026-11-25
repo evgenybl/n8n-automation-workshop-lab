@@ -564,11 +564,14 @@ test('started on its own on a port another program uses, the office says so in o
     child.stdout.on('data', (c) => (out += c));
     child.stderr.on('data', (c) => (out += c));
     const code = await new Promise((resolve, reject) => {
-      child.on('exit', resolve);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         child.kill();
         reject(new Error('the office did not stop: ' + out));
       }, 5000);
+      child.on('exit', (c) => {
+        clearTimeout(timer);
+        resolve(c);
+      });
     });
     assert.notEqual(code, 0);
     assert.equal(out, 'The practice office cannot start: 127.0.0.1:' + port + ' is already in use by another program.\n');
