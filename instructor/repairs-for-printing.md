@@ -55,8 +55,10 @@ Answer:    {"code":404,"message":"The requested webhook \"POST repair-a\" is not
 problem is not the publishing. On a real website, the person who filled in the form would see nothing at all, and nobody
 would know an enquiry was lost.
 
-**Hint 1.** The answer came from n8n, not from your flow: your flow never ran. Look at the **Executions** tab: is there a run? What
-does it mean when an address answers 404?
+**Hint 1.** The answer came from n8n, not from your flow: your flow never ran. Look at the **Executions** tab: is there a run? Only
+the list on the left counts: if you looked at a run of another workflow before, n8n 2.48.8 may still show that run
+beside the list, with that workflow's nodes, while the list says *No executions found*. What does it mean when an
+address answers 404?
 
 **Hint 2.** The form sends to one address; your flow listens at one address. Find where your flow says where it listens, and compare
 the two, character by character.

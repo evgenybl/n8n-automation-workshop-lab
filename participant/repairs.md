@@ -56,8 +56,10 @@ would know an enquiry was lost.
 
 <details><summary>Hint 1</summary>
 
-The answer came from n8n, not from your flow: your flow never ran. Look at the **Executions** tab: is there a run? What
-does it mean when an address answers 404?
+The answer came from n8n, not from your flow: your flow never ran. Look at the **Executions** tab: is there a run? Only
+the list on the left counts: if you looked at a run of another workflow before, n8n 2.48.8 may still show that run
+beside the list, with that workflow's nodes, while the list says *No executions found*. What does it mean when an
+address answers 404?
 
 </details>
 

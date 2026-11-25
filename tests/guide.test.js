@@ -291,6 +291,9 @@ test('the guide places things on n8n\'s screen as the screen showed or as n8n\'s
   // The guide says who carried out which parts on a screen.
   assert.ok(flatText.includes("carried out the steps of *How every stage works* (not the test address), stages 1 and 2 and repair A on n8n 2.48.8's own screen, with n8n started without Docker"));
   assert.ok(flatText.includes('The same agent made the corrections, so this was not an independent test.'));
+  // A run left on the Executions tab from the workflow looked at before, as the second pass on the screen found it.
+  assert.ok(flatText.includes("The list on the left holds this workflow's runs only: if the right side shows a run while the list says *No executions found*, that run is left over from the workflow you looked at before"));
+  assert.ok(read('participant/repairs.md').replace(/\s+/g, ' ').includes('Only the list on the left counts: if you looked at a run of another workflow before'));
   assert.ok(flatText.includes('Stages 3 to 6 have not been carried out on a screen'));
   const unsure = 'This page was not written from a screen: if you cannot';
   assert.ok((text.replace(/\s+/g, ' ').match(new RegExp(unsure, 'g')) || []).length >= 1, 'the guide says so where the documentation does not place a thing and no screen was seen');

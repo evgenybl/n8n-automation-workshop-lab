@@ -113,7 +113,9 @@ The **Fixed** and **Expression** switch shows only while the pointer is over tha
 towards its right end, beside the box's label where it has one.
 
 **Seeing inside a run.** Select the **Executions** tab in the top menu, and choose a run: n8n shows what each node received
-and sent on. This is where you look when an answer surprises you.
+and sent on. This is where you look when an answer surprises you. The list on the left holds this workflow's runs only:
+if the right side shows a run while the list says *No executions found*, that run is left over from the workflow you
+looked at before (on n8n 2.48.8's screen it went away when the page was reloaded while the **Editor** tab was shown).
 
 **Starting a stage again.** Delete your half-built workflow, or unpublish it (the small arrow beside the **Published**
 button, then **Unpublish**, and **Unpublish** again in the window that opens; deleting was not tried on a screen). Then

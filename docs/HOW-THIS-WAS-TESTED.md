@@ -406,7 +406,9 @@ production mode; the first half of the walk-through ran without that setting, an
 set: before, n8n's 404 answer carried one more field, a stack trace. The first-run screens were then gone through again
 on a new, empty n8n in production mode, and were the same but for one label on the Assistant page. A person's hand,
 eyes and pace: the pauses after typing were a script's, and whether a person goes on within a second of the last letter
-was not seen. The corrected pages were not carried out again from the start. Windows, and browsers other than Chrome.
+was not seen. The corrected pages were then carried out again from the start, on a new, empty n8n, by the same agent:
+one more difference was found and corrected, a run left on the **Executions** tab from the workflow looked at before
+(the lab guide, *Seeing inside a run*, and repair A's first hint). Windows, and browsers other than Chrome.
 Stages 3 to 6 and repairs B to D. Pasting a whole file onto the canvas, deleting a workflow, and the test address.
 
 ## What a reading test without n8n's screen cannot show
